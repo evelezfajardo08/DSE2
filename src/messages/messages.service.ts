@@ -1,26 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { Message, MessageDocument } from './entities/schema';
 
 @Injectable()
 export class MessagesService {
-  create(createMessageDto: CreateMessageDto) {
-    return 'This action adds a new message';
+  constructor(
+    @InjectModel(Message.name)
+    private readonly messageModel: Model<MessageDocument>,
+  ) {}
+
+  async create(createMessageDto: CreateMessageDto) {
+    const createdMessage = new this.messageModel(createMessageDto);
+    return createdMessage.save();
   }
 
-  findAll() {
-    return `This action returns all messages`;
+  async findAll() {
+    return this.messageModel.find().exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} message`;
+  async findOne(id: number) {
+    const message = await this.messageModel.findOne({ id }).exec();
+    if (!message) {
+      throw new NotFoundException(`Message with id ${id} not found`);
+    }
+    return message;
   }
 
-  update(id: number, updateMessageDto: UpdateMessageDto) {
-    return `This action updates a #${id} message`;
+  async update(id: number, updateMessageDto: UpdateMessageDto) {
+    const message = await this.messageModel
+      .findOneAndUpdate({ id }, updateMessageDto, { new: true })
+      .exec();
+    if (!message) {
+      throw new NotFoundException(`Message with id ${id} not found`);
+    }
+    return message;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} message`;
+  async remove(id: number) {
+    const message = await this.messageModel.findOneAndDelete({ id }).exec();
+    if (!message) {
+      throw new NotFoundException(`Message with id ${id} not found`);
+    }
+    return message;
   }
 }
