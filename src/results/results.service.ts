@@ -1,26 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateResultDto } from './dto/create-result.dto';
 import { UpdateResultDto } from './dto/update-result.dto';
+import { Result, ResultDocument } from './entities/schema';
 
 @Injectable()
 export class ResultsService {
-  create(createResultDto: CreateResultDto) {
-    return 'This action adds a new result';
+  constructor(
+    @InjectModel(Result.name)
+    private readonly resultModel: Model<ResultDocument>,
+  ) {}
+
+  async create(createResultDto: CreateResultDto) {
+    const createdResult = new this.resultModel(createResultDto);
+    return createdResult.save();
   }
 
-  findAll() {
-    return `This action returns all results`;
+  async findAll() {
+    return this.resultModel.find().exec();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} result`;
+  async findOne(id: number) {
+    const result = await this.resultModel.findOne({ id }).exec();
+    if (!result) {
+      throw new NotFoundException(`Result with id ${id} not found`);
+    }
+    return result;
   }
 
-  update(id: number, updateResultDto: UpdateResultDto) {
-    return `This action updates a #${id} result`;
+  async update(id: number, updateResultDto: UpdateResultDto) {
+    const result = await this.resultModel
+      .findOneAndUpdate({ id }, updateResultDto, { new: true })
+      .exec();
+    if (!result) {
+      throw new NotFoundException(`Result with id ${id} not found`);
+    }
+    return result;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} result`;
+  async remove(id: number) {
+    const result = await this.resultModel.findOneAndDelete({ id }).exec();
+    if (!result) {
+      throw new NotFoundException(`Result with id ${id} not found`);
+    }
+    return result;
   }
 }
