@@ -23,6 +23,16 @@ export class UsersController {
     return this.usersService.findStudents();
   }
 
+  @Get('registered')
+  @UseGuards(JwtAuthGuard)
+  async findRegisteredUsers(@Req() request: any) {
+    const viewer = await this.usersService.findByEmail(String(request.user?.email || '').toLowerCase());
+    if (!viewer || viewer.role !== 'teacher' || viewer.status !== 'active' || !viewer.emailVerified) {
+      throw new ForbiddenException('Solo los docentes pueden consultar las cuentas registradas.');
+    }
+    return this.usersService.findRegisteredUsers();
+  }
+
   @Get('teacher-requests')
   @UseGuards(JwtAuthGuard)
   async findTeacherApprovalRequests(@Req() request: any) {

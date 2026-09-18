@@ -30,6 +30,15 @@ export class UsersService {
       .exec();
   }
 
+  async findRegisteredUsers() {
+    return this.userModel
+      .find({ emailVerified: true, status: 'active' })
+      .select('-_id id name email role status registered_at')
+      .sort({ role: 1, name: 1 })
+      .lean()
+      .exec();
+  }
+
   async findTeacherApprovalRequests() {
     return this.userModel
       .find({ role: 'teacher', status: 'pending_approval', emailVerified: true })

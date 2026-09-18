@@ -45,6 +45,10 @@ interface Student {
   lastActivity: string;
 }
 
+interface RegisteredUser extends Student {
+  role: 'student' | 'teacher';
+}
+
 interface ProgressRecord {
   user_id?: number;
   percentage?: number;
@@ -71,7 +75,9 @@ const skillNames = [
 
 export function TeacherPanel() {
   const [studentsData, setStudentsData] = useState<Student[]>([]);
+  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,7 +96,9 @@ export function TeacherPanel() {
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        const studentsResponse = await fetch('http://localhost:4001/users/students');
+        const studentsResponse = await fetch('http://localhost:4001/users/registered', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || ''}` },
+        });
         const data = await studentsResponse.json();
         if (!studentsResponse.ok) {
           throw new Error(data.message || 'No se pudieron cargar los estudiantes.');
@@ -110,7 +118,7 @@ export function TeacherPanel() {
           resultRecords = await resultsResponse.json();
         }
 
-        const mappedStudents = data.map((student: { id: number; name: string; email: string; status?: string; registered_at?: string }) => {
+        const mappedUsers = data.map((student: { id: number; name: string; email: string; role: 'student' | 'teacher'; status?: string; registered_at?: string }) => {
           const studentProgress = progressRecords.filter((record) => record.user_id === student.id);
           const percentageTotal = studentProgress.reduce(
             (sum, record) => sum + (Number(record.percentage) || 0),
@@ -124,6 +132,7 @@ export function TeacherPanel() {
             id: student.id,
             name: student.name,
             email: student.email,
+            role: student.role,
             status: student.status === 'active' ? 'active' : 'inactive',
             progress,
             evaluations: resultRecords.filter((result) => result.user_id === student.id).length,
@@ -133,6 +142,8 @@ export function TeacherPanel() {
               : 'Sin actividad',
           };
         });
+        const mappedStudents = mappedUsers.filter((user: RegisteredUser) => user.role === 'student');
+        setRegisteredUsers(mappedUsers);
         setStudentsData(mappedStudents);
         setGroupProgressData([
           {
@@ -190,12 +201,13 @@ export function TeacherPanel() {
   };
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
-  const visibleStudents = studentsData.filter((student) => {
+  const visibleUsers = registeredUsers.filter((student) => {
     const matchesStatus = statusFilter === 'all' || student.status === statusFilter;
+    const matchesRole = roleFilter === 'all' || student.role === roleFilter;
     const matchesSearch = !normalizedSearchTerm
       || student.name.toLowerCase().includes(normalizedSearchTerm)
       || student.email.toLowerCase().includes(normalizedSearchTerm);
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesRole && matchesSearch;
   });
   const totalStudents = studentsData.length;
   const activeStudents = studentsData.filter(s => s.status === 'active').length;
@@ -359,7 +371,7 @@ export function TeacherPanel() {
               <div>
                 <h3 id="student-filter-title">Filtrar estudiantes</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {visibleStudents.length} de {studentsData.length} estudiantes
+                  {visibleUsers.length} de {registeredUsers.length} cuentas
                 </p>
               </div>
               <Button
@@ -403,6 +415,21 @@ export function TeacherPanel() {
                   </SelectContent>
                 </Select>
               </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Tipo de cuenta
+                  </label>
+                  <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="w-full md:w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="teacher">Docentes</SelectItem>
+                      <SelectItem value="student">Estudiantes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
             </div>
 
             <div className="max-h-[55vh] overflow-y-auto p-5">
@@ -410,13 +437,13 @@ export function TeacherPanel() {
                 <p className="py-8 text-center text-muted-foreground">Cargando estudiantes...</p>
               ) : loadError ? (
                 <p className="py-8 text-center text-red-600">{loadError}</p>
-              ) : visibleStudents.length === 0 ? (
+              ) : visibleUsers.length === 0 ? (
                 <p className="py-8 text-center text-muted-foreground">
                   No hay estudiantes que coincidan con los filtros.
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {visibleStudents.map((student) => (
+                  {visibleUsers.map((student) => (
                     <div
                       key={student.id}
                       className="flex flex-col gap-2 rounded-lg border p-4 md:flex-row md:items-center md:justify-between"
@@ -427,6 +454,9 @@ export function TeacherPanel() {
                       </div>
                       <div className="flex items-center gap-4 text-sm">
                         <span>{student.progress}% progreso</span>
+                        <Badge variant="outline">
+                          {student.role === 'teacher' ? 'Docente' : 'Estudiante'}
+                        </Badge>
                         <Badge variant={student.status === 'active' ? 'default' : 'secondary'}>
                           {student.status === 'active' ? 'Activo' : 'Inactivo'}
                         </Badge>
@@ -530,7 +560,7 @@ export function TeacherPanel() {
       <Card className="shadow-md">
         <div className="p-6 border-b">
           <div className="flex items-center justify-between">
-            <h3>Estudiantes</h3>
+            <h3>Usuarios registrados</h3>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-40">
                 <SelectValue />
@@ -541,13 +571,24 @@ export function TeacherPanel() {
                 <SelectItem value="inactive">Inactivos</SelectItem>
               </SelectContent>
             </Select>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="teacher">Docentes</SelectItem>
+                  <SelectItem value="student">Estudiantes</SelectItem>
+                </SelectContent>
+              </Select>
           </div>
         </div>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Estudiante</TableHead>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Tipo de cuenta</TableHead>
                 <TableHead>Progreso</TableHead>
                 <TableHead className="text-center">Evaluaciones</TableHead>
                 <TableHead className="text-center">Actividades</TableHead>
@@ -559,29 +600,34 @@ export function TeacherPanel() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     Cargando estudiantes...
                   </TableCell>
                 </TableRow>
               ) : loadError ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-red-600">
+                  <TableCell colSpan={8} className="text-center text-red-600">
                     {loadError}
                   </TableCell>
                 </TableRow>
-              ) : visibleStudents.length === 0 ? (
+              ) : visibleUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    No hay estudiantes registrados.
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
+                    No hay cuentas registradas.
                   </TableCell>
                 </TableRow>
-              ) : visibleStudents.map((student) => (
+              ) : visibleUsers.map((student) => (
                 <TableRow key={student.id}>
                   <TableCell>
                     <div>
                       <p>{student.name}</p>
                       <p className="text-sm text-muted-foreground">{student.email}</p>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={student.role === 'teacher' ? 'default' : 'secondary'}>
+                      {student.role === 'teacher' ? 'Docente' : 'Estudiante'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="w-32">
