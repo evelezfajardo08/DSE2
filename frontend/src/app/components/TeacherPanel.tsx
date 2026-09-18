@@ -47,6 +47,7 @@ interface Student {
 
 interface RegisteredUser extends Student {
   role: 'student' | 'teacher';
+  registered_at?: string;
 }
 
 interface ProgressRecord {
@@ -78,6 +79,7 @@ export function TeacherPanel() {
   const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [selectedUser, setSelectedUser] = useState<RegisteredUser | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -134,6 +136,7 @@ export function TeacherPanel() {
             email: student.email,
             role: student.role,
             status: student.status === 'active' ? 'active' : 'inactive',
+            registered_at: student.registered_at,
             progress,
             evaluations: resultRecords.filter((result) => result.user_id === student.id).length,
             activities: studentProgress.length,
@@ -249,7 +252,7 @@ export function TeacherPanel() {
     autoTable(document, {
       startY: 76,
       head: [['Estudiante', 'Correo', 'Progreso', 'Evaluaciones', 'Actividades', 'Estado']],
-      body: visibleStudents.map((student) => [
+      body: visibleUsers.map((student) => [
         student.name,
         student.email,
         `${student.progress}%`,
@@ -646,7 +649,7 @@ export function TeacherPanel() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedUser(student)}>
                       Ver Detalles
                     </Button>
                   </TableCell>
@@ -656,6 +659,81 @@ export function TeacherPanel() {
           </Table>
         </div>
       </Card>
+
+      {selectedUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="user-details-title"
+          onClick={() => setSelectedUser(null)}
+        >
+          <Card
+            className="w-full max-w-lg shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b p-5">
+              <div>
+                <h3 id="user-details-title">Detalles de la cuenta</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Información registrada del usuario.
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedUser(null)}
+                aria-label="Cerrar detalles"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
+              <div className="rounded-lg bg-muted/40 p-4">
+                <p className="text-sm text-muted-foreground">Nombre completo</p>
+                <p className="mt-1 font-semibold">{selectedUser.name}</p>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-4">
+                <p className="text-sm text-muted-foreground">Correo electrónico</p>
+                <p className="mt-1 break-all font-semibold">{selectedUser.email}</p>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-4">
+                <p className="text-sm text-muted-foreground">Tipo de cuenta</p>
+                <p className="mt-1 font-semibold">
+                  {selectedUser.role === 'teacher' ? 'Docente' : 'Estudiante'}
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-4">
+                <p className="text-sm text-muted-foreground">Estado</p>
+                <p className="mt-1 font-semibold text-green-600">
+                  {selectedUser.status === 'active' ? 'Activo' : 'Inactivo'}
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-4 sm:col-span-2">
+                <p className="text-sm text-muted-foreground">Fecha de registro</p>
+                <p className="mt-1 font-semibold">
+                  {selectedUser.registered_at
+                    ? new Date(selectedUser.registered_at).toLocaleDateString('es-CO')
+                    : 'No disponible'}
+                </p>
+              </div>
+              {selectedUser.role === 'student' && (
+                <div className="rounded-lg bg-muted/40 p-4 sm:col-span-2">
+                  <p className="text-sm text-muted-foreground">Resumen académico</p>
+                  <p className="mt-1 font-semibold">
+                    {selectedUser.progress}% de progreso, {selectedUser.evaluations} evaluaciones y {selectedUser.activities} actividades.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end border-t p-4">
+              <Button variant="outline" onClick={() => setSelectedUser(null)}>
+                Cerrar
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
