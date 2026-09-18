@@ -1,0 +1,30 @@
+import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { setServers } from 'node:dns';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const dnsServers = process.env.MONGODB_DNS_SERVERS?.split(',')
+    .map((server) => server.trim())
+    .filter(Boolean);
+
+  if (dnsServers?.length) {
+    setServers(dnsServers);
+  }
+
+  const app = await NestFactory.create(AppModule);
+  app.enableCors();
+
+ const config = new DocumentBuilder()
+    .setTitle('API de prueba')
+    .setDescription('Api de prueba')
+    .setVersion('1.0')
+    .addTag('prueba')
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
+
+
+  await app.listen(process.env.PORT ?? 4001);
+}
+bootstrap();

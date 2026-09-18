@@ -1,0 +1,12 @@
+export class CreateUserDto {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  role?: string;
+  registered_at?: Date;
+  status?: string;
+  emailVerified?: boolean;
+  emailVerificationCodeHash?: string;
+  emailVerificationExpiresAt?: Date;
+}
