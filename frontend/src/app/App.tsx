@@ -16,11 +16,12 @@ type Screen = 'home' | 'assessment' | 'activities' | 'progress' | 'teacher' | 'p
 interface AuthUser {
   name: string;
   email: string;
+  currentStreak: number;
 }
 
 const studentStatsData = {
-  overallProgress: 73,
-  activitiesCompleted: 12,
+  overallProgress: 0,
+  activitiesCompleted: 0,
   currentStreak: 7,
   skills: [
     { name: 'Liderazgo', level: 85, color: '#1E3A8A' },
@@ -43,11 +44,82 @@ export default function App() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [settingsMessage, setSettingsMessage] = useState('');
   const [settingsError, setSettingsError] = useState('');
+  const [completedActivityIds, setCompletedActivityIds] = useState<string[]>([]);
+  const [activityCompletionDates, setActivityCompletionDates] = useState<string[]>([]);
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
+  const totalActivities = 6;
+  const activityProgress = Math.round((completedActivityIds.length / totalActivities) * 100);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setIsRestoringSession(false);
+      return;
+    }
+
+    fetch('http://localhost:4001/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'La sesión no es válida.');
+        setUserRole(data.role);
+        setCurrentScreen(data.role === 'teacher' ? 'teacher' : 'home');
+        setAuthUser({
+          name: data.name,
+          email: data.email,
+          currentStreak: data.currentStreak || 0,
+        });
+      })
+      .catch(() => {
+        localStorage.removeItem('access_token');
+      })
+      .finally(() => setIsRestoringSession(false));
+  }, []);
+
+  useEffect(() => {
+    if (!authUser) return;
+    try {
+      const storedActivities = localStorage.getItem(`completed-activities:${authUser.email}`);
+      const parsedActivities = storedActivities ? JSON.parse(storedActivities) : [];
+      setCompletedActivityIds(Array.isArray(parsedActivities) ? parsedActivities : []);
+      const storedCompletionDates = localStorage.getItem(`activity-completion-dates:${authUser.email}`);
+      const parsedCompletionDates = storedCompletionDates ? JSON.parse(storedCompletionDates) : [];
+      setActivityCompletionDates(Array.isArray(parsedCompletionDates) ? parsedCompletionDates : []);
+    } catch {
+      setCompletedActivityIds([]);
+      setActivityCompletionDates([]);
+    }
+  }, [authUser]);
+
+  const completeActivity = (activityId: string) => {
+    setCompletedActivityIds((currentIds) => {
+      if (currentIds.includes(activityId) || !authUser) return currentIds;
+      const nextIds = [...currentIds, activityId];
+      localStorage.setItem(`completed-activities:${authUser.email}`, JSON.stringify(nextIds));
+      const today = new Date().toISOString().slice(0, 10);
+      setActivityCompletionDates((currentDates) => {
+        const nextDates = [...currentDates, today];
+        localStorage.setItem(`activity-completion-dates:${authUser.email}`, JSON.stringify(nextDates));
+        return nextDates;
+      });
+      return nextIds;
+    });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    setAuthUser(null);
+  };
+
+  if (isRestoringSession) {
+    return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Cargando sesión...</div>;
+  }
 
   if (!authUser) {
     return (
@@ -216,7 +288,19 @@ export default function App() {
 
             {/* Stats Panel - Takes 1 column */}
             <div className="lg:col-span-1">
-              <StatsPanel data={studentStatsData} />
+              <StatsPanel
+                data={{
+                  ...studentStatsData,
+                  overallProgress: activityProgress,
+                  activitiesCompleted: completedActivityIds.length,
+                  currentStreak: authUser.currentStreak,
+                  recentBadges: [
+                    'Primera Evaluación',
+                    authUser.currentStreak > 0 ? `Racha de ${authUser.currentStreak} días` : 'Comienza tu racha',
+                    'Comunicador',
+                  ],
+                }}
+              />
             </div>
 
             {/* Quick Actions */}
@@ -267,9 +351,23 @@ export default function App() {
       case 'assessment':
         return <SelfAssessment />;
       case 'activities':
-        return <Activities />;
+        return (
+          <Activities
+            completedActivityIds={completedActivityIds}
+            onCompleteActivity={completeActivity}
+            currentStreak={authUser.currentStreak}
+          />
+        );
       case 'progress':
-        return <Progress />;
+        return (
+          <Progress
+            completedActivities={completedActivityIds.length}
+            totalActivities={totalActivities}
+            currentStreak={authUser.currentStreak}
+            activityCompletionDates={activityCompletionDates}
+            completedActivityIds={completedActivityIds}
+          />
+        );
       default:
         return null;
     }
@@ -293,7 +391,7 @@ export default function App() {
           setSettingsError('');
           setCurrentScreen('settings');
         }}
-        onLogout={() => setAuthUser(null)}
+        onLogout={handleLogout}
       />
 
       <div className="flex">
@@ -332,7 +430,7 @@ export default function App() {
 
             {/* Logout */}
             <button
-              onClick={() => setAuthUser(null)}
+              onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-4"
             >
               <LogOut className="w-5 h-5" />
@@ -390,7 +488,7 @@ export default function App() {
                 </div>
 
                 <button
-                  onClick={() => { setAuthUser(null); setIsMobileMenuOpen(false); }}
+                  onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-4"
                 >
                   <LogOut className="w-5 h-5" />

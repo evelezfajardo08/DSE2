@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Bot, Send, Mic, User } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -32,6 +33,11 @@ export function ChatPanel() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, isTyping]);
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
@@ -53,15 +59,50 @@ export function ChatPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMessage.content }),
       });
-      const data = await response.json();
-      
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'bot',
-        content: data.reply || 'Lo siento, hubo un error al obtener la respuesta.',
-        timestamp: new Date(),
+      if (!response.ok || !response.body) {
+        throw new Error('No se pudo conectar con LideraBot.');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let streamedReply = '';
+      const botMessageId = (Date.now() + 1).toString();
+      let botMessageCreated = false;
+
+      const updateBotMessage = (content: string) => {
+        setMessages((prev) => prev.map((message) => (
+          message.id === botMessageId ? { ...message, content } : message
+        )));
       };
-      setMessages((prev) => [...prev, botMessage]);
+
+      while (true) {
+        const { value, done } = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const event of events) {
+          const dataLine = event.split('\n').find((line) => line.startsWith('data: '));
+          if (!dataLine) continue;
+          const eventData = JSON.parse(dataLine.slice(6));
+          if (event.startsWith('event: error')) throw new Error(eventData);
+          if (event.startsWith('event: done')) continue;
+          if (!botMessageCreated) {
+            botMessageCreated = true;
+            setMessages((prev) => [
+              ...prev,
+              { id: botMessageId, type: 'bot', content: '', timestamp: new Date() },
+            ]);
+          }
+          streamedReply += eventData;
+          updateBotMessage(streamedReply);
+        }
+
+        if (done) break;
+      }
+
+      if (!streamedReply) throw new Error('No se recibió respuesta de LideraBot.');
     } catch (error) {
       console.error('Error fetching bot response:', error);
       const errorMessage: Message = {
@@ -94,8 +135,8 @@ export function ChatPanel() {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
+      <ScrollArea className="min-h-0 flex-1 overflow-hidden">
+        <div className="space-y-4 p-4">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -108,12 +149,18 @@ export function ChatPanel() {
               }`}>
                 {message.type === 'bot' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
               </div>
-              <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+              <div className={`min-w-0 max-w-[75%] overflow-hidden rounded-2xl px-4 py-2 ${
                 message.type === 'bot'
                   ? 'bg-white border shadow-sm'
                   : 'bg-primary text-white'
               }`}>
-                <p className="text-sm">{message.content}</p>
+                {message.type === 'bot' ? (
+                  <div className="min-w-0 break-words text-sm leading-6 [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:font-semibold [&_ol]:my-2 [&_ol]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:ml-5 [&_ul]:list-disc">
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="break-words text-sm">{message.content}</p>
+                )}
               </div>
             </div>
           ))}
@@ -123,7 +170,7 @@ export function ChatPanel() {
               <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-primary text-white">
                 <Bot className="w-5 h-5" />
               </div>
-              <div className="bg-white border shadow-sm rounded-2xl px-4 py-3">
+              <div className="rounded-2xl border bg-white px-4 py-3 shadow-sm">
                 <div className="flex gap-1">
                   <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                   <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -132,6 +179,7 @@ export function ChatPanel() {
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 

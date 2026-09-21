@@ -226,7 +226,25 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    return this.generateToken(user);
+    const userWithLogin = actualRole === 'student'
+      ? await this.usersService.recordLogin(user.id)
+      : user;
+
+    return this.generateToken(userWithLogin);
+  }
+
+  async getCurrentUser(payload: any) {
+    const user = await this.usersService.findByEmail(String(payload.email || '').toLowerCase());
+    if (!user || user.emailVerified === false || (user.role === 'teacher' && user.status !== 'active')) {
+      throw new UnauthorizedException('La sesión no es válida o ha expirado.');
+    }
+
+    return {
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      currentStreak: user.loginStreak || 0,
+    };
   }
 
   async updateProfile(data: any) {
@@ -422,7 +440,8 @@ export class AuthService {
       user: {
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        currentStreak: user.loginStreak || 0,
       }
     };
   }

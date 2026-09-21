@@ -14,6 +14,12 @@ interface Activity {
   completed: boolean;
 }
 
+interface ActivitiesProps {
+  completedActivityIds: string[];
+  onCompleteActivity: (activityId: string) => void;
+  currentStreak: number;
+}
+
 const activities: Activity[] = [
   {
     id: '1',
@@ -90,9 +96,11 @@ const difficultyConfig = {
   advanced: { label: 'Avanzado', color: 'bg-red-100 text-red-700' },
 };
 
-export function Activities() {
-  const completedActivities = activities.filter(a => a.completed).length;
-  const totalPoints = activities.filter(a => a.completed).reduce((sum, a) => sum + a.points, 0);
+export function Activities({ completedActivityIds, onCompleteActivity, currentStreak }: ActivitiesProps) {
+  const completedActivities = completedActivityIds.length;
+  const totalPoints = activities
+    .filter((activity) => completedActivityIds.includes(activity.id))
+    .reduce((sum, activity) => sum + activity.points, 0);
 
   return (
     <div className="space-y-6">
@@ -137,7 +145,7 @@ export function Activities() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Racha Actual</p>
-              <p className="text-2xl">7 días</p>
+              <p className="text-2xl">{currentStreak} días</p>
             </div>
           </div>
         </Card>
@@ -146,13 +154,14 @@ export function Activities() {
       {/* Activities Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {activities.map((activity) => {
+          const isCompleted = completedActivityIds.includes(activity.id);
           const categoryInfo = categoryConfig[activity.category];
           const CategoryIcon = categoryInfo.icon;
           const difficultyInfo = difficultyConfig[activity.difficulty];
 
           return (
             <Card key={activity.id} className="p-5 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden">
-              {activity.completed && (
+              {isCompleted && (
                 <div className="absolute top-3 right-3">
                   <Badge className="bg-accent text-white">Completada</Badge>
                 </div>
@@ -160,8 +169,8 @@ export function Activities() {
 
               <div className="space-y-4">
                 {/* Icon */}
-                <div className={`w-12 h-12 ${activity.completed ? 'bg-accent/10' : 'bg-primary/10'} rounded-lg flex items-center justify-center`}>
-                  <CategoryIcon className={`w-6 h-6 ${activity.completed ? 'text-accent' : categoryInfo.color}`} />
+                <div className={`w-12 h-12 ${isCompleted ? 'bg-accent/10' : 'bg-primary/10'} rounded-lg flex items-center justify-center`}>
+                  <CategoryIcon className={`w-6 h-6 ${isCompleted ? 'text-accent' : categoryInfo.color}`} />
                 </div>
 
                 {/* Content */}
@@ -196,10 +205,11 @@ export function Activities() {
 
                 {/* Action */}
                 <Button 
-                  className={`w-full ${activity.completed ? 'bg-muted hover:bg-muted/80 text-muted-foreground' : 'bg-primary hover:bg-primary/90'}`}
-                  disabled={activity.completed}
+                  className={`w-full ${isCompleted ? 'bg-muted hover:bg-muted/80 text-muted-foreground' : 'bg-primary hover:bg-primary/90'}`}
+                  disabled={isCompleted}
+                  onClick={() => onCompleteActivity(activity.id)}
                 >
-                  {activity.completed ? 'Revisar' : 'Comenzar'}
+                  {isCompleted ? 'Completada' : 'Marcar como completada'}
                 </Button>
               </div>
             </Card>

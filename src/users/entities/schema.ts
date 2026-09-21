@@ -29,6 +29,15 @@ export class User {
   @Prop({ default: false })
   emailVerified: boolean;
 
+  @Prop({ default: 0 })
+  loginStreak: number;
+
+  @Prop()
+  lastLoginDate?: string;
+
+  @Prop()
+  streakRecoveryMonth?: string;
+
   @Prop()
   emailVerificationCodeHash?: string;
 

@@ -5,7 +5,7 @@ type Role = 'student' | 'teacher';
 type AuthMode = 'role-select' | 'login' | 'register';
 
 interface LoginScreenProps {
-  onLogin: (role: Role, userData: { name: string; email: string }) => void;
+  onLogin: (role: Role, userData: { name: string; email: string; currentStreak: number }) => void;
 }
 
 const STUDENT_FEATURES = [
@@ -160,7 +160,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       }
 
       localStorage.setItem('access_token', data.access_token);
-      onLogin(data.user.role as Role, { name: data.user.name, email: data.user.email });
+      onLogin(data.user.role as Role, {
+        name: data.user.name,
+        email: data.user.email,
+        currentStreak: data.user.currentStreak || 0,
+      });
     } catch (err: any) {
       if (!isLogin && err.message.includes('registro pendiente')) {
         setIsVerifyingRegistration(true);

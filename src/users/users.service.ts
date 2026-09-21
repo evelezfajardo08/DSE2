@@ -60,6 +60,41 @@ export class UsersService {
     return this.userModel.findOne({ email }).exec();
   }
 
+  async recordLogin(id: number) {
+    const user = await this.findOne(id);
+    const today = new Date().toISOString().slice(0, 10);
+    const currentMonth = today.slice(0, 7);
+
+    if (user.lastLoginDate === today) {
+      return user;
+    }
+
+    const lastLogin = user.lastLoginDate ? new Date(`${user.lastLoginDate}T00:00:00Z`) : null;
+    const todayDate = new Date(`${today}T00:00:00Z`);
+    const elapsedDays = lastLogin
+      ? Math.round((todayDate.getTime() - lastLogin.getTime()) / (24 * 60 * 60 * 1000))
+      : null;
+    const previousStreak = user.loginStreak || 0;
+    const canRecoverStreak = elapsedDays === 2 && user.streakRecoveryMonth !== currentMonth;
+    const loginStreak = elapsedDays === 1
+      ? previousStreak + 1
+      : canRecoverStreak
+        ? previousStreak
+        : 1;
+
+    return this.userModel
+      .findOneAndUpdate(
+        { id },
+        {
+          loginStreak,
+          lastLoginDate: today,
+          ...(canRecoverStreak ? { streakRecoveryMonth: currentMonth } : {}),
+        },
+        { new: true },
+      )
+      .exec();
+  }
+
   async update(id: number, updateUserDto: UpdateUserDto) {
     const user = await this.userModel
       .findOneAndUpdate({ id }, updateUserDto, { new: true })

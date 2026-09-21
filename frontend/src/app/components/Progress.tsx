@@ -11,7 +11,6 @@ import {
   Radar,
   PolarGrid,
   PolarAngleAxis,
-  PolarRadiusAxis,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -20,23 +19,22 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const weeklyProgress = [
-  { day: 'Lun', actividades: 2, tiempo: 45 },
-  { day: 'Mar', actividades: 3, tiempo: 60 },
-  { day: 'Mié', actividades: 1, tiempo: 30 },
-  { day: 'Jue', actividades: 4, tiempo: 75 },
-  { day: 'Vie', actividades: 2, tiempo: 50 },
-  { day: 'Sáb', actividades: 0, tiempo: 0 },
-  { day: 'Dom', actividades: 1, tiempo: 20 },
-];
+const activitySkillMap: Record<string, string> = {
+  '1': 'Liderazgo',
+  '2': 'Comunicación',
+  '3': 'Trabajo en Equipo',
+  '4': 'Liderazgo',
+  '5': 'Toma de Decisiones',
+  '6': 'Comunicación',
+};
 
-const skillsData = [
-  { skill: 'Liderazgo', value: 85 },
-  { skill: 'Comunicación', value: 78 },
-  { skill: 'Toma de Decisiones', value: 70 },
-  { skill: 'Trabajo en Equipo', value: 88 },
-  { skill: 'Gestión del Tiempo', value: 75 },
-];
+const skillActivityTotals: Record<string, number> = {
+  Liderazgo: 2,
+  Comunicación: 2,
+  'Toma de Decisiones': 1,
+  'Trabajo en Equipo': 1,
+  'Gestión del Tiempo': 0,
+};
 
 const achievements = [
   { id: '1', title: 'Primera Evaluación', description: 'Completaste tu primera autoevaluación', date: '15 Oct 2025', icon: '🎯' },
@@ -63,7 +61,42 @@ const aiRecommendations = [
   },
 ];
 
-export function Progress() {
+interface ProgressProps {
+  completedActivities: number;
+  totalActivities: number;
+  currentStreak: number;
+  activityCompletionDates: string[];
+  completedActivityIds: string[];
+}
+
+export function Progress({ completedActivities, totalActivities, currentStreak, activityCompletionDates, completedActivityIds }: ProgressProps) {
+  const activityProgress = totalActivities > 0
+    ? Math.round((completedActivities / totalActivities) * 100)
+    : 0;
+  const skillsData = Object.entries(skillActivityTotals).map(([skill, total]) => ({
+    skill,
+    value: total > 0
+      ? Math.round(
+        (completedActivityIds.filter((activityId) => activitySkillMap[activityId] === skill).length / total) * 100,
+      )
+      : 0,
+  }));
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  const dayOfWeek = (today.getDay() + 6) % 7;
+  startOfWeek.setDate(today.getDate() - dayOfWeek);
+  startOfWeek.setHours(0, 0, 0, 0);
+  const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const weeklyProgress = weekDays.map((day, index) => {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + index);
+    const dateKey = date.toISOString().slice(0, 10);
+    return {
+      day,
+      actividades: activityCompletionDates.filter((completedAt) => completedAt === dateKey).length,
+    };
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -118,13 +151,25 @@ export function Progress() {
             <RadarChart data={skillsData}>
               <PolarGrid />
               <PolarAngleAxis dataKey="skill" />
-              <PolarRadiusAxis angle={90} domain={[0, 100]} />
               <Radar name="Nivel" dataKey="value" stroke="#1E3A8A" fill="#1E3A8A" fillOpacity={0.6} />
               <Tooltip />
             </RadarChart>
           </ResponsiveContainer>
         </Card>
       </div>
+
+      <Card className="p-6 shadow-md">
+        <div className="flex items-center justify-between gap-4 mb-3">
+          <div>
+            <h3>Progreso de actividades</h3>
+            <p className="text-sm text-muted-foreground">
+              {completedActivities} de {totalActivities} actividades completadas
+            </p>
+          </div>
+          <span className="text-xl font-semibold text-primary">{activityProgress}%</span>
+        </div>
+        <ProgressBar value={activityProgress} className="h-3" />
+      </Card>
 
       {/* Skills Progress Bars */}
       <Card className="p-6 shadow-md">
@@ -187,9 +232,9 @@ export function Progress() {
           <div className="p-4 border rounded-lg">
             <div className="flex justify-between items-center mb-2">
               <h4>Mantener racha de 30 días</h4>
-              <Badge variant="secondary">7/30</Badge>
+              <Badge variant="secondary">{currentStreak}/30</Badge>
             </div>
-            <ProgressBar value={23} className="h-2" />
+            <ProgressBar value={Math.min((currentStreak / 30) * 100, 100)} className="h-2" />
           </div>
         </div>
       </Card>
