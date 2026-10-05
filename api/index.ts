@@ -1,7 +1,17 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
+import { setServers } from 'node:dns';
+
+// Configurar DNS personalizado para MongoDB Atlas (evita timeouts en serverless)
+const dnsServers = process.env.MONGODB_DNS_SERVERS?.split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+if (dnsServers?.length) {
+  setServers(dnsServers);
+}
 
 const server = express();
 let isInitialized = false;
