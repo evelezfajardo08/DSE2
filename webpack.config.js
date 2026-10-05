@@ -1,6 +1,6 @@
-module.exports = function (options, webpack) {
+module.exports = function (options) {
   return {
     ...options,
-    externals: [], // Fuerza a Webpack a empaquetar @nestjs/jwt dentro del bundle final
+    externals: [],
   };
 };
