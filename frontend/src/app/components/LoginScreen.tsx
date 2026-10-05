@@ -20,6 +20,8 @@ const TEACHER_FEATURES = [
   { icon: BookOpen, text: 'Gestión de cursos y grupos' },
 ];
 
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
+
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [authMode, setAuthMode] = useState<AuthMode>('role-select');
   const [role, setRole] = useState<Role>('student');
@@ -140,7 +142,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       : { name: form.name, email: form.email, password: form.password, role };
 
     try {
-      const response = await fetch(`http://localhost:4001${endpoint}`, {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -185,7 +187,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     }
 
     try {
-      const response = await fetch('http://localhost:4001/auth/resend-verification', {
+      const response = await fetch(`${API_BASE}/auth/resend-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email }),
@@ -208,7 +210,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     }
 
     try {
-      const response = await fetch('http://localhost:4001/auth/verify-email', {
+      const response = await fetch(`${API_BASE}/auth/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email, code: registrationCode }),
@@ -243,7 +245,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     }
 
     try {
-      const response = await fetch('http://localhost:4001/auth/forgot-password', {
+      const response = await fetch(`${API_BASE}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: form.email, role }),
@@ -293,7 +295,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     }
 
     try {
-      const response = await fetch('http://localhost:4001/auth/reset-password', {
+      const response = await fetch(`${API_BASE}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

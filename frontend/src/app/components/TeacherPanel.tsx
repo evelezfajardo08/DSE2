@@ -74,6 +74,8 @@ const skillNames = [
   'Gestión del Tiempo',
 ];
 
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
+
 export function TeacherPanel() {
   const [studentsData, setStudentsData] = useState<Student[]>([]);
   const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
@@ -98,7 +100,7 @@ export function TeacherPanel() {
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        const studentsResponse = await fetch('http://localhost:4001/users/registered', {
+        const studentsResponse = await fetch(`${API_BASE}/users/registered`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || ''}` },
         });
         const data = await studentsResponse.json();
@@ -109,8 +111,8 @@ export function TeacherPanel() {
         let resultRecords: ResultRecord[] = [];
 
         const [progressResponse, resultsResponse] = await Promise.all([
-          fetch('http://localhost:4001/progress'),
-          fetch('http://localhost:4001/results'),
+          fetch(`${API_BASE}/progress`),
+          fetch(`${API_BASE}/results`),
         ]);
 
         if (progressResponse.ok) {
@@ -169,7 +171,7 @@ export function TeacherPanel() {
   useEffect(() => {
     const loadTeacherRequests = async () => {
       try {
-        const response = await fetch('http://localhost:4001/users/teacher-requests', {
+        const response = await fetch(`${API_BASE}/users/teacher-requests`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || ''}` },
         });
         const data = await response.json();
@@ -189,7 +191,7 @@ export function TeacherPanel() {
     setApprovingRequestId(requestId);
     setRequestsError('');
     try {
-      const response = await fetch(`http://localhost:4001/auth/teacher-requests/${requestId}/approve`, {
+      const response = await fetch(`${API_BASE}/auth/teacher-requests/${requestId}/approve`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${localStorage.getItem('access_token') || ''}` },
       });
