@@ -87,6 +87,8 @@ interface ProgressProps {
   userEmail?: string;
 }
 
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
+
 export function Progress({ userId, completedActivities, totalActivities, currentStreak, activityCompletionDates, completedActivityIds, completedActivitySkills = {}, userEmail }: ProgressProps) {
   const [attempts, setAttempts] = useState<ActivityAttempt[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -95,7 +97,7 @@ export function Progress({ userId, completedActivities, totalActivities, current
   useEffect(() => {
     let isActive = true;
     const token = localStorage.getItem('access_token') || '';
-    fetch('http://localhost:4001/activities/attempts/me', {
+    fetch(`${API_BASE}/activities/attempts/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((response) => response.ok ? response.json() : [])

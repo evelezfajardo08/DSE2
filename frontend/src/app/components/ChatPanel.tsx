@@ -54,6 +54,8 @@ const suggestedQuestions = [
   '¿Qué estrategias me ayudan a liderar mejor?',
 ];
 
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
+
 export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, totalAvailableActivities, onOpenActivitiesWithQuiz, onOpenRecommendedActivity }: ChatPanelProps) {
   const storageKey = `liderabot-chat-messages:${userEmail}`;
 
@@ -84,7 +86,7 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
 
   useEffect(() => {
     let isActive = true;
-    fetch('http://localhost:4001/activities')
+    fetch(`${API_BASE}/activities`)
       .then((response) => response.ok ? response.json() : [])
       .then((data) => {
         if (isActive) setActivityOptions(Array.isArray(data) ? data : []);
@@ -102,7 +104,7 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
     let isActive = true;
     const token = localStorage.getItem('access_token') || '';
 
-    fetch('http://localhost:4001/activities/attempts/me', {
+    fetch(`${API_BASE}/activities/attempts/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((response) => response.ok ? response.json() : [])
@@ -215,7 +217,7 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
     setIsTyping(true);
 
     try {
-      const response = await fetch('http://localhost:4001/chat', {
+      const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
