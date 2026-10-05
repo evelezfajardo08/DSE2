@@ -87,7 +87,7 @@ interface ProgressProps {
   userEmail?: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
+const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.MODE === 'production' ? '' : 'http://localhost:4001');
 
 export function Progress({ userId, completedActivities, totalActivities, currentStreak, activityCompletionDates, completedActivityIds, completedActivitySkills = {}, userEmail }: ProgressProps) {
   const [attempts, setAttempts] = useState<ActivityAttempt[]>([]);

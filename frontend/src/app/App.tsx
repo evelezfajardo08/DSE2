@@ -12,7 +12,7 @@ import { Card } from './components/ui/card';
 
 type Screen = 'home' | 'activities' | 'progress' | 'teacher' | 'profile' | 'settings';
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
+const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.MODE === 'production' ? '' : 'http://localhost:4001');
 
 interface AuthUser {
   id: number;

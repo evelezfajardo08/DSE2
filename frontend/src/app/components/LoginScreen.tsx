@@ -20,7 +20,7 @@ const TEACHER_FEATURES = [
   { icon: BookOpen, text: 'Gestión de cursos y grupos' },
 ];
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
+const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.MODE === 'production' ? '' : 'http://localhost:4001');
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [authMode, setAuthMode] = useState<AuthMode>('role-select');

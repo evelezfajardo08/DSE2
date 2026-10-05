@@ -4,7 +4,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
+const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.MODE === 'production' ? '' : 'http://localhost:4001');
 
 interface Activity {
   id: string;

@@ -54,7 +54,7 @@ const suggestedQuestions = [
   '¿Qué estrategias me ayudan a liderar mejor?',
 ];
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
+const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.MODE === 'production' ? '' : 'http://localhost:4001');
 
 export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, totalAvailableActivities, onOpenActivitiesWithQuiz, onOpenRecommendedActivity }: ChatPanelProps) {
   const storageKey = `liderabot-chat-messages:${userEmail}`;
