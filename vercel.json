@@ -3,7 +3,12 @@
   "builds": [
     {
       "src": "api/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "tsconfig": "tsconfig.api.json",
+        "includeFiles": ["src/**"],
+        "maxLambdaSize": "50mb"
+      }
     },
     {
       "src": "frontend/package.json",
