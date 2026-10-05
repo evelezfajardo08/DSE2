@@ -6,8 +6,6 @@
     "deleteOutDir": true,
     "builder": "webpack",
     "webpack": true,
-    "webpackOptions": {
-      "externals": false
-    }
+    "webpackConfigFile": "webpack.config.js"
   }
 }
