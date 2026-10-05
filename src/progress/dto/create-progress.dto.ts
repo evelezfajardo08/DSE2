@@ -1,7 +1,10 @@
 export class CreateProgressDto {
-  id: number;
+  id?: number | string;
   user_id: number;
-  module_id: number;
-  percentage: number;
-  status: string;
+  module_id?: number;
+  user_email?: string;
+  activity_id?: string;
+  percentage?: number;
+  status?: string;
+  completed_at?: Date;
 }

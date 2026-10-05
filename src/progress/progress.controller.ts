@@ -12,9 +12,19 @@ export class ProgressController {
     return this.progressService.create(createProgressDto);
   }
 
+  @Post('activity-completed')
+  markActivityCompleted(@Body() createProgressDto: CreateProgressDto) {
+    return this.progressService.markActivityCompleted(createProgressDto);
+  }
+
   @Get()
   findAll() {
     return this.progressService.findAll();
+  }
+
+  @Get('user/:userId')
+  findByUser(@Param('userId') userId: string) {
+    return this.progressService.findByUser(+userId);
   }
 
   @Get(':id')

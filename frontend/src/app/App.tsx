@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Home, ClipboardCheck, Dumbbell, TrendingUp, GraduationCap, X, LogOut, Moon, Sun } from 'lucide-react';
+import { Home, Dumbbell, TrendingUp, GraduationCap, X, LogOut, Moon, Sun } from 'lucide-react';
 import { Header } from './components/Header';
 import { ChatPanel } from './components/ChatPanel';
 import { StatsPanel } from './components/StatsPanel';
-import { SelfAssessment } from './components/SelfAssessment';
 import { Activities } from './components/Activities';
 import { Progress } from './components/Progress';
 import { TeacherPanel } from './components/TeacherPanel';
@@ -11,13 +10,68 @@ import { LoginScreen } from './components/LoginScreen';
 import { Button } from './components/ui/button';
 import { Card } from './components/ui/card';
 
-type Screen = 'home' | 'assessment' | 'activities' | 'progress' | 'teacher' | 'profile' | 'settings';
+type Screen = 'home' | 'activities' | 'progress' | 'teacher' | 'profile' | 'settings';
+
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4001';
 
 interface AuthUser {
+  id: number;
   name: string;
   email: string;
   currentStreak: number;
 }
+
+const defaultSkillTotals: Record<string, number> = {
+  Liderazgo: 2,
+  Comunicación: 1,
+  'Toma de Decisiones': 1,
+  'Trabajo en Equipo': 2,
+};
+
+const defaultSkillMap: Record<string, string> = {
+  '1': 'Liderazgo',
+  '2': 'Comunicación',
+  '3': 'Trabajo en Equipo',
+  '4': 'Liderazgo',
+  '5': 'Toma de Decisiones',
+  '6': 'Comunicación',
+  'generated-ai-quiz': 'Liderazgo',
+};
+
+const normalizeSkillName = (value?: string) => {
+  const normalizedValue = (value || '').toLowerCase();
+  switch (normalizedValue) {
+    case 'leadership':
+      return 'Liderazgo';
+    case 'communication':
+      return 'Comunicación';
+    case 'decision':
+      return 'Toma de Decisiones';
+    case 'teamwork':
+      return 'Trabajo en Equipo';
+    default:
+      return value || 'Liderazgo';
+  }
+};
+
+const buildSkillProgress = (completedIds: string[], completedSkillMap: Record<string, string>) => {
+  const skillNames = ['Liderazgo', 'Comunicación', 'Toma de Decisiones', 'Trabajo en Equipo'];
+  const colors = ['#1E3A8A', '#FACC15', '#10B981', '#8B5CF6'];
+
+  return skillNames.map((skill, index) => {
+    const total = defaultSkillTotals[skill] ?? 1;
+    const completed = completedIds.filter((activityId) => {
+      const rawSkill = completedSkillMap[activityId] || defaultSkillMap[activityId] || 'Liderazgo';
+      return normalizeSkillName(rawSkill) === skill;
+    }).length;
+
+    return {
+      name: skill,
+      level: Math.min(100, Math.round((completed / total) * 100)),
+      color: colors[index],
+    };
+  });
+};
 
 const studentStatsData = {
   overallProgress: 0,
@@ -29,7 +83,7 @@ const studentStatsData = {
     { name: 'Toma de Decisiones', level: 70, color: '#10B981' },
     { name: 'Trabajo en Equipo', level: 88, color: '#8B5CF6' },
   ],
-  recentBadges: ['Primera Evaluación', 'Racha de 7 días', 'Comunicador'],
+  recentBadges: ['Primera Actividad', 'Racha de 7 días', 'Comunicador'],
 };
 
 export default function App() {
@@ -45,10 +99,16 @@ export default function App() {
   const [settingsMessage, setSettingsMessage] = useState('');
   const [settingsError, setSettingsError] = useState('');
   const [completedActivityIds, setCompletedActivityIds] = useState<string[]>([]);
+  const [completedActivitySkills, setCompletedActivitySkills] = useState<Record<string, string>>({});
   const [activityCompletionDates, setActivityCompletionDates] = useState<string[]>([]);
+  const [pendingChatQuiz, setPendingChatQuiz] = useState<any | null>(null);
+  const [pendingRecommendedActivityId, setPendingRecommendedActivityId] = useState<string | null>(null);
   const [isRestoringSession, setIsRestoringSession] = useState(true);
-  const totalActivities = 6;
-  const activityProgress = Math.round((completedActivityIds.length / totalActivities) * 100);
+  const [totalAvailableActivities, setTotalAvailableActivities] = useState(6);
+  const activityProgress = Math.min(
+    100,
+    Math.round((completedActivityIds.length / Math.max(totalAvailableActivities, 1)) * 100),
+  );
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
@@ -62,7 +122,7 @@ export default function App() {
       return;
     }
 
-    fetch('http://localhost:4001/auth/me', {
+    fetch(`${API_BASE}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (response) => {
@@ -71,6 +131,7 @@ export default function App() {
         setUserRole(data.role);
         setCurrentScreen(data.role === 'teacher' ? 'teacher' : 'home');
         setAuthUser({
+          id: Number(data.id),
           name: data.name,
           email: data.email,
           currentStreak: data.currentStreak || 0,
@@ -84,30 +145,111 @@ export default function App() {
 
   useEffect(() => {
     if (!authUser) return;
-    try {
-      const storedActivities = localStorage.getItem(`completed-activities:${authUser.email}`);
-      const parsedActivities = storedActivities ? JSON.parse(storedActivities) : [];
-      setCompletedActivityIds(Array.isArray(parsedActivities) ? parsedActivities : []);
-      const storedCompletionDates = localStorage.getItem(`activity-completion-dates:${authUser.email}`);
-      const parsedCompletionDates = storedCompletionDates ? JSON.parse(storedCompletionDates) : [];
-      setActivityCompletionDates(Array.isArray(parsedCompletionDates) ? parsedCompletionDates : []);
-    } catch {
-      setCompletedActivityIds([]);
-      setActivityCompletionDates([]);
-    }
+
+    const hydrateFromLocalStorage = () => {
+      try {
+        const storedActivities = localStorage.getItem(`completed-activities:${authUser.email}`);
+        const parsedActivities = storedActivities ? JSON.parse(storedActivities) : [];
+        const validActivities = Array.isArray(parsedActivities)
+          ? parsedActivities.filter((id) => typeof id === 'string' && !id.startsWith('generated'))
+          : [];
+        setCompletedActivityIds(validActivities);
+
+        // Remove old generated quiz keys
+        localStorage.removeItem(`generated-quiz:${authUser.email}`);
+        localStorage.removeItem(`completed-generated-quizzes:${authUser.email}`);
+
+        const storedSkillMap = localStorage.getItem(`completed-activity-skills:${authUser.email}`);
+        const parsedSkillMap = storedSkillMap ? JSON.parse(storedSkillMap) : {};
+        setCompletedActivitySkills(parsedSkillMap && typeof parsedSkillMap === 'object' ? parsedSkillMap : {});
+
+        const storedCompletionDates = localStorage.getItem(`activity-completion-dates:${authUser.email}`);
+        const parsedCompletionDates = storedCompletionDates ? JSON.parse(storedCompletionDates) : [];
+        setActivityCompletionDates(Array.isArray(parsedCompletionDates) ? parsedCompletionDates : []);
+      } catch {
+        setCompletedActivityIds([]);
+        setCompletedActivitySkills({});
+        setActivityCompletionDates([]);
+      }
+    };
+
+    const hydrateAvailableActivities = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/activities`);
+        if (response.ok) {
+          const data = await response.json();
+          const count = Array.isArray(data) ? data.length : 0;
+          setTotalAvailableActivities(Math.max(1, count || 1));
+          return;
+        }
+      } catch {
+        // ignore and keep default fallback
+      }
+
+      setTotalAvailableActivities(6);
+    };
+
+    hydrateFromLocalStorage();
+    void hydrateAvailableActivities();
+
+    const hydrateFromBackend = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/progress/user/${authUser.id}`);
+        if (!response.ok) return;
+        const records = await response.json();
+        const backendActivityIds = Array.from(
+          new Set(
+            (records || [])
+              .map((record: { activity_id?: string }) => record.activity_id)
+              .filter((activityId): activityId is string => Boolean(activityId) && !activityId.startsWith('generated')),
+          ),
+        );
+
+        if (backendActivityIds.length > 0) {
+          setCompletedActivityIds(backendActivityIds);
+          localStorage.setItem(`completed-activities:${authUser.email}`, JSON.stringify(backendActivityIds));
+        }
+      } catch {
+        hydrateFromLocalStorage();
+      }
+    };
+
+    void hydrateFromBackend();
   }, [authUser]);
 
-  const completeActivity = (activityId: string) => {
+  const completeActivity = (activityId: string, activitySkill?: string) => {
     setCompletedActivityIds((currentIds) => {
       if (currentIds.includes(activityId) || !authUser) return currentIds;
       const nextIds = [...currentIds, activityId];
       localStorage.setItem(`completed-activities:${authUser.email}`, JSON.stringify(nextIds));
+
+      const skillName = normalizeSkillName(activitySkill || defaultSkillMap[activityId] || 'Liderazgo');
+      setCompletedActivitySkills((currentSkills) => {
+        const nextSkills = { ...currentSkills, [activityId]: skillName };
+        localStorage.setItem(`completed-activity-skills:${authUser.email}`, JSON.stringify(nextSkills));
+        return nextSkills;
+      });
+
       const today = new Date().toISOString().slice(0, 10);
       setActivityCompletionDates((currentDates) => {
         const nextDates = [...currentDates, today];
         localStorage.setItem(`activity-completion-dates:${authUser.email}`, JSON.stringify(nextDates));
         return nextDates;
       });
+
+      fetch(`${API_BASE}/progress/activity-completed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: authUser.id,
+          user_email: authUser.email,
+          activity_id: activityId,
+          module_id: 1,
+          percentage: 100,
+          status: 'completed',
+        }),
+      }).catch(() => undefined);
+
       return nextIds;
     });
   };
@@ -116,6 +258,8 @@ export default function App() {
     localStorage.removeItem('access_token');
     setAuthUser(null);
   };
+
+  const skillProgressData = buildSkillProgress(completedActivityIds, completedActivitySkills);
 
   if (isRestoringSession) {
     return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Cargando sesión...</div>;
@@ -135,7 +279,6 @@ export default function App() {
 
   const navigation = [
     { id: 'home', label: 'Inicio', icon: Home, roles: ['student'] },
-    { id: 'assessment', label: 'Autoevaluación', icon: ClipboardCheck, roles: ['student'] },
     { id: 'activities', label: 'Actividades', icon: Dumbbell, roles: ['student'] },
     { id: 'progress', label: 'Mi Progreso', icon: TrendingUp, roles: ['student'] },
     { id: 'teacher', label: 'Panel Docente', icon: GraduationCap, roles: ['teacher'] },
@@ -151,7 +294,7 @@ export default function App() {
         setSettingsMessage('');
         setSettingsError('');
         try {
-          const response = await fetch('http://localhost:4001/auth/profile', {
+          const response = await fetch(`${API_BASE}/auth/profile`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: authUser.email, name: settingsName }),
@@ -173,7 +316,7 @@ export default function App() {
           return;
         }
         try {
-          const response = await fetch('http://localhost:4001/auth/change-password', {
+          const response = await fetch(`${API_BASE}/auth/change-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -283,7 +426,22 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Chat Panel - Takes 2 columns on large screens */}
             <div className="lg:col-span-2 h-[600px]">
-              <ChatPanel />
+              <ChatPanel
+                userId={authUser.id}
+                userEmail={authUser.email}
+                completedActivityIds={completedActivityIds}
+                totalAvailableActivities={totalAvailableActivities}
+                onOpenActivitiesWithQuiz={(quiz) => {
+                  setPendingChatQuiz(quiz);
+                  setPendingRecommendedActivityId(null);
+                  setCurrentScreen('activities');
+                }}
+                onOpenRecommendedActivity={(activityId) => {
+                  setPendingChatQuiz(null);
+                  setPendingRecommendedActivityId(activityId);
+                  setCurrentScreen('activities');
+                }}
+              />
             </div>
 
             {/* Stats Panel - Takes 1 column */}
@@ -294,8 +452,9 @@ export default function App() {
                   overallProgress: activityProgress,
                   activitiesCompleted: completedActivityIds.length,
                   currentStreak: authUser.currentStreak,
+                  skills: skillProgressData,
                   recentBadges: [
-                    'Primera Evaluación',
+                    completedActivityIds.length > 0 ? 'Primera práctica' : 'Sin prácticas aún',
                     authUser.currentStreak > 0 ? `Racha de ${authUser.currentStreak} días` : 'Comienza tu racha',
                     'Comunicador',
                   ],
@@ -307,19 +466,7 @@ export default function App() {
             <div className="lg:col-span-3">
               <Card className="p-6 shadow-md">
                 <h3 className="mb-4">Acciones Rápidas</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button
-                    variant="outline"
-                    className="h-auto py-4 flex-col gap-2 hover:border-primary hover:bg-primary/5"
-                    onClick={() => setCurrentScreen('assessment')}
-                  >
-                    <ClipboardCheck className="w-6 h-6 text-primary" />
-                    <div>
-                      <p>Autoevaluación</p>
-                      <p className="text-xs text-muted-foreground">Evalúa tus habilidades</p>
-                    </div>
-                  </Button>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Button
                     variant="outline"
                     className="h-auto py-4 flex-col gap-2 hover:border-primary hover:bg-primary/5"
@@ -348,24 +495,30 @@ export default function App() {
             </div>
           </div>
         );
-      case 'assessment':
-        return <SelfAssessment />;
       case 'activities':
         return (
           <Activities
+            userEmail={authUser.email}
             completedActivityIds={completedActivityIds}
             onCompleteActivity={completeActivity}
             currentStreak={authUser.currentStreak}
+            pendingQuiz={pendingChatQuiz}
+            onQuizHandled={() => setPendingChatQuiz(null)}
+            pendingActivityId={pendingRecommendedActivityId}
+            onRecommendedActivityHandled={() => setPendingRecommendedActivityId(null)}
           />
         );
       case 'progress':
         return (
           <Progress
+            userId={authUser.id}
             completedActivities={completedActivityIds.length}
-            totalActivities={totalActivities}
+            totalActivities={totalAvailableActivities}
             currentStreak={authUser.currentStreak}
             activityCompletionDates={activityCompletionDates}
             completedActivityIds={completedActivityIds}
+            completedActivitySkills={completedActivitySkills}
+            userEmail={authUser.email}
           />
         );
       default:
