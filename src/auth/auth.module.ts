@@ -9,9 +9,13 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 @Module({
   imports: [
     UsersModule,
-    PassportModule,
+    PassportModule.registerAsync({
+      useFactory: async () => ({
+        defaultStrategy: 'jwt',
+      }),
+    }),
     JwtModule.register({
-      secret: 'SECRET_KEY_LIDERABOT_123', // En un proyecto real esto iría en .env
+      secret: process.env.JWT_SECRET || 'SECRET_KEY_LIDERABOT_123',
       signOptions: { expiresIn: '7d' },
     }),
   ],
