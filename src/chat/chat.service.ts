@@ -14,7 +14,7 @@ interface QuizQuestion {
   points?: number;
 }
 
-interface GeneratedQuiz {
+interface GeneratedQuiz {z
   title: string;
   description?: string;
   category?: string;
@@ -175,42 +175,35 @@ export class ChatService {
     }
 
     const client = new GoogleGenAI({ apiKey });
-    const response = await client.interactions.create({
-      model: this.configService.get<string>('GEMINI_MODEL') || 'gemini-3.8-flash',
-      input: prompt,
-      system_instruction: `${systemInstruction}\n\nFundamenta las respuestas en la información de File Search. Redacta de forma natural y fluida como un mentor personal. JAMÁS insertes citas de fuentes, títulos de documentos, ni aclaraciones bibliográficas entre paréntesis dentro del texto explicativo (evita frases como "(según se advierte en...)", "(fuente:...)", "(como señala...)"). Limítate a explicar el concepto pedagógico de forma natural; las fuentes se listarán automáticamente al final.`,
-      tools: [{
-        type: 'file_search',
-        file_search_store_names: [storeName],
-      }],
+    const model = this.configService.get<string>('GEMINI_MODEL') || 'gemini-2.5-flash';
+    const response = await client.models.generateContent({
+      model,
+      contents: prompt,
+      config: {
+        systemInstruction: `${systemInstruction}\n\nFundamenta las respuestas en la información de File Search. Redacta de forma natural y fluida como un mentor personal. JAMÁS insertes citas de fuentes, títulos de documentos, ni aclaraciones bibliográficas entre paréntesis dentro del texto explicativo (evita frases como "(según se advierte en...)", "(fuente:...)", "(como señala...)"). Limítate a explicar el concepto pedagógico de forma natural; las fuentes se listarán automáticamente al final.`,
+        tools: [{
+          fileSearch: {
+            fileSearchStoreNames: [storeName],
+          },
+        }],
+      },
     });
 
-    const interaction = response as unknown as {
-      output_text?: string;
-      steps?: Array<{
-        type?: string;
-        content?: Array<{
-          type?: string;
-          annotations?: Array<{ type?: string; file_name?: string }>;
-        }>;
-      }>;
-    };
     const sources = new Set<string>();
-
-    for (const step of interaction.steps || []) {
-      if (step.type !== 'model_output') continue;
-      for (const content of step.content || []) {
-        if (content.type !== 'text') continue;
-        for (const annotation of content.annotations || []) {
-          if (annotation.type === 'file_citation' && annotation.file_name) {
-            sources.add(annotation.file_name);
-          }
+    const candidate = response.candidates?.[0] as any;
+    const groundingMetadata = candidate?.groundingMetadata;
+    if (groundingMetadata && Array.isArray(groundingMetadata.groundingChunks)) {
+      for (const chunk of groundingMetadata.groundingChunks) {
+        if (chunk.retrievedContext?.title) {
+          sources.add(chunk.retrievedContext.title);
+        } else if (chunk.web?.title) {
+          sources.add(chunk.web.title);
         }
       }
     }
 
     return {
-      text: (interaction.output_text || '').trim(),
+      text: (response.text || '').trim(),
       sources: [...sources],
     };
   }
