@@ -51,6 +51,43 @@ export class AuthService {
       }
     }
 
+    const brevoApiKey = process.env.BREVO_API_KEY?.trim();
+    if (brevoApiKey) {
+      try {
+        console.log('[Mail] Intentando envío vía Brevo REST API (HTTPS 443)...');
+        const recipients = (Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to])
+          .map((email: any) => ({ email: String(email).trim() }));
+        const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': brevoApiKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            sender: {
+              name: 'LideraBot',
+              email: process.env.SMTP_FROM || 'liderabot.app@gmail.com',
+            },
+            to: recipients,
+            subject: mailOptions.subject,
+            htmlContent: mailOptions.html,
+            textContent: mailOptions.text,
+          }),
+        });
+
+        const resData: any = await res.json().catch(() => ({}));
+        if (res.ok) {
+          console.log('[Mail Success] Enviado exitosamente vía Brevo API. ID:', resData?.messageId);
+          return resData;
+        } else {
+          console.warn('[Mail Attempt] Brevo API devolvió error:', resData);
+        }
+      } catch (brevoErr: any) {
+        console.warn('[Mail Attempt] Falló llamada a Brevo API:', brevoErr?.message || brevoErr);
+      }
+    }
+
     const smtpUser = process.env.SMTP_USER?.trim();
     const smtpPass = process.env.SMTP_PASS?.trim().replace(/\s+/g, '');
 
