@@ -40,6 +40,7 @@ import { TeacherPanel } from "./components/TeacherPanel";
 import { LoginScreen } from "./components/LoginScreen";
 import { ChatPanel } from "./components/ChatPanel";
 import { DiagnosticView } from "./components/DiagnosticView";
+import { SuggestionsView } from "./components/SuggestionsView";
 import { Button } from "./components/ui/button";
 import { Card } from "./components/ui/card";
 import {
@@ -124,6 +125,7 @@ type View =
   | "chatbot"
   | "foundations"
   | "responses"
+  | "suggestions"
   | "profile"
   | "settings";
 type TeacherScreen = "teacher" | "profile" | "settings";
@@ -334,8 +336,16 @@ export default function App() {
           `liderabot-diagnostic-result:${authUser.email}`,
           JSON.stringify(nextResult),
         );
+        if (nextResult.recommendedDisciplineKey) {
+          const targetDisc = nextResult.recommendedDisciplineKey as DisciplineKey;
+          if (disciplines.some((d) => d.key === targetDisc)) {
+            setCurrentDiscipline(targetDisc);
+          }
+        }
         if (nextResult.recommendedStartingSubmoduleId) {
           setActiveModuleId(nextResult.recommendedStartingSubmoduleId);
+        } else {
+          setActiveModuleId(1);
         }
         fetch(`${API_BASE}/results`, {
           method: "POST",
@@ -364,7 +374,76 @@ export default function App() {
     }
   }, [currentDiscipline]);
 
-  // Compute recommended stepped unlocking order
+  // Check if all 5 submodules / 25 activities of a discipline are 100% completed
+  const isDisciplineCompleted = useCallback(
+    (discKey: DisciplineKey): boolean => {
+      for (let modId = 1; modId <= 5; modId++) {
+        for (let lvl = 1; lvl <= 5; lvl++) {
+          const key = getAnswerKey(discKey, modId, lvl);
+          if (!isAnswerValid(lvl, answers[key])) {
+            return false;
+          }
+        }
+      }
+      return true;
+    },
+    [answers],
+  );
+
+  // Disciplines ordered by student weakness (from lowest diagnostic percentage to highest)
+  const recommendedDisciplineOrder = useMemo<DisciplineKey[]>(() => {
+    if (!diagnosticResult) {
+      return ["leadership", "communication", "decision"];
+    }
+    if (
+      Array.isArray(diagnosticResult.recommendedDisciplineOrder) &&
+      diagnosticResult.recommendedDisciplineOrder.length > 0
+    ) {
+      const valid = diagnosticResult.recommendedDisciplineOrder.filter((k) =>
+        disciplines.some((d) => d.key === k),
+      ) as DisciplineKey[];
+      if (valid.length > 0) return valid;
+    }
+    if (Array.isArray(diagnosticResult.competencyModules)) {
+      const compMap: Record<string, DisciplineKey> = {
+        Liderazgo: "leadership",
+        "Comunicación": "communication",
+        "Toma de Decisiones": "decision",
+      };
+      const sorted = [...diagnosticResult.competencyModules]
+        .filter((c) => compMap[c.competency] && c.availableInPlatform)
+        .sort((a, b) => a.percentage - b.percentage || a.scoreLevel - b.scoreLevel)
+        .map((c) => compMap[c.competency]);
+      if (sorted.length > 0) return sorted;
+    }
+    return ["leadership", "communication", "decision"];
+  }, [diagnosticResult]);
+
+  // Macro-level module unlocking: ONLY the first recommended module is unlocked initially.
+  // The remaining modules are BLOCKED until the preceding recommended module is 100% completed!
+  const unlockedDisciplineKeys = useMemo<DisciplineKey[]>(() => {
+    if (!diagnosticResult) return [];
+
+    const unlocked: DisciplineKey[] = [];
+    for (let i = 0; i < recommendedDisciplineOrder.length; i++) {
+      const disc = recommendedDisciplineOrder[i];
+      if (i === 0) {
+        // Only the single recommended module (highest weaknesses) is unlocked first
+        unlocked.push(disc);
+      } else {
+        // Subsequent modules unlock sequentially only when the previous module is completed 100% (25/25)
+        const prevDisc = recommendedDisciplineOrder[i - 1];
+        if (isDisciplineCompleted(prevDisc) && unlocked.includes(prevDisc)) {
+          unlocked.push(disc);
+        } else {
+          break; // Stop unlocking further modules
+        }
+      }
+    }
+    return unlocked;
+  }, [diagnosticResult, recommendedDisciplineOrder, isDisciplineCompleted]);
+
+  // Compute recommended stepped unlocking order for leadership submodules
   const recommendedSubmoduleOrder = useMemo(() => {
     if (currentDiscipline !== "leadership") return [1, 2, 3, 4, 5];
     if (!diagnosticResult) return [1, 2, 3, 4, 5];
@@ -378,8 +457,10 @@ export default function App() {
 
   // Compute which submodules are currently unlocked (Stepped Unlocking)
   const unlockedSubmoduleIds = useMemo(() => {
-    // Si aún no se ha presentado la prueba diagnóstica, todos los módulos de todas las disciplinas están bloqueados
-    if (!diagnosticResult) return [];
+    // Si aún no se ha presentado la prueba diagnóstica o si el módulo completo está bloqueado, nada está abierto
+    if (!diagnosticResult || !unlockedDisciplineKeys.includes(currentDiscipline)) {
+      return [];
+    }
 
     if (currentDiscipline === "leadership") {
       const unlocked: number[] = [];
@@ -403,7 +484,8 @@ export default function App() {
       return unlocked;
     }
 
-    // Para Comunicación y Toma de Decisiones: Una vez realizada la prueba diagnóstica, el Eje 1 inicia desbloqueado y los siguientes (2, 3, 4, 5) se desbloquean secuencialmente al completar 5/5 del anterior
+    // Para Comunicación y Toma de Decisiones (y futuros módulos):
+    // El Eje 1 inicia desbloqueado y los siguientes (2, 3, 4, 5) se desbloquean secuencialmente al completar 5/5 del anterior
     const unlocked: number[] = [1];
     for (let modId = 2; modId <= 5; modId++) {
       const prevModId = modId - 1;
@@ -418,10 +500,12 @@ export default function App() {
       }
     }
     return unlocked;
-  }, [currentDiscipline, diagnosticResult, recommendedSubmoduleOrder, answers]);
+  }, [currentDiscipline, diagnosticResult, unlockedDisciplineKeys, recommendedSubmoduleOrder, answers]);
 
   // Compute dynamic progress across all 5 modules (25 total levels) + lock status
   const computedModules: ModuleWithProgress[] = useMemo(() => {
+    const isDiscUnlocked = unlockedDisciplineKeys.includes(currentDiscipline);
+
     return rawDisciplineModules.map((mod) => {
       const completedLevels = [1, 2, 3, 4, 5].filter((lvl) =>
         isAnswerValid(lvl, answers[getAnswerKey(currentDiscipline, mod.id, lvl)]),
@@ -434,7 +518,7 @@ export default function App() {
             ? "En progreso"
             : "No iniciado";
 
-      const isUnlocked = unlockedSubmoduleIds.includes(mod.id);
+      const isUnlocked = isDiscUnlocked && unlockedSubmoduleIds.includes(mod.id);
       const stepOrderIndex = mod.id - 1;
 
       let unlockRequirementText = "";
@@ -442,6 +526,11 @@ export default function App() {
         unlockRequirementText = "Bloqueado · Habla primero con LideraBot";
       } else if (!diagnosticResult) {
         unlockRequirementText = "Bloqueado · Realiza primero la Prueba Diagnóstica";
+      } else if (!isDiscUnlocked) {
+        const activeDiscKey =
+          unlockedDisciplineKeys[unlockedDisciplineKeys.length - 1] || recommendedDisciplineOrder[0];
+        const activeDisc = disciplines.find((d) => d.key === activeDiscKey);
+        unlockRequirementText = `Bloqueado · Debes completar primero el módulo recomendado: ${activeDisc?.shortTitle || "Recomendado"}`;
       } else if (!isUnlocked) {
         if (currentDiscipline === "leadership") {
           const prevModId = recommendedSubmoduleOrder[stepOrderIndex - 1];
@@ -1119,6 +1208,23 @@ export default function App() {
             >
               Progreso ({overallProgress}%)
             </button>
+
+            <button
+              onClick={() => {
+                setView("suggestions");
+                setMobileNav(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className={cn(
+                "rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5",
+                view === "suggestions"
+                  ? "bg-white/15 text-white"
+                  : "text-blue-100 hover:bg-white/10",
+              )}
+            >
+              <MessageSquare className="h-3.5 w-3.5 text-[#FACC15]" />
+              Sugerencias / PQRS
+            </button>
           </div>
 
           <div className="flex items-center gap-3">
@@ -1148,6 +1254,15 @@ export default function App() {
                 <DropdownMenuItem onClick={openSettings}>
                   <Settings className="w-4 h-4 mr-2" />
                   Configuración
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setView("suggestions");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Sugerencias / PQRS
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -1211,6 +1326,15 @@ export default function App() {
               className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
             >
               Progreso ({overallProgress}%)
+            </button>
+            <button
+              onClick={() => {
+                setView("suggestions");
+                setMobileNav(false);
+              }}
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-[#FACC15]"
+            >
+              Buzón de Sugerencias y PQRS
             </button>
             <button
               onClick={openProfile}
@@ -1301,7 +1425,9 @@ export default function App() {
           diagnosticResult={diagnosticResult}
           hasInteractedWithBot={hasInteractedWithBot}
           unlockedSubmoduleIds={unlockedSubmoduleIds}
-          recommendedSubmoduleOrder={recommendedSubmoduleOrder}
+          unlockedDisciplineKeys={unlockedDisciplineKeys}
+          isDisciplineCompleted={isDisciplineCompleted}
+          recommendedDisciplineOrder={recommendedDisciplineOrder}
           onChoose={chooseModule}
           onOpenDiagnostic={handleOpenDiagnosticGuarded}
           onOpenChatbot={() => {
@@ -1432,6 +1558,14 @@ export default function App() {
           onBack={goHome}
         />
       )}
+      {view === "suggestions" && (
+        <SuggestionsView
+          userId={authUser.id}
+          userName={authUser.name}
+          userEmail={authUser.email}
+          onBack={goHome}
+        />
+      )}
       {view === "profile" && renderProfileSection()}
       {view === "settings" && renderSettingsSection()}
 
@@ -1506,7 +1640,9 @@ function HomeView({
   diagnosticResult,
   hasInteractedWithBot,
   unlockedSubmoduleIds,
-  recommendedSubmoduleOrder,
+  unlockedDisciplineKeys,
+  isDisciplineCompleted,
+  recommendedDisciplineOrder,
   onChoose,
   onOpenDiagnostic,
   onOpenChatbot,
@@ -1521,7 +1657,9 @@ function HomeView({
   diagnosticResult: DiagnosticEvaluationResult | null;
   hasInteractedWithBot: boolean;
   unlockedSubmoduleIds: number[];
-  recommendedSubmoduleOrder: number[];
+  unlockedDisciplineKeys: DisciplineKey[];
+  isDisciplineCompleted: (key: DisciplineKey) => boolean;
+  recommendedDisciplineOrder: DisciplineKey[];
   onChoose: (item: ModuleWithProgress) => void;
   onOpenDiagnostic: () => void;
   onOpenChatbot: () => void;
@@ -1529,6 +1667,9 @@ function HomeView({
 }) {
   const activeDiscipline =
     discList.find((d) => d.key === currentDiscipline) ?? discList[0];
+  const isCurrentDisciplineUnlocked = unlockedDisciplineKeys.includes(currentDiscipline);
+  const primaryUnlockedKey = unlockedDisciplineKeys[0];
+  const primaryUnlockedDiscipline = discList.find((d) => d.key === primaryUnlockedKey);
 
   return (
     <main className="mx-auto max-w-[1140px] px-5 py-8 lg:px-8">
@@ -1537,22 +1678,45 @@ function HomeView({
         {discList.map((d) => {
           const Icon = d.icon;
           const isActive = currentDiscipline === d.key;
+          const isDiscUnlocked = unlockedDisciplineKeys.includes(d.key);
+          const isDiscCompleted = isDisciplineCompleted(d.key);
+          const isPrimaryRec =
+            diagnosticResult?.recommendedDisciplineKey === d.key ||
+            recommendedDisciplineOrder[0] === d.key;
+
           return (
             <button
               key={d.key}
               onClick={() => onSelectDiscipline(d.key)}
               className={cn(
-                "flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-xs sm:text-sm font-extrabold transition-all",
+                "flex items-center justify-between gap-2 rounded-xl px-3.5 py-3 text-xs sm:text-sm font-extrabold transition-all",
                 isActive
                   ? "bg-white text-[#0F3B8F] shadow-sm border border-[#DCE3EF]"
                   : "text-[#5A6A85] hover:text-[#0F3B8F] hover:bg-white/60",
               )}
             >
-              <Icon
-                className="h-4 w-4 shrink-0"
-                style={{ color: isActive ? d.color : undefined }}
-              />
-              <span className="truncate">{d.shortTitle}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Icon
+                  className="h-4 w-4 shrink-0"
+                  style={{ color: isActive ? d.color : undefined }}
+                />
+                <span className="truncate">{d.shortTitle}</span>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                {isDiscCompleted ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#DFF5ED] px-2 py-0.5 text-[10px] font-bold text-[#0E785F]">
+                    <CheckCircle2 className="h-3 w-3" /> 100%
+                  </span>
+                ) : !isDiscUnlocked ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-200/90 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                    <LockKeyhole className="h-3 w-3" /> Bloqueado
+                  </span>
+                ) : isPrimaryRec ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-extrabold text-[#92400E]">
+                    ★ Recomendado
+                  </span>
+                ) : null}
+              </div>
             </button>
           );
         })}
@@ -1565,8 +1729,10 @@ function HomeView({
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="max-w-2xl">
-            <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white mb-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white mb-2">
+              {!isCurrentDisciplineUnlocked && <LockKeyhole className="h-3 w-3 text-amber-300" />}
               {activeDiscipline.title}
+              {!isCurrentDisciplineUnlocked && " · Bloqueado"}
             </span>
             <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
               {activeDiscipline.shortTitle}
@@ -1580,11 +1746,42 @@ function HomeView({
             <p className="text-[11px] font-bold uppercase tracking-wider text-blue-200">Progreso</p>
             <p className="mt-1 text-2xl font-extrabold text-[#FACC15]">{overallProgress}%</p>
             <p className="text-[11px] text-blue-100">
-              {unlockedSubmoduleIds.length}/5 {currentDiscipline === "leadership" ? "submódulos" : "ejes"} desbloqueados
+              {isCurrentDisciplineUnlocked
+                ? `${unlockedSubmoduleIds.length}/5 ${currentDiscipline === "leadership" ? "submódulos" : "ejes"} desbloqueados`
+                : "Módulo bloqueado"}
             </p>
           </div>
         </div>
       </section>
+
+      {/* Banner de Módulo Bloqueado si el estudiante seleccionó un módulo que no es el recomendado activo */}
+      {diagnosticResult && !isCurrentDisciplineUnlocked && (
+        <section className="mt-6 rounded-[24px] border-2 border-dashed border-[#DCE3EF] bg-white p-6 md:p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
+            <LockKeyhole className="h-7 w-7" />
+          </div>
+          <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
+            MÓDULO BLOQUEADO TEMPORALMENTE
+          </span>
+          <h2 className="mt-3 text-xl font-extrabold text-[#10264F]">
+            {activeDiscipline.title}
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-xs sm:text-sm leading-relaxed text-[#66738A]">
+            LideraBot analizó tus respuestas de la Prueba Diagnóstica y priorizó el módulo{" "}
+            <strong className="text-[#0F3B8F]">{primaryUnlockedDiscipline?.shortTitle || "Recomendado"}</strong>{" "}
+            debido a que en esa competencia se identificaron mayores falencias y áreas de mejora.
+            Para desbloquear este módulo, debes completar primero el 100% de las actividades del módulo recomendado.
+          </p>
+          {primaryUnlockedDiscipline && (
+            <button
+              onClick={() => onSelectDiscipline(primaryUnlockedDiscipline.key)}
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-6 py-3 text-xs sm:text-sm font-extrabold text-white shadow-md hover:bg-[#174AA6]"
+            >
+              Ir al Módulo Recomendado ({primaryUnlockedDiscipline.shortTitle}) <ArrowRight className="h-4 w-4 text-[#FACC15]" />
+            </button>
+          )}
+        </section>
+      )}
 
       {/* Distribución: Módulo desbloqueado a la izquierda y módulos bloqueados/completados a la derecha */}
       <section className="mt-8 grid gap-6 md:grid-cols-[1.25fr_0.95fr] items-start">

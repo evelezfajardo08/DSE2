@@ -162,6 +162,44 @@ export function DiagnosticView({
           </div>
         </section>
 
+        {/* Banner de Recomendación Prioritaria de LideraBot */}
+        {(() => {
+          const recKey = activeResult.recommendedDisciplineKey || "leadership";
+          const recMod =
+            activeResult.competencyModules.find((m) => m.disciplineKey === recKey) ||
+            activeResult.competencyModules[0];
+          return (
+            <section className="mt-6 rounded-[22px] border-2 border-[#FACC15] bg-[#FEFCE8] p-6 shadow-sm">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#0F3B8F] px-3 py-1 text-xs font-black text-[#FACC15]">
+                      RECOMENDACIÓN PRIORITARIA DE LIDERABOT
+                    </span>
+                    <span className="text-xs font-bold text-[#854D0E]">
+                      Área con Mayores Falencias Detectadas
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-black text-[#10264F]">
+                    {recMod?.moduleTitle || "Módulo Recomendado"}
+                  </h3>
+                  <p className="max-w-2xl text-xs sm:text-sm leading-relaxed text-[#713F12]">
+                    {activeResult.weakestCompetencyReason ||
+                      `LideraBot detectó que tu competencia con mayor número de falencias es ${recMod?.competency} (${recMod?.percentage}%). Por ello, este módulo es el ÚNICO que inicia desbloqueado. Los demás módulos permanecerán bloqueados hasta que completes el 100% de este módulo.`}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-6 py-3.5 text-xs sm:text-sm font-extrabold text-white hover:bg-[#174AA6] shadow-md transition-all"
+                >
+                  Comenzar este Módulo <ArrowRight className="h-4 w-4 text-[#FACC15]" />
+                </button>
+              </div>
+            </section>
+          );
+        })()}
+
         {/* 2. Apartado clicable para abrir la ventana superpuesta con las respuestas */}
         <section className="mt-6">
           <button

@@ -239,12 +239,16 @@ export class AuthService {
       throw new UnauthorizedException('La sesión no es válida o ha expirado.');
     }
 
+    // Actualizar marca de última conexión en tiempo real
+    this.usersService.updateLastConnection(user.id).catch(() => undefined);
+
     return {
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
       currentStreak: user.loginStreak || 0,
+      last_connection: user.last_connection || new Date(),
     };
   }
 

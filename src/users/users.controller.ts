@@ -54,7 +54,21 @@ export class UsersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  async remove(
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+    @Req() request: any,
+  ) {
+    const actorEmail = String(request.user?.email || '').toLowerCase();
+    const actor = await this.usersService.findByEmail(actorEmail);
+    if (!actor || actor.role !== 'teacher' || actor.status !== 'active') {
+      throw new ForbiddenException('Solo los docentes pueden eliminar usuarios.');
+    }
+    return this.usersService.removeUserWithNotification(
+      +id,
+      body?.reason || 'Sin motivo especificado',
+      actor.name,
+    );
   }
 }

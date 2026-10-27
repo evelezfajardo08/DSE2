@@ -36,6 +36,9 @@ export class User {
   lastLoginDate?: string;
 
   @Prop()
+  last_connection?: Date;
+
+  @Prop()
   streakRecoveryMonth?: string;
 
   @Prop()

@@ -15,6 +15,7 @@ import { AssessmentsModule } from './assessments/assessments.module';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { SuggestionsModule } from './suggestions/suggestions.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ActivitiesModule } from './activities/activities.module';
     AuthModule,
     ChatModule,
     ActivitiesModule,
+    SuggestionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

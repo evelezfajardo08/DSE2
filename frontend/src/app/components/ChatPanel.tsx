@@ -44,16 +44,39 @@ interface Message {
   timestamp: Date;
 }
 
-const getInitialGreeting = (userName?: string, hasDiagnostic?: boolean): Message[] => [
-  {
-    id: '1',
-    type: 'bot',
-    content: hasDiagnostic
-      ? `¡Hola${userName ? `, **${userName}**` : ''}! Soy **LideraBot**, tu chatbot y mentor en la plataforma. Ya realizaste tu Prueba Diagnóstica Inicial, por lo que tu módulo recomendado está desbloqueado. Recuerda que a medida que completes satisfactoriamente cada módulo (5 de 5 niveles), irás escalonando y desbloqueando el siguiente. ¿En qué te puedo ayudar hoy?`
-      : `¡Hola${userName ? `, **${userName}**` : ''}! 👋 Soy **LideraBot**, el chatbot que te acompañará en todo tu recorrido por esta aplicación.\n\nPara iniciar nuestro proceso de interacción, primero debes realizar una **Prueba Diagnóstica Inicial**. Con base en tus resultados identificaré tus habilidades, fortalezas y debilidades, te diré **qué módulo te recomiendo estudiar primero** y cómo irás **escalonando paso a paso para desbloquear los demás módulos** cuando termines los primeros satisfactoriamente.\n\nEscríbeme **"Hola"** para interactuar conmigo y **desbloquear tu Prueba Diagnóstica**.`,
-    timestamp: new Date(),
-  },
-];
+const getInitialGreeting = (
+  userName?: string,
+  diagnosticResult?: DiagnosticEvaluationResult | null,
+): Message[] => {
+  if (diagnosticResult) {
+    const discMap: Record<string, string> = {
+      leadership: 'Módulo 1: Formación en Liderazgo',
+      communication: 'Módulo 2: Competencias en Comunicación Educativa',
+      decision: 'Módulo 3: Toma de Decisiones y Resolución de Problemas',
+      teamwork: 'Módulo 4: Trabajo en Equipo y Gestión de Conflictos',
+    };
+    const recKey = diagnosticResult.recommendedDisciplineKey || 'leadership';
+    const recTitle = discMap[recKey] || recKey;
+
+    return [
+      {
+        id: '1',
+        type: 'bot',
+        content: `¡Hola${userName ? `, **${userName}**` : ''}! Soy **LideraBot**, tu chatbot y mentor en la plataforma.\n\nHe analizado tu Prueba Diagnóstica Inicial. Con base en las mayores falencias detectadas en tu evaluación, tu ruta formativa inicia obligatoriamente con el **${recTitle}**.\n\n🔒 **Importante:** Los demás módulos se encuentran actualmente bloqueados y se desbloquearán de manera escalonada a medida que completes satisfactoriamente cada módulo (5 de 5 niveles en todos sus ejes). ¿En qué te puedo orientar hoy?`,
+        timestamp: new Date(),
+      },
+    ];
+  }
+
+  return [
+    {
+      id: '1',
+      type: 'bot',
+      content: `¡Hola${userName ? `, **${userName}**` : ''}! 👋 Soy **LideraBot**, el chatbot que te acompañará en todo tu recorrido por esta aplicación.\n\nPara iniciar nuestro proceso de interacción, primero debes realizar una **Prueba Diagnóstica Inicial**. Con base en tus resultados identificaré tus habilidades, fortalezas y debilidades, te diré **qué módulo te recomiendo estudiar primero** (priorizando el área donde tengas más falencias) y cómo irás **escalonando paso a paso para desbloquear los demás módulos** cuando termines los primeros satisfactoriamente.\n\nEscríbeme **"Hola"** para interactuar conmigo y **desbloquear tu Prueba Diagnóstica**.`,
+      timestamp: new Date(),
+    },
+  ];
+};
 
 const API_BASE =
   import.meta.env.VITE_API_URL ??
@@ -98,17 +121,17 @@ export function ChatPanel({
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const storedMessages = localStorage.getItem(storageKey);
-      if (!storedMessages) return getInitialGreeting(userName, Boolean(diagnosticResult));
+      if (!storedMessages) return getInitialGreeting(userName, diagnosticResult);
       const parsedMessages = JSON.parse(storedMessages) as Message[];
       if (!Array.isArray(parsedMessages) || parsedMessages.length === 0) {
-        return getInitialGreeting(userName, Boolean(diagnosticResult));
+        return getInitialGreeting(userName, diagnosticResult);
       }
       return parsedMessages.map((message) => ({
         ...message,
         timestamp: new Date(message.timestamp),
       }));
     } catch {
-      return getInitialGreeting(userName, Boolean(diagnosticResult));
+      return getInitialGreeting(userName, diagnosticResult);
     }
   });
   const [inputValue, setInputValue] = useState('');
@@ -117,7 +140,7 @@ export function ChatPanel({
 
   const handleNewConversation = () => {
     localStorage.removeItem(storageKey);
-    setMessages(getInitialGreeting(userName, Boolean(diagnosticResult)));
+    setMessages(getInitialGreeting(userName, diagnosticResult));
   };
 
   useEffect(() => {
@@ -219,14 +242,28 @@ export function ChatPanel({
       return 'El estudiante todavía no ha realizado la Prueba Diagnóstica Inicial de 14 preguntas. Los módulos están bloqueados hasta que realice la prueba diagnóstica.';
     }
 
+    const discMap: Record<string, string> = {
+      leadership: 'Módulo 1: Formación en Liderazgo',
+      communication: 'Módulo 2: Competencias en Comunicación Educativa',
+      decision: 'Módulo 3: Toma de Decisiones y Resolución de Problemas',
+      teamwork: 'Módulo 4: Trabajo en Equipo y Gestión de Conflictos',
+    };
+
+    const recDiscKey = diagnosticResult.recommendedDisciplineKey || 'leadership';
+    const recDiscTitle = discMap[recDiscKey] || recDiscKey;
+
+    const discOrder = (
+      diagnosticResult.recommendedDisciplineOrder || ['leadership', 'communication', 'decision']
+    )
+      .map((k) => discMap[k] || k)
+      .join(' → ');
+
     const orderIds = diagnosticResult.recommendedSubmoduleOrder || [1, 2, 3, 4, 5];
-    const startId = diagnosticResult.recommendedStartingSubmoduleId || orderIds[0] || 1;
-    const startMod = leadershipModules.find((m) => m.id === startId) || leadershipModules[0];
 
     const modLines = diagnosticResult.competencyModules
       .map(
         (m) =>
-          `- ${m.moduleTitle} (${m.competency}): ${m.levelTitle} (${m.percentage}%) -> Recomendación: ${m.studyStatus}. Fortalezas: ${m.strengths}. Debilidades/Reforzar: ${m.weaknesses}. Temas a reforzar: ${m.reinforcementTopics.join(', ')}.`,
+          `- ${m.moduleTitle} (${m.competency}): ${m.levelTitle} (${m.percentage}%) -> Recomendación: ${m.studyStatus}. Fortalezas: ${m.strengths}. Falencias/Debilidades: ${m.weaknesses}. Temas a reforzar: ${m.reinforcementTopics.join(', ')}.`,
       )
       .join('\n');
 
@@ -236,14 +273,15 @@ export function ChatPanel({
 
     return [
       `Nivel General Obtenido: ${diagnosticResult.overallLevelTitle} (${diagnosticResult.overallPercentage}%)`,
-      `Primer Submódulo Recomendado y Desbloqueado: Submódulo ${startMod.id} (${startMod.name})`,
-      `Orden de Escalonamiento de Submódulos (se desbloquean uno a uno al completar 5/5 niveles del anterior): ${orderIds.map((id) => `Submódulo 0${id}`).join(' → ')}`,
-      `Submódulos actualmente desbloqueados para el estudiante: ${unlockedSubmoduleIds.map((id) => `Submódulo 0${id}`).join(', ')}`,
+      `MÓDULO PRIORITARIO RECOMENDADO POR LIDERABOT (PUNTO DE INICIO OBLIGATORIO): ${recDiscTitle}`,
+      `MOTIVO DE LA RECOMENDACIÓN: ${diagnosticResult.weakestCompetencyReason || 'El estudiante presentó en esta competencia su menor desempeño (mayores falencias) en la evaluación diagnóstica.'}`,
+      `REGLA ESTRICTA DE BLOQUEO DE MÓDULOS: Únicamente ${recDiscTitle} está actualmente desbloqueado. Los demás módulos están estrictamente BLOQUEADOS. No se desbloquearán hasta que el estudiante complete satisfactoriamente el 100% (5 de 5 niveles en todos sus ejes) del módulo recomendado previo.`,
+      `ORDEN DE ESCALONAMIENTO ENTRE MÓDULOS (desde mayor falencia hacia menor falencia): ${discOrder}`,
       `Habilidades detectadas: ${diagnosticResult.skillsProfile.join('; ')}`,
       `Fortalezas principales: ${diagnosticResult.strengthsList.join(' | ')}`,
-      `Debilidades / Áreas de mejora: ${diagnosticResult.weaknessesList.join(' | ')}`,
-      `Diagnóstico por Módulos Generales (1. Liderazgo, 2. Comunicación, 3. Toma de Decisiones, 4. Trabajo en Equipo):\n${modLines}`,
-      `Ruta en los 5 Submódulos de Liderazgo:\n${subLines}`,
+      `Debilidades / Falencias prioritarias: ${diagnosticResult.weaknessesList.join(' | ')}`,
+      `Diagnóstico por Módulos Generales:\n${modLines}`,
+      `Ruta en los Submódulos de Liderazgo (Submódulos 0${orderIds.join(' → 0')}):\n${subLines}`,
     ].join('\n\n');
   };
 

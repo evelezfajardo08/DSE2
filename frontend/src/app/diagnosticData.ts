@@ -375,6 +375,7 @@ export type StudyRecommendationStatus =
 
 export interface CompetencyModuleResult {
   moduleNumber: number;
+  disciplineKey?: "leadership" | "communication" | "decision" | "teamwork";
   competency: CompetencyCategory;
   moduleTitle: string;
   scoreLevel: number; // 1 to 5
@@ -408,6 +409,9 @@ export interface DiagnosticEvaluationResult {
   submoduleRecommendations: SubmoduleRecommendation[];
   recommendedStartingSubmoduleId: number;
   recommendedSubmoduleOrder: number[];
+  recommendedDisciplineKey?: "leadership" | "communication" | "decision" | "teamwork";
+  recommendedDisciplineOrder?: Array<"leadership" | "communication" | "decision" | "teamwork">;
+  weakestCompetencyReason?: string;
   aiDetailedFeedback?: string;
 }
 
@@ -491,30 +495,35 @@ export function calculateDiagnosticResult(
 ): DiagnosticEvaluationResult {
   const orderedModules: Array<{
     moduleNumber: number;
+    disciplineKey: "leadership" | "communication" | "decision" | "teamwork";
     competency: CompetencyCategory;
     moduleTitle: string;
     availableInPlatform: boolean;
   }> = [
     {
       moduleNumber: 1,
+      disciplineKey: "leadership",
       competency: "Liderazgo",
       moduleTitle: "Módulo 1: Formación en Liderazgo",
       availableInPlatform: true,
     },
     {
       moduleNumber: 2,
+      disciplineKey: "communication",
       competency: "Comunicación",
-      moduleTitle: "Módulo 2: Comunicación Efectiva y Asertiva",
-      availableInPlatform: false,
+      moduleTitle: "Módulo 2: Competencias en Comunicación Educativa",
+      availableInPlatform: true,
     },
     {
       moduleNumber: 3,
+      disciplineKey: "decision",
       competency: "Toma de Decisiones",
       moduleTitle: "Módulo 3: Toma de Decisiones y Resolución de Problemas",
-      availableInPlatform: false,
+      availableInPlatform: true,
     },
     {
       moduleNumber: 4,
+      disciplineKey: "teamwork",
       competency: "Trabajo en Equipo",
       moduleTitle: "Módulo 4: Trabajo en Equipo y Gestión de Conflictos",
       availableInPlatform: false,
@@ -651,6 +660,7 @@ export function calculateDiagnosticResult(
 
     return {
       moduleNumber: modInfo.moduleNumber,
+      disciplineKey: modInfo.disciplineKey,
       competency: comp,
       moduleTitle: modInfo.moduleTitle,
       scoreLevel: roundedLevel,
@@ -780,6 +790,40 @@ export function calculateDiagnosticResult(
 
   const recommendedStartingSubmoduleId = recommendedSubmoduleOrder[0] ?? 1;
 
+  // Macro-level module recommendation based on greatest weaknesses / falencias
+  // Filter active modules in the platform (currently Liderazgo, Comunicación, Toma de Decisiones)
+  const availableModules = competencyModules.filter((m) => m.availableInPlatform);
+
+  // Sort ascending by percentage (lowest score = highest weakness first)
+  // Tie-breakers: lowest scoreLevel, then moduleNumber
+  const sortedByWeakness = [...availableModules].sort((a, b) => {
+    if (a.percentage !== b.percentage) {
+      return a.percentage - b.percentage;
+    }
+    if (a.scoreLevel !== b.scoreLevel) {
+      return a.scoreLevel - b.scoreLevel;
+    }
+    return a.moduleNumber - b.moduleNumber;
+  });
+
+  const primaryRecommended = sortedByWeakness[0] || competencyModules[0];
+  const recommendedDisciplineKey = (primaryRecommended.disciplineKey || "leadership") as
+    | "leadership"
+    | "communication"
+    | "decision"
+    | "teamwork";
+
+  const recommendedDisciplineOrder = sortedByWeakness.map(
+    (m) =>
+      (m.disciplineKey || "leadership") as
+        | "leadership"
+        | "communication"
+        | "decision"
+        | "teamwork",
+  );
+
+  const weakestCompetencyReason = `LideraBot detectó que tu competencia con mayor número de falencias es ${primaryRecommended.competency} (${primaryRecommended.percentage}% de desempeño - ${primaryRecommended.levelTitle}). Por esta razón pedagógica, este módulo ha sido priorizado como tu punto de inicio obligatorio en la plataforma, y los demás módulos permanecerán bloqueados hasta que completes este satisfactoriamente.`;
+
   return {
     completedAt: new Date().toISOString(),
     overallLevel,
@@ -792,5 +836,8 @@ export function calculateDiagnosticResult(
     submoduleRecommendations,
     recommendedStartingSubmoduleId,
     recommendedSubmoduleOrder,
+    recommendedDisciplineKey,
+    recommendedDisciplineOrder,
+    weakestCompetencyReason,
   };
 }

@@ -349,8 +349,8 @@ Devuelve solo JSON válido con este formato: {"score":0,"feedback":"retroaliment
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
-    const queryTerms = (normalize(message).match(/[a-z0-9]+/g) || [])
-      .filter((term) => term.length > 3 && !stopWords.has(term));
+    const rawTerms: string[] = normalize(message).match(/[a-z0-9]+/g) || [];
+    const queryTerms = rawTerms.filter((term: string) => term.length > 3 && !stopWords.has(term));
 
     if (!queryTerms.length) return null;
 
@@ -493,10 +493,11 @@ INSTRUCCIONES CLAVE DE RETROALIMENTACIÓN Y DIAGNÓSTICO:
    - Submódulo 4 (Liderazgo Delegativo / Laissez-Faire): Kurt Lewin, Lippitt y White (1939).
    - Submódulo 5 (Liderazgo Situacional / Adaptativo): Paul Hersey y Kenneth Blanchard (1969 - niveles de madurez M1 a M4 y estilos E1 a E4).
    - Además de los marcos de Comunicación Efectiva/Asertiva, Toma de Decisiones (Vroom-Yetton, racionalidad limitada, sesgos cognitivos) y Trabajo en Equipo (etapas de Tuckman y las 5 C).
-3. Cuando consulte sobre su Prueba Diagnóstica o ruta de estudio, indícale claramente:
-   - Qué Módulos Generales (1. Liderazgo, 2. Comunicación, 3. Toma de Decisiones, 4. Trabajo en Equipo) y qué Submódulos debe estudiar con prioridad y cuáles ya domina o no necesita cursar a fondo.
-   - En qué temas específicos debe reforzar.
-   - Cuáles son sus habilidades actuales, fortalezas y debilidades detectadas.
+3. Cuando consulte sobre su Prueba Diagnóstica o ruta de estudio:
+   - Recomienda SIEMPRE como punto de inicio prioritario el módulo donde el estudiante presentó mayores falencias (menor porcentaje en el diagnóstico). Actualmente los módulos disponibles en la plataforma son 3: Módulo 1 (Liderazgo), Módulo 2 (Comunicación) y Módulo 3 (Toma de Decisiones). (Cuando se incorpore el Módulo 4 - Trabajo en Equipo, se incluirá en esta misma regla).
+   - Explica con claridad por qué se le recomendó ese módulo específico debido a sus falencias detectadas.
+   - Enfatiza que por regla de la plataforma, ÚNICAMENTE el módulo recomendado está actualmente desbloqueado; los demás módulos se encuentran estrictamente BLOQUEADOS y se irán desbloqueando de forma escalonada a medida que complete al 100% (5 de 5 niveles en todos sus ejes) el módulo prioritario previo.
+   - Detalla en qué temas específicos debe reforzar y cuáles fueron sus fortalezas y debilidades.
 4. Habla con naturalidad como un mentor académico cercano y riguroso.
 5. BOTÓN PARA ABRIR SUBMÓDULO: Tienes la capacidad de mostrarle al estudiante un botón interactivo para abrir un submódulo escribiendo al final de tu respuesta la etiqueta exacta [ABRIR_SUBMODULO:X] (donde X es el número del submódulo desbloqueado del 1 al 5, por ejemplo [ABRIR_SUBMODULO:1]). Incluye esta etiqueta ÚNICAMENTE cuando decidas que es el momento oportuno y necesario para que el estudiante entre al submódulo (por ejemplo, cuando el estudiante confirme que está listo para comenzar, pida abrir/iniciar el submódulo o cuando lo envíes directamente a resolver las actividades del submódulo). NO incluyas la etiqueta si apenas estás conversando, explicando conceptos o preguntándole si está listo.`;
 
