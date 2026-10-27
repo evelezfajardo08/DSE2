@@ -157,10 +157,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       if (!isLogin) {
         setIsVerifyingRegistration(true);
         setError('');
-        if (data.devVerificationCode) {
-          setRegistrationCode(data.devVerificationCode);
-          setSuccessMessage('Código de verificación: ' + data.devVerificationCode);
-        }
+        setRegistrationCode('');
+        setSuccessMessage('Te hemos enviado un código de verificación a tu correo. Revisa tu bandeja de entrada o spam.');
         setVerificationCooldownSeconds(0);
         return;
       }
@@ -199,15 +197,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'No se pudo reenviar el código');
       setVerificationCooldownSeconds(60);
-      if (data.devVerificationCode) {
-        setRegistrationCode(data.devVerificationCode);
-        setSuccessMessage('Nuevo código generado: ' + data.devVerificationCode);
-        setError('');
-      } else {
-        setRegistrationCode('');
-        setSuccessMessage('Te enviamos un nuevo código. Revisa también la carpeta de spam.');
-        setError('');
-      }
+      setRegistrationCode('');
+      setSuccessMessage('Te enviamos un nuevo código. Revisa también la carpeta de spam.');
+      setError('');
     } catch (err: any) {
       setError(err.message);
     }
@@ -269,10 +261,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       }
 
       setResetStep('code');
-      setResetToken(data.reset_token || '');
-      if (data.reset_token) {
-        setSuccessMessage('Código de recuperación: ' + data.reset_token);
-      }
+      setResetToken('');
+      setSuccessMessage('Revisa tu correo para ingresar el código de recuperación.');
       setError('');
       setNewPassword('');
       setNewPasswordConfirm('');

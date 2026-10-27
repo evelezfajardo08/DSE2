@@ -21,33 +21,30 @@ export class AuthService {
   private async sendMailWithFallback(mailOptions: nodemailer.SendMailOptions) {
     const resendApiKey = process.env.RESEND_API_KEY?.trim();
     if (resendApiKey) {
-      try {
-        console.log('[Mail] Intentando envío vía Resend REST API (HTTPS 443)...');
-        const recipients = Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to];
-        const res = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: process.env.RESEND_FROM || 'LideraBot <onboarding@resend.dev>',
-            to: recipients,
-            subject: mailOptions.subject,
-            text: mailOptions.text,
-            html: mailOptions.html,
-          }),
-        });
+      console.log('[Mail] Intentando envío vía Resend REST API (HTTPS 443)...');
+      const recipients = Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to];
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: process.env.RESEND_FROM || 'LideraBot <onboarding@resend.dev>',
+          to: recipients,
+          subject: mailOptions.subject,
+          text: mailOptions.text,
+          html: mailOptions.html,
+        }),
+      });
 
-        const resData: any = await res.json().catch(() => ({}));
-        if (res.ok) {
-          console.log('[Mail Success] Enviado exitosamente vía Resend API. ID:', resData?.id);
-          return resData;
-        } else {
-          console.warn('[Mail Attempt] Resend API devolvió error:', resData);
-        }
-      } catch (resendErr: any) {
-        console.warn('[Mail Attempt] Falló llamada a Resend API:', resendErr?.message || resendErr);
+      const resData: any = await res.json().catch(() => ({}));
+      if (res.ok) {
+        console.log('[Mail Success] Enviado exitosamente vía Resend API. ID:', resData?.id);
+        return resData;
+      } else {
+        console.error('[Mail Error] Resend API devolvió error:', res.status, resData);
+        throw new Error(resData?.message || `Error ${res.status} al enviar correo con Resend`);
       }
     }
 
@@ -348,22 +345,18 @@ export class AuthService {
       emailVerificationExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });
 
-    let emailSent = false;
-    let emailErrorMessage = '';
     try {
       await this.sendEmailVerificationEmail(email, verificationCode);
-      emailSent = true;
     } catch (error: any) {
-      emailErrorMessage = error?.message || 'Fallo de conexión';
-      console.warn('[Auth Warning] No se pudo enviar el correo de verificación a', email, ':', emailErrorMessage);
-      console.log(`[Auth Verification Code for ${email}]: ${verificationCode}`);
+      console.error('[Auth Error] Falló al enviar código a', email, ':', error?.message || error);
+      await this.usersService.remove(userId);
+      throw new BadRequestException(
+        `No se pudo enviar el código al correo (${error?.message || 'Error del servidor de correo'}).`
+      );
     }
 
     return {
-      message: emailSent
-        ? 'Revisa la bandeja de entrada de tu correo para obtener el código de verificación.'
-        : `Servidor en Render: Puerto SMTP bloqueado por firewall en nube. Tu código es: ${verificationCode}`,
-      devVerificationCode: emailSent ? undefined : verificationCode,
+      message: 'Revisa la bandeja de entrada de tu correo para obtener el código de verificación.',
     };
   }
 
@@ -376,13 +369,13 @@ export class AuthService {
     }
 
     const verificationCode = crypto.randomInt(100000, 1000000).toString();
-    let emailSent = false;
     try {
       await this.sendEmailVerificationEmail(email, verificationCode);
-      emailSent = true;
     } catch (error: any) {
-      console.warn('[Auth Warning] Reenvío falló para', email, ':', error?.message || error);
-      console.log(`[Auth New Verification Code for ${email}]: ${verificationCode}`);
+      console.error('[Auth Error] Falló al reenviar código a', email, ':', error?.message || error);
+      throw new BadRequestException(
+        `No se pudo enviar el correo: ${error?.message || 'Error del servidor de correo'}.`
+      );
     }
 
     await this.usersService.update(user.id, {
@@ -391,10 +384,7 @@ export class AuthService {
     });
 
     return {
-      message: emailSent
-        ? 'Revisa la bandeja de entrada de tu correo para obtener el nuevo código de verificación.'
-        : `Servidor en Render: Puerto SMTP bloqueado por firewall en nube. Tu código es: ${verificationCode}`,
-      devVerificationCode: emailSent ? undefined : verificationCode,
+      message: 'Revisa la bandeja de entrada de tu correo para obtener el nuevo código de verificación.',
     };
   }
 
@@ -590,20 +580,17 @@ export class AuthService {
     const expiresAt = Date.now() + 15 * 60 * 1000;
     this.passwordResetTokens.set(resetCode, { email: user.email, expiresAt });
 
-    let emailSent = false;
     try {
       await this.sendPasswordResetEmail(user.email, resetCode);
-      emailSent = true;
-    } catch (error) {
-      console.warn('[Auth] No se pudo enviar el correo de recuperación:', error);
-      console.log(`[Auth Reset Code for ${user.email}]: ${resetCode}`);
+    } catch (error: any) {
+      console.error('[Auth Error] Falló al enviar recuperación a', user.email, ':', error?.message || error);
+      throw new BadRequestException(
+        `No se pudo enviar el correo de recuperación: ${error?.message || 'Error del servidor de correo'}.`
+      );
     }
 
     return {
-      message: emailSent
-        ? 'Si el correo está asociado a una cuenta, recibirás instrucciones para restablecer la contraseña.'
-        : `Servidor en Render: Puerto SMTP bloqueado por firewall en nube. Tu código es: ${resetCode}`,
-      reset_token: emailSent ? undefined : resetCode,
+      message: 'Si el correo está asociado a una cuenta, recibirás instrucciones para restablecer la contraseña.',
     };
   }
 
