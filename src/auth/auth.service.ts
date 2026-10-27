@@ -19,27 +19,28 @@ export class AuthService {
   ) {}
 
   private getMailTransporter() {
-    const smtpPort = Number(process.env.SMTP_PORT ?? 465);
-    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
 
     if (!smtpUser || !smtpPass) {
-      throw new Error('Gmail SMTP no está configurado (faltan credenciales).');
+      throw new Error('Variables SMTP_USER o SMTP_PASS no están configuradas en el servidor.');
     }
 
-    if (smtpHost === 'smtp.gmail.com') {
-      return nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: smtpUser, pass: smtpPass },
-      });
-    }
-
+    // Usar transporte seguro directo con host smtp.gmail.com y fallback
     return nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass },
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: smtpUser.trim(),
+        pass: smtpPass.trim().replace(/\s+/g, ''),
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 15000,
     });
   }
 
@@ -249,9 +250,12 @@ export class AuthService {
 
     try {
       await this.sendEmailVerificationEmail(email, verificationCode);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Auth Error] Fallo al enviar correo de verificación a', email, ':', error?.message || error);
       await this.usersService.remove(userId);
-      throw new BadRequestException('No se pudo enviar el código de verificación. Intenta nuevamente.');
+      throw new BadRequestException(
+        `Error al enviar el código de verificación (${error?.message || 'Fallo de conexión SMTP'}). Verifica que el servicio de correo esté activo.`
+      );
     }
 
     return {
