@@ -315,9 +315,10 @@ export class AuthService {
 
   async register(data: any) {
     const email = String(data.email || '').trim().toLowerCase();
-    if (!/^[^\s@]+@gmail\.com$/.test(email)) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       throw new BadRequestException(
-        'Solo puedes registrarte con una cuenta de correo @gmail.com.'
+        'Ingresa una dirección de correo electrónico válida.'
       );
     }
 

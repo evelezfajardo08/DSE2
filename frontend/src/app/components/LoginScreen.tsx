@@ -131,8 +131,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       return;
     }
 
-    if (!isLogin && !/^[^\s@]+@gmail\.com$/i.test(form.email.trim())) {
-      setError('Para registrarte debes usar una cuenta de correo @gmail.com.');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email.trim())) {
+      setError('Ingresa un correo electrónico válido (personal o institucional).');
       return;
     }
 
@@ -548,7 +549,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                       type="email"
                       value={form.email}
                       onChange={(e) => handleField('email', e.target.value)}
-                      placeholder={isLogin ? 'tu-correo@gmail.com' : 'Ej. nombre@gmail.com'}
+                      placeholder={isLogin ? 'tu-correo@ejemplo.com' : 'Ej. nombre@institucion.edu.co'}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
                     />
                   </div>
@@ -711,7 +712,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     required
                     value={form.email}
                     onChange={(e) => handleField('email', e.target.value)}
-                    placeholder="tu-correo@gmail.com"
+                    placeholder="tu-correo@ejemplo.com"
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
                   />
                 </div>
