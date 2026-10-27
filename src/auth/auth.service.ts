@@ -18,30 +18,63 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
-  private getMailTransporter() {
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+  private async sendMailWithFallback(mailOptions: nodemailer.SendMailOptions) {
+    const smtpUser = process.env.SMTP_USER?.trim();
+    const smtpPass = process.env.SMTP_PASS?.trim().replace(/\s+/g, '');
 
     if (!smtpUser || !smtpPass) {
       throw new Error('Variables SMTP_USER o SMTP_PASS no están configuradas en el servidor.');
     }
 
-    // Usar transporte seguro directo con host smtp.gmail.com y fallback
-    return nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: smtpUser.trim(),
-        pass: smtpPass.trim().replace(/\s+/g, ''),
+    const configs = [
+      {
+        name: 'Gmail Service (OAuth/TLS)',
+        transport: {
+          service: 'gmail',
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 10000,
+        },
       },
-      tls: {
-        rejectUnauthorized: false,
+      {
+        name: 'Gmail Port 465 (SSL)',
+        transport: {
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 10000,
+        },
       },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 15000,
-    });
+      {
+        name: 'Gmail Port 587 (STARTTLS)',
+        transport: {
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          requireTLS: true,
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 10000,
+        },
+      },
+    ];
+
+    let lastError: any = null;
+    for (const item of configs) {
+      try {
+        const transporter = nodemailer.createTransport(item.transport as any);
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`[Mail Success] Enviado exitosamente usando ${item.name}. MessageId:`, info?.messageId);
+        return info;
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[Mail Attempt] Falló transporte ${item.name}:`, err?.message || err);
+      }
+    }
+
+    throw lastError || new Error('No se pudo enviar el correo por ningún puerto disponible.');
   }
 
   private async sendPasswordResetEmail(email: string, code: string) {
@@ -57,10 +90,9 @@ export class AuthService {
       return;
     }
 
-    const transporter = this.getMailTransporter();
     const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(code)}`;
 
-    await transporter.sendMail({
+    await this.sendMailWithFallback({
       from: senderFrom,
       to: email,
       subject: 'Restablecimiento de contraseña - LideraBot',
@@ -117,9 +149,7 @@ export class AuthService {
       throw new Error('Gmail SMTP no está configurado (faltan credenciales).');
     }
 
-    const transporter = this.getMailTransporter();
-
-    await transporter.sendMail({
+    await this.sendMailWithFallback({
       from: senderFrom,
       to: email,
       subject: 'Código de verificación de tu cuenta - LideraBot',
@@ -173,9 +203,7 @@ export class AuthService {
       throw new Error('Gmail SMTP no está configurado (faltan credenciales).');
     }
 
-    const transporter = this.getMailTransporter();
-
-    await transporter.sendMail({
+    await this.sendMailWithFallback({
       from: senderFrom,
       to: email,
       subject: 'Tu cuenta docente fue aprobada - LideraBot',
