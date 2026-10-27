@@ -45,14 +45,21 @@ interface Student {
   lastActivity: string;
 }
 
+interface ProgressRecord {
+  user_id?: number;
+  module_id?: number;
+  activity_id?: string;
+  submodule_name?: string;
+  exercise_response?: string;
+  overall_progress?: number;
+  percentage?: number;
+  status?: string;
+}
+
 interface RegisteredUser extends Student {
   role: 'student' | 'teacher';
   registered_at?: string;
-}
-
-interface ProgressRecord {
-  user_id?: number;
-  percentage?: number;
+  submodules?: ProgressRecord[];
 }
 
 interface ResultRecord {
@@ -123,14 +130,19 @@ export function TeacherPanel() {
         }
 
         const mappedUsers = data.map((student: { id: number; name: string; email: string; role: 'student' | 'teacher'; status?: string; registered_at?: string }) => {
-          const studentProgress = progressRecords.filter((record) => record.user_id === student.id);
+          const studentProgress = progressRecords
+            .filter((record) => record.user_id === student.id)
+            .sort((a, b) => (a.module_id ?? 0) - (b.module_id ?? 0));
           const percentageTotal = studentProgress.reduce(
             (sum, record) => sum + (Number(record.percentage) || 0),
             0
           );
           const progress = studentProgress.length
-            ? Math.round(percentageTotal / studentProgress.length)
+            ? Math.round(percentageTotal / Math.max(studentProgress.length, 5))
             : 0;
+          const activeSubmodulesCount = studentProgress.filter(
+            (record) => (Number(record.percentage) || 0) > 0,
+          ).length;
 
           return {
             id: student.id,
@@ -141,7 +153,8 @@ export function TeacherPanel() {
             registered_at: student.registered_at,
             progress,
             evaluations: resultRecords.filter((result) => result.user_id === student.id).length,
-            activities: studentProgress.length,
+            activities: activeSubmodulesCount,
+            submodules: studentProgress,
             lastActivity: student.registered_at
               ? new Date(student.registered_at).toLocaleDateString('es-CO')
               : 'Sin actividad',
@@ -671,14 +684,14 @@ export function TeacherPanel() {
           onClick={() => setSelectedUser(null)}
         >
           <Card
-            className="w-full max-w-lg shadow-xl"
+            className="w-full max-w-2xl max-h-[88vh] flex flex-col overflow-hidden shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4 border-b p-5">
+            <div className="flex items-start justify-between gap-4 border-b p-5 shrink-0">
               <div>
-                <h3 id="user-details-title">Detalles de la cuenta</h3>
+                <h3 id="user-details-title">Detalles de la cuenta y Progreso</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Información registrada del usuario.
+                  Información registrada, avance y ejercicios prácticos del estudiante.
                 </p>
               </div>
               <Button
@@ -690,45 +703,90 @@ export function TeacherPanel() {
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <div className="grid gap-4 p-5 sm:grid-cols-2">
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-sm text-muted-foreground">Nombre completo</p>
-                <p className="mt-1 font-semibold">{selectedUser.name}</p>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-sm text-muted-foreground">Correo electrónico</p>
-                <p className="mt-1 break-all font-semibold">{selectedUser.email}</p>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-sm text-muted-foreground">Tipo de cuenta</p>
-                <p className="mt-1 font-semibold">
-                  {selectedUser.role === 'teacher' ? 'Docente' : 'Estudiante'}
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-sm text-muted-foreground">Estado</p>
-                <p className="mt-1 font-semibold text-green-600">
-                  {selectedUser.status === 'active' ? 'Activo' : 'Inactivo'}
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-4 sm:col-span-2">
-                <p className="text-sm text-muted-foreground">Fecha de registro</p>
-                <p className="mt-1 font-semibold">
-                  {selectedUser.registered_at
-                    ? new Date(selectedUser.registered_at).toLocaleDateString('es-CO')
-                    : 'No disponible'}
-                </p>
-              </div>
-              {selectedUser.role === 'student' && (
-                <div className="rounded-lg bg-muted/40 p-4 sm:col-span-2">
-                  <p className="text-sm text-muted-foreground">Resumen académico</p>
+            <div className="overflow-y-auto p-5 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg bg-muted/40 p-4">
+                  <p className="text-sm text-muted-foreground">Nombre completo</p>
+                  <p className="mt-1 font-semibold">{selectedUser.name}</p>
+                </div>
+                <div className="rounded-lg bg-muted/40 p-4">
+                  <p className="text-sm text-muted-foreground">Correo electrónico</p>
+                  <p className="mt-1 break-all font-semibold">{selectedUser.email}</p>
+                </div>
+                <div className="rounded-lg bg-muted/40 p-4">
+                  <p className="text-sm text-muted-foreground">Tipo de cuenta</p>
                   <p className="mt-1 font-semibold">
-                    {selectedUser.progress}% de progreso, {selectedUser.evaluations} evaluaciones y {selectedUser.activities} actividades.
+                    {selectedUser.role === 'teacher' ? 'Docente' : 'Estudiante'}
                   </p>
+                </div>
+                <div className="rounded-lg bg-muted/40 p-4">
+                  <p className="text-sm text-muted-foreground">Estado</p>
+                  <p className="mt-1 font-semibold text-green-600">
+                    {selectedUser.status === 'active' ? 'Activo' : 'Inactivo'}
+                  </p>
+                </div>
+                {selectedUser.role === 'student' && (
+                  <div className="rounded-lg bg-muted/40 p-4 sm:col-span-2">
+                    <p className="text-sm text-muted-foreground">Resumen académico</p>
+                    <p className="mt-1 font-semibold">
+                      {selectedUser.progress}% de progreso general, {selectedUser.evaluations} evaluaciones y {selectedUser.activities} submódulos iniciados/completados.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {selectedUser.role === 'student' && (
+                <div className="space-y-3 border-t pt-4">
+                  <h4 className="font-semibold text-sm">
+                    Progreso y Respuestas a Ejercicios Prácticos por Submódulo
+                  </h4>
+                  {selectedUser.submodules && selectedUser.submodules.length > 0 ? (
+                    selectedUser.submodules.map((sub, idx) => {
+                      const [part1 = '', part2 = ''] = (sub.exercise_response || '').split('|||');
+                      const hasExerciseAnswer = part1.trim().length > 0 && part2.trim().length > 0;
+                      return (
+                        <div
+                          key={sub.activity_id || idx}
+                          className="rounded-lg border border-gray-200 p-4 space-y-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-semibold text-sm">
+                              Submódulo 0{sub.module_id || idx + 1}:{' '}
+                              {sub.submodule_name || `Submódulo ${idx + 1}`}
+                            </p>
+                            <Badge variant={sub.percentage === 100 ? 'default' : 'secondary'}>
+                              {sub.percentage ?? 0}%
+                            </Badge>
+                          </div>
+                          {hasExerciseAnswer ? (
+                            <div className="mt-2 space-y-2 rounded-md bg-slate-50 p-3 text-xs">
+                              <p className="font-semibold text-primary">
+                                Respuesta al Ejercicio Práctico:
+                              </p>
+                              <p>
+                                <strong>1. Decisión / Estrategia:</strong> {part1}
+                              </p>
+                              <p>
+                                <strong>2. Sustentación teórica:</strong> {part2}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              Ejercicio práctico aún sin responder.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      El estudiante aún no registra avance en los submódulos.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
-            <div className="flex justify-end border-t p-4">
+            <div className="flex justify-end border-t p-4 shrink-0">
               <Button variant="outline" onClick={() => setSelectedUser(null)}>
                 Cerrar
               </Button>

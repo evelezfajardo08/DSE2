@@ -5,7 +5,7 @@ export type ProgressDocument = Progress & Document;
 
 @Schema()
 export class Progress {
-  @Prop({ required: false, unique: true })
+  @Prop({ required: false })
   id?: number;
 
   @Prop({ type: Number, ref: 'User', required: true })
@@ -19,6 +19,15 @@ export class Progress {
 
   @Prop()
   activity_id?: string;
+
+  @Prop()
+  submodule_name?: string;
+
+  @Prop()
+  exercise_response?: string;
+
+  @Prop({ default: 0 })
+  overall_progress?: number;
 
   @Prop({ default: 0 })
   percentage: number;

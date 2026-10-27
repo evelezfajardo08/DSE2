@@ -1,46 +1,46 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
   --font-size: 16px;
-  --background: #F3F4F6;
-  --foreground: #1F2937;
+  --background: #F5F7FB;
+  --foreground: #152542;
   --card: #ffffff;
-  --card-foreground: #1F2937;
+  --card-foreground: #152542;
   --popover: #ffffff;
-  --popover-foreground: #1F2937;
-  --primary: #1E3A8A;
+  --popover-foreground: #152542;
+  --primary: #0F3B8F;
   --primary-foreground: #ffffff;
-  --secondary: #FACC15;
-  --secondary-foreground: #1F2937;
-  --muted: #E5E7EB;
-  --muted-foreground: #6B7280;
-  --accent: #10B981;
-  --accent-foreground: #ffffff;
-  --destructive: #EF4444;
+  --secondary: #EAF0FF;
+  --secondary-foreground: #0F3B8F;
+  --muted: #E9EDF4;
+  --muted-foreground: #66738A;
+  --accent: #FACC15;
+  --accent-foreground: #0F3B8F;
+  --destructive: #d4183d;
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
+  --border: #DCE3EF;
   --input: transparent;
-  --input-background: #ffffff;
-  --switch-background: #D1D5DB;
+  --input-background: #FBFCFE;
+  --switch-background: #cbced4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #1E3A8A;
-  --chart-1: #1E3A8A;
-  --chart-2: #FACC15;
-  --chart-3: #10B981;
-  --chart-4: #8B5CF6;
-  --chart-5: #F59E0B;
-  --radius: 0.75rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #1F2937;
-  --sidebar-primary: #1E3A8A;
+  --ring: #2D6BFF;
+  --chart-1: #0F3B8F;
+  --chart-2: #2D6BFF;
+  --chart-3: #A855F7;
+  --chart-4: #FACC15;
+  --chart-5: #17A98C;
+  --radius: 0.875rem;
+  --sidebar: #0F3B8F;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #2D6BFF;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #F9FAFB;
-  --sidebar-accent-foreground: #1F2937;
-  --sidebar-border: #E5E7EB;
-  --sidebar-ring: #1E3A8A;
+  --sidebar-accent: rgba(255, 255, 255, 0.1);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.15);
+  --sidebar-ring: #FACC15;
 }
 
 .dark {
@@ -234,5 +234,5 @@ html {
 }
 
 body {
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }

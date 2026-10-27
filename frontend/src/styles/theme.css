@@ -2,43 +2,43 @@
 
 :root {
   --font-size: 16px;
-  --background: #F3F4F6;
-  --foreground: #111827;
+  --background: #F5F7FB;
+  --foreground: #152542;
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #152542;
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #1E3A8A;
+  --popover-foreground: #152542;
+  --primary: #0F3B8F;
   --primary-foreground: #ffffff;
-  --secondary: #EFF6FF;
-  --secondary-foreground: #1E3A8A;
-  --muted: #E5E7EB;
-  --muted-foreground: #6B7280;
+  --secondary: #EAF0FF;
+  --secondary-foreground: #0F3B8F;
+  --muted: #E9EDF4;
+  --muted-foreground: #66738A;
   --accent: #FACC15;
-  --accent-foreground: #1E3A8A;
+  --accent-foreground: #0F3B8F;
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
+  --border: #DCE3EF;
   --input: transparent;
-  --input-background: #f3f3f5;
+  --input-background: #FBFCFE;
   --switch-background: #cbced4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --ring: #2D6BFF;
+  --chart-1: #0F3B8F;
+  --chart-2: #2D6BFF;
+  --chart-3: #A855F7;
+  --chart-4: #FACC15;
+  --chart-5: #17A98C;
+  --radius: 0.875rem;
+  --sidebar: #0F3B8F;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #2D6BFF;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.1);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.15);
+  --sidebar-ring: #FACC15;
 }
 
 .dark {
@@ -126,7 +126,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Poppins', sans-serif;
+    font-family: "Inter", sans-serif;
   }
 
   /**

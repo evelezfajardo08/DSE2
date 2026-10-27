@@ -1,32 +1,38 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Bot, Send, Mic, User, PlusCircle } from 'lucide-react';
+import {
+  ArrowRight,
+  Bot,
+  Send,
+  User,
+  PlusCircle,
+  Sparkles,
+  ClipboardCheck,
+  LockKeyhole,
+  Unlock,
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
+import { leadershipModules } from '../leadershipData';
+import { DiagnosticEvaluationResult } from '../diagnosticData';
 
 interface ChatPanelProps {
   userId: number;
   userEmail?: string;
+  userName?: string;
   completedActivityIds: string[];
   totalAvailableActivities: number;
-  onOpenActivitiesWithQuiz?: (quiz: any) => void;
-  onOpenRecommendedActivity?: (activityId: string) => void;
-}
-
-interface ActivityOption {
-  id: string;
-  title: string;
-}
-
-interface ActivityAttemptContext {
-  activity_id: string;
-  activity_title: string;
-  skill: string;
-  score: number | null;
-  next_steps: string[];
-  status: 'evaluated' | 'pending_evaluation';
+  moduleAnswers?: Record<string, string>;
+  diagnosticResult?: DiagnosticEvaluationResult | null;
+  hasInteractedWithBot?: boolean;
+  unlockedSubmoduleIds?: number[];
+  initialPrompt?: string | null;
+  onPromptHandled?: () => void;
+  onBotInteraction?: () => void;
+  onOpenDiagnostic?: () => void;
+  onOpenSubmodule?: (moduleId: number, level?: number) => void;
 }
 
 interface Message {
@@ -34,91 +40,83 @@ interface Message {
   type: 'user' | 'bot';
   content: string;
   timestamp: Date;
-  recommendedActivityId?: string;
-  recommendedActivityTitle?: string;
 }
 
-const initialMessages: Message[] = [
+const getInitialGreeting = (userName?: string, hasDiagnostic?: boolean): Message[] => [
   {
     id: '1',
     type: 'bot',
-    content: '¡Hola! Soy LideraBot, tu asistente virtual para desarrollar habilidades de liderazgo. ¿En qué puedo ayudarte hoy?',
+    content: hasDiagnostic
+      ? `¡Hola${userName ? `, **${userName}**` : ''}! Soy **LideraBot**, tu chatbot y mentor en la plataforma. Ya realizaste tu Prueba Diagnóstica Inicial, por lo que tu módulo recomendado está desbloqueado. Recuerda que a medida que completes satisfactoriamente cada módulo (5 de 5 niveles), irás escalonando y desbloqueando el siguiente. ¿En qué te puedo ayudar hoy?`
+      : `¡Hola${userName ? `, **${userName}**` : ''}! 👋 Soy **LideraBot**, el chatbot que te acompañará en todo tu recorrido por esta aplicación.\n\nPara iniciar nuestro proceso de interacción, primero debes realizar una **Prueba Diagnóstica Inicial**. Con base en tus resultados identificaré tus habilidades, fortalezas y debilidades, te diré **qué módulo te recomiendo estudiar primero** y cómo irás **escalonando paso a paso para desbloquear los demás módulos** cuando termines los primeros satisfactoriamente.\n\nEscríbeme **"Hola"** para interactuar conmigo y **desbloquear tu Prueba Diagnóstica**.`,
     timestamp: new Date(),
   },
 ];
 
-const suggestedQuestions = [
-  '¿Cómo puedo mejorar mi comunicación?',
-  'Ejercicios de toma de decisiones',
-  'Retroalimentación de mi progreso',
-  '¿Qué estrategias me ayudan a liderar mejor?',
-];
+const API_BASE =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.MODE === 'production' ? '' : 'http://localhost:4001');
 
-const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.MODE === 'production' ? '' : 'http://localhost:4001');
+function cleanBotMarkdown(text: string): string {
+  return text
+    .replace(/\[ABRIR_SUBMODULO:\s*\d+\s*\]/gi, '')
+    .replace(/\\text\{([^}]*)\}/g, '$1')
+    .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
+    .replace(/\\textit\{([^}]*)\}/g, '*$1*')
+    .replace(/\\rightarrow|\\to|\\longrightarrow|\\Rightarrow/g, '→')
+    .replace(/\\leftarrow|\\longleftarrow/g, '←')
+    .replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, '**$1**')
+    .replace(/\$\s*([^$\n]+?)\s*\$/g, '$1')
+    .trim();
+}
 
-export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, totalAvailableActivities, onOpenActivitiesWithQuiz, onOpenRecommendedActivity }: ChatPanelProps) {
-  const storageKey = `liderabot-chat-messages:${userEmail}`;
+function extractSubmoduleAction(text: string): number | null {
+  const match = text.match(/\[ABRIR_SUBMODULO:\s*([1-5])\s*\]/i);
+  if (!match) return null;
+  return Number(match[1]);
+}
+
+export function ChatPanel({
+  userEmail = 'guest',
+  userName,
+  completedActivityIds,
+  totalAvailableActivities,
+  moduleAnswers = {},
+  diagnosticResult = null,
+  hasInteractedWithBot = false,
+  unlockedSubmoduleIds = [],
+  initialPrompt = null,
+  onPromptHandled,
+  onBotInteraction,
+  onOpenDiagnostic,
+  onOpenSubmodule,
+}: ChatPanelProps) {
+  const storageKey = `liderabot-chat-messages-v3:${userEmail}`;
 
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const storedMessages = localStorage.getItem(storageKey);
-      if (!storedMessages) return initialMessages;
+      if (!storedMessages) return getInitialGreeting(userName, Boolean(diagnosticResult));
       const parsedMessages = JSON.parse(storedMessages) as Message[];
-      if (!Array.isArray(parsedMessages) || parsedMessages.length === 0) return initialMessages;
+      if (!Array.isArray(parsedMessages) || parsedMessages.length === 0) {
+        return getInitialGreeting(userName, Boolean(diagnosticResult));
+      }
       return parsedMessages.map((message) => ({
         ...message,
         timestamp: new Date(message.timestamp),
       }));
     } catch {
-      return initialMessages;
+      return getInitialGreeting(userName, Boolean(diagnosticResult));
     }
   });
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [activityAttempts, setActivityAttempts] = useState<ActivityAttemptContext[]>([]);
-  const [activityOptions, setActivityOptions] = useState<ActivityOption[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleNewConversation = () => {
     localStorage.removeItem(storageKey);
-    setMessages(initialMessages);
+    setMessages(getInitialGreeting(userName, Boolean(diagnosticResult)));
   };
-
-  useEffect(() => {
-    let isActive = true;
-    fetch(`${API_BASE}/activities`)
-      .then((response) => response.ok ? response.json() : [])
-      .then((data) => {
-        if (isActive) setActivityOptions(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (isActive) setActivityOptions([]);
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let isActive = true;
-    const token = localStorage.getItem('access_token') || '';
-
-    fetch(`${API_BASE}/activities/attempts/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((response) => response.ok ? response.json() : [])
-      .then((data) => {
-        if (isActive) setActivityAttempts(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (isActive) setActivityAttempts([]);
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [userId]);
 
   useEffect(() => {
     try {
@@ -131,6 +129,13 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    if (initialPrompt && !isTyping) {
+      void sendPromptText(initialPrompt);
+      onPromptHandled?.();
+    }
+  }, [initialPrompt]);
 
   const appendUniqueMessage = (message: Message) => {
     setMessages((prev) => {
@@ -146,69 +151,93 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
     });
   };
 
-  const buildUserContext = () => {
-    try {
-      const completedActivities = JSON.parse(localStorage.getItem(`completed-activities:${userEmail}`) || '[]');
-      const completedGenerated = JSON.parse(localStorage.getItem(`completed-generated-quizzes:${userEmail}`) || '[]');
-      const skillMap = JSON.parse(localStorage.getItem(`completed-activity-skills:${userEmail}`) || '{}');
-      const totalAvailable = Math.max(totalAvailableActivities, 1);
-      const storedActivityIds = Array.isArray(completedActivities) ? completedActivities : [];
-      const history = Array.isArray(completedGenerated) ? completedGenerated : [];
-      const completedAttemptTitles = activityAttempts
-        .filter((attempt) => attempt.status === 'evaluated')
-        .map((attempt) => attempt.activity_id);
-      const completedActivitiesCount = new Set([
-        ...storedActivityIds,
-        ...completedActivityIds,
-        ...completedAttemptTitles,
-      ]).size;
-      const latestAttempt = activityAttempts[0];
-      const lastActivityTitle = latestAttempt?.activity_title || history[0]?.title || null;
-      const lastCategory = latestAttempt?.skill || history[0]?.category || null;
-      const progressPercent = Math.min(100, Math.round((completedActivitiesCount / totalAvailable) * 100));
-      const groupedScores = activityAttempts.reduce<Record<string, number[]>>((scores, attempt) => {
-        if (attempt.score !== null && attempt.status === 'evaluated') {
-          (scores[attempt.skill] ??= []).push(attempt.score);
+  const buildModuleProgressSummary = () => {
+    const lines: string[] = [];
+    for (const mod of leadershipModules) {
+      const isUnlocked = unlockedSubmoduleIds.includes(mod.id);
+      const topicDetails: string[] = [];
+      for (const topic of mod.topics) {
+        const key = `${mod.id}-${topic.level}`;
+        const rawAns = moduleAnswers[key];
+        if (topic.level < 5) {
+          topicDetails.push(
+            `  - Contenido ${topic.level} (${topic.topicTitle} - ${topic.authorCitation}): ${rawAns && rawAns.trim() ? 'Contenido estudiado' : 'Pendiente por estudiar'}`,
+          );
+        } else if (rawAns && rawAns.trim()) {
+          const cleanAns = rawAns.replace('|||', ' | Sustentación: ');
+          topicDetails.push(
+            `  - Ejercicio Práctico Final (${topic.topicTitle} - ${topic.authorCitation}): Estudiante respondió: "${cleanAns}"`,
+          );
+        } else {
+          topicDetails.push(
+            `  - Ejercicio Práctico Final (${topic.topicTitle}): Pendiente por responder`,
+          );
         }
-        return scores;
-      }, {});
-      const skillScores = Object.fromEntries(Object.entries(groupedScores).map(([skill, scores]) => [
-        skill,
-        Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length),
-      ]));
-
-      return {
-        completedActivitiesCount: Math.max(activitiesCount, completedActivitiesCount),
-        progressPercent,
-        lastActivityTitle,
-        lastCategory,
-        skills: skillMap && typeof skillMap === 'object' ? skillMap : {},
-        skillScores,
-        recentActivityAttempts: activityAttempts.slice(0, 3).map((attempt) => ({
-          title: attempt.activity_title,
-          skill: attempt.skill,
-          score: attempt.score,
-          nextSteps: attempt.next_steps,
-        })),
-      };
-    } catch {
-      return {
-        completedActivitiesCount: 0,
-        progressPercent: 0,
-        lastActivityTitle: null,
-        lastCategory: null,
-        skills: {},
-      };
+      }
+      lines.push(
+        `Submódulo ${mod.id}: ${mod.name} (${mod.authorsSummary}) [${isUnlocked ? 'DESBLOQUEADO' : 'BLOQUEADO HASTA COMPLETAR EL ANTERIOR'}]\n${topicDetails.join('\n')}`,
+      );
     }
+    return lines.join('\n\n');
   };
 
-  const handleSend = async () => {
-    if (!inputValue.trim()) return;
+  const buildDiagnosticSummary = () => {
+    if (!diagnosticResult) {
+      return 'El estudiante todavía no ha realizado la Prueba Diagnóstica Inicial de 14 preguntas. Los módulos están bloqueados hasta que realice la prueba diagnóstica.';
+    }
+
+    const orderIds = diagnosticResult.recommendedSubmoduleOrder || [1, 2, 3, 4, 5];
+    const startId = diagnosticResult.recommendedStartingSubmoduleId || orderIds[0] || 1;
+    const startMod = leadershipModules.find((m) => m.id === startId) || leadershipModules[0];
+
+    const modLines = diagnosticResult.competencyModules
+      .map(
+        (m) =>
+          `- ${m.moduleTitle} (${m.competency}): ${m.levelTitle} (${m.percentage}%) -> Recomendación: ${m.studyStatus}. Fortalezas: ${m.strengths}. Debilidades/Reforzar: ${m.weaknesses}. Temas a reforzar: ${m.reinforcementTopics.join(', ')}.`,
+      )
+      .join('\n');
+
+    const subLines = diagnosticResult.submoduleRecommendations
+      .map((s) => `- ${s.moduleName}: ${s.priority} (${s.reason})`)
+      .join('\n');
+
+    return [
+      `Nivel General Obtenido: ${diagnosticResult.overallLevelTitle} (${diagnosticResult.overallPercentage}%)`,
+      `Primer Submódulo Recomendado y Desbloqueado: Submódulo ${startMod.id} (${startMod.name})`,
+      `Orden de Escalonamiento de Submódulos (se desbloquean uno a uno al completar 5/5 niveles del anterior): ${orderIds.map((id) => `Submódulo 0${id}`).join(' → ')}`,
+      `Submódulos actualmente desbloqueados para el estudiante: ${unlockedSubmoduleIds.map((id) => `Submódulo 0${id}`).join(', ')}`,
+      `Habilidades detectadas: ${diagnosticResult.skillsProfile.join('; ')}`,
+      `Fortalezas principales: ${diagnosticResult.strengthsList.join(' | ')}`,
+      `Debilidades / Áreas de mejora: ${diagnosticResult.weaknessesList.join(' | ')}`,
+      `Diagnóstico por Módulos Generales (1. Liderazgo, 2. Comunicación, 3. Toma de Decisiones, 4. Trabajo en Equipo):\n${modLines}`,
+      `Ruta en los 5 Submódulos de Liderazgo:\n${subLines}`,
+    ].join('\n\n');
+  };
+
+  const buildUserContext = () => {
+    const totalAvailable = Math.max(totalAvailableActivities, 1);
+    const completedCount = completedActivityIds.length;
+    const progressPercent = Math.min(100, Math.round((completedCount / totalAvailable) * 100));
+
+    return {
+      completedActivitiesCount: completedCount,
+      progressPercent,
+      hasCompletedDiagnostic: Boolean(diagnosticResult),
+      moduleProgressSummary: buildModuleProgressSummary(),
+      diagnosticSummary: buildDiagnosticSummary(),
+    };
+  };
+
+  const sendPromptText = async (textToSend: string) => {
+    if (!textToSend.trim()) return;
+
+    // Unlock diagnostic test upon first interaction with the chatbot
+    onBotInteraction?.();
 
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputValue,
+      content: textToSend,
       timestamp: new Date(),
     };
 
@@ -241,11 +270,13 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
       let botMessageCreated = false;
 
       const updateBotMessage = (content: string) => {
-        setMessages((prev) => prev.map((message) => {
-          if (message.id !== botMessageId) return message;
-          if (message.content === content) return message;
-          return { ...message, content };
-        }));
+        setMessages((prev) =>
+          prev.map((message) => {
+            if (message.id !== botMessageId) return message;
+            if (message.content === content) return message;
+            return { ...message, content };
+          }),
+        );
       };
 
       while (true) {
@@ -276,24 +307,21 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
           if (event.startsWith('event: error')) throw new Error(String(eventData));
           if (event.startsWith('event: done')) continue;
 
-          if (
-            eventData &&
-            typeof eventData === 'object' &&
-            (eventData.type === 'quiz' || eventData.type === 'activity')
-          ) {
-            onOpenActivitiesWithQuiz?.(eventData.payload);
-            continue;
-          }
-
-          const messageText = eventData && typeof eventData === 'object' && 'payload' in eventData
-            ? String(eventData.payload ?? '')
-            : typeof eventData === 'string'
-              ? eventData
-              : '';
+          const messageText =
+            eventData && typeof eventData === 'object' && 'payload' in eventData
+              ? String(eventData.payload ?? '')
+              : typeof eventData === 'string'
+                ? eventData
+                : '';
 
           if (!botMessageCreated) {
             botMessageCreated = true;
-            appendUniqueMessage({ id: botMessageId, type: 'bot', content: '', timestamp: new Date() });
+            appendUniqueMessage({
+              id: botMessageId,
+              type: 'bot',
+              content: '',
+              timestamp: new Date(),
+            });
           }
           streamedReply += messageText;
           updateBotMessage(streamedReply);
@@ -303,22 +331,12 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
       }
 
       if (!streamedReply) throw new Error('No se recibió respuesta de LideraBot.');
-      const recommendation = activityOptions.find((activity) => streamedReply.includes(activity.title));
-      if (recommendation) {
-        setMessages((previous) => previous.map((message) => message.id === botMessageId
-          ? {
-            ...message,
-            recommendedActivityId: recommendation.id,
-            recommendedActivityTitle: recommendation.title,
-          }
-          : message));
-      }
     } catch (error) {
       console.error('Error fetching bot response:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: 'Error de conexión con LideraBot.',
+        content: 'Error de conexión con LideraBot. Verifica que el servidor backend esté activo.',
         timestamp: new Date(),
       };
       appendUniqueMessage(errorMessage);
@@ -327,78 +345,110 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
     }
   };
 
-  const handleSuggestedQuestion = (question: string) => {
-    setInputValue(question);
+  const handleSend = () => {
+    void sendPromptText(inputValue);
   };
 
+  const recommendedStartId =
+    diagnosticResult?.recommendedStartingSubmoduleId ?? unlockedSubmoduleIds[0] ?? 1;
+  const recommendedStartModule =
+    leadershipModules.find((m) => m.id === recommendedStartId) ?? leadershipModules[0];
+
   return (
-    <Card className="flex flex-col h-full shadow-lg">
-      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-primary/90 text-white rounded-t-lg">
+    <Card className="flex flex-col h-full w-full shadow-lg border-[#DCE3EF] overflow-hidden rounded-[22px]">
+      {/* Top Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b bg-[#0F3B8F] text-white shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <Bot className="w-6 h-6" />
+          <div className="w-9 h-9 bg-[#FACC15] text-[#0F3B8F] rounded-xl flex items-center justify-center font-bold">
+            <Bot className="w-5 h-5" />
           </div>
-          <div>
-            <h3 className="text-white font-medium">LideraBot</h3>
-            <p className="text-xs text-white/80">En línea</p>
-          </div>
+          <h3 className="text-white font-extrabold tracking-tight text-sm sm:text-base">
+            LideraBot · Asistente y Guía de Aprendizaje
+          </h3>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleNewConversation}
-          className="text-white hover:bg-white/20 hover:text-white text-xs gap-1.5 px-3 py-1.5 border border-white/30 rounded-md transition-colors"
-          title="Eliminar conversación y empezar de nuevo"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Nueva conversación</span>
-        </Button>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleNewConversation}
+            className="text-white hover:bg-white/20 hover:text-white text-xs gap-1.5 px-2.5 py-1.5 border border-white/30 rounded-lg transition-colors"
+            title="Reiniciar conversación"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">Reiniciar</span>
+          </Button>
+        </div>
       </div>
 
-      <ScrollArea className="min-h-0 flex-1 overflow-hidden">
-        <div className="space-y-4 p-4">
+      {/* Messages Area - Takes remaining height with internal scroll */}
+      <ScrollArea className="min-h-0 flex-1 overflow-y-auto bg-[#F8FAFD]">
+        <div className="space-y-4 p-5">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex gap-3 ${message.type === 'user' ? 'flex-row-reverse' : ''}`}
             >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                message.type === 'bot' ? 'bg-primary text-white' : 'bg-secondary text-foreground'
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  message.type === 'bot'
+                    ? 'bg-[#0F3B8F] text-white'
+                    : 'bg-[#A855F7] text-white'
+                }`}
+              >
                 {message.type === 'bot' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
               </div>
-              <div className={`min-w-0 max-w-[75%] overflow-hidden rounded-2xl px-4 py-2 ${
-                message.type === 'bot' ? 'bg-white border shadow-sm' : 'bg-primary text-white'
-              }`}>
+              <div
+                className={`min-w-0 max-w-[82%] overflow-hidden rounded-2xl px-4 py-3 ${
+                  message.type === 'bot'
+                    ? 'bg-white border border-[#DCE3EF] shadow-sm text-[#152542]'
+                    : 'bg-[#0F3B8F] text-white'
+                }`}
+              >
                 {message.type === 'bot' ? (
-                  <div className="min-w-0 break-words text-sm leading-6 [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:font-semibold [&_ol]:my-2 [&_ol]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_ul]:my-2 [&_ul]:ml-5 [&_ul]:list-disc">
+                  <div className="min-w-0 break-words text-sm leading-6 [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-bold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-bold [&_h3]:mb-2 [&_h3]:font-bold [&_ol]:my-2 [&_ol]:ml-5 [&_ol]:list-decimal [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-bold [&_ul]:my-2 [&_ul]:ml-5 [&_ul]:list-disc">
                     {(() => {
-                      const refIndex = message.content.search(/\n\n(Referencia|Fuentes consultadas):/i);
-                      if (refIndex !== -1) {
-                        const mainText = message.content.slice(0, refIndex);
-                        const refText = message.content.slice(refIndex).trim();
-                        return (
-                          <>
-                            <ReactMarkdown>{mainText}</ReactMarkdown>
-                            <div className="mt-3 pt-2 border-t border-gray-200 text-xs text-muted-foreground italic">
-                              <ReactMarkdown>{refText}</ReactMarkdown>
+                      const actionModId = extractSubmoduleAction(message.content);
+                      const targetMod =
+                        actionModId !== null
+                          ? (leadershipModules.find((m) => m.id === actionModId) ??
+                            recommendedStartModule)
+                          : null;
+                      const cleanedContent = cleanBotMarkdown(message.content);
+                      const refIndex = cleanedContent.search(
+                        /\n\n(Referencia|Fuentes consultadas):/i,
+                      );
+                      return (
+                        <>
+                          {refIndex !== -1 ? (
+                            <>
+                              <ReactMarkdown>{cleanedContent.slice(0, refIndex)}</ReactMarkdown>
+                              <div className="mt-3 pt-2 border-t border-gray-200 text-xs text-muted-foreground italic">
+                                <ReactMarkdown>
+                                  {cleanedContent.slice(refIndex).trim()}
+                                </ReactMarkdown>
+                              </div>
+                            </>
+                          ) : (
+                            <ReactMarkdown>{cleanedContent}</ReactMarkdown>
+                          )}
+
+                          {targetMod && diagnosticResult && onOpenSubmodule && (
+                            <div className="mt-3 pt-3 border-t border-[#E4EAF3] flex items-center justify-between gap-3">
+                              <span className="text-xs font-bold text-[#0E785F]">
+                                Submódulo 0{targetMod.id}: {targetMod.name}
+                              </span>
+                              <button
+                                onClick={() => onOpenSubmodule(targetMod.id, 1)}
+                                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#0E785F] px-3.5 py-2 text-xs font-extrabold text-white hover:bg-[#0B614D]"
+                              >
+                                Abrir Submódulo 0{targetMod.id} <ArrowRight className="w-3.5 h-3.5" />
+                              </button>
                             </div>
-                          </>
-                        );
-                      }
-                      return <ReactMarkdown>{message.content}</ReactMarkdown>;
+                          )}
+                        </>
+                      );
                     })()}
-                    {message.recommendedActivityId && message.recommendedActivityTitle && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-3"
-                        onClick={() => onOpenRecommendedActivity?.(message.recommendedActivityId!)}
-                      >
-                        Abrir {message.recommendedActivityTitle}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
                 ) : (
                   <p className="break-words text-sm">{message.content}</p>
@@ -407,16 +457,46 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
             </div>
           ))}
 
+          {/* Action Banner inside chat once user has interacted (before diagnostic) */}
+          {hasInteractedWithBot && !diagnosticResult && onOpenDiagnostic && (
+            <div className="rounded-2xl border-2 border-[#FACC15] bg-[#FFFBEB] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-wider text-[#92400E]">
+                  ✓ ¡Prueba Diagnóstica Desbloqueada!
+                </p>
+                <p className="text-sm font-bold text-[#10264F] mt-0.5">
+                  Completa las 14 preguntas para que LideraBot te recomiende y desbloquee tu primer
+                  módulo.
+                </p>
+              </div>
+              <button
+                onClick={onOpenDiagnostic}
+                className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-4 py-2.5 text-xs font-extrabold text-white hover:bg-[#174AA6]"
+              >
+                Ir a la Prueba Diagnóstica <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {isTyping && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-primary text-white">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#0F3B8F] text-white">
                 <Bot className="w-5 h-5" />
               </div>
-              <div className="rounded-2xl border bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-2xl border border-[#DCE3EF] bg-white px-4 py-3 shadow-sm">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div
+                    className="w-2 h-2 bg-[#2D6BFF] rounded-full animate-bounce"
+                    style={{ animationDelay: '0ms' }}
+                  />
+                  <div
+                    className="w-2 h-2 bg-[#2D6BFF] rounded-full animate-bounce"
+                    style={{ animationDelay: '150ms' }}
+                  />
+                  <div
+                    className="w-2 h-2 bg-[#2D6BFF] rounded-full animate-bounce"
+                    style={{ animationDelay: '300ms' }}
+                  />
                 </div>
               </div>
             </div>
@@ -425,38 +505,26 @@ export function ChatPanel({ userId, userEmail = 'guest', completedActivityIds, t
         </div>
       </ScrollArea>
 
-      {messages.length <= 1 && (
-        <div className="px-4 pb-3">
-          <p className="text-sm text-muted-foreground mb-2">Preguntas sugeridas:</p>
-          <div className="flex flex-wrap gap-2">
-            {suggestedQuestions.map((question) => (
-              <Button
-                key={question}
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => handleSuggestedQuestion(question)}
-              >
-                {question}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="p-4 border-t bg-gray-50">
+      {/* Input Bar */}
+      <div className="p-3.5 border-t border-[#DCE3EF] bg-white shrink-0">
         <div className="flex gap-2">
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Escribe tu mensaje..."
-            className="flex-1"
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            placeholder={
+              !hasInteractedWithBot
+                ? 'Escribe "Hola" para iniciar y desbloquear tu Prueba Diagnóstica...'
+                : 'Escribe tu mensaje a LideraBot...'
+            }
+            className="flex-1 rounded-xl border-[#C9D2E1]"
           />
-          <Button size="icon" variant="outline" className="flex-shrink-0">
-            <Mic className="w-5 h-5" />
-          </Button>
-          <Button size="icon" onClick={handleSend} className="flex-shrink-0 bg-primary hover:bg-primary/90">
+          <Button
+            size="icon"
+            onClick={handleSend}
+            disabled={isTyping || !inputValue.trim()}
+            className="flex-shrink-0 bg-[#0F3B8F] hover:bg-[#174AA6] rounded-xl"
+          >
             <Send className="w-5 h-5" />
           </Button>
         </div>

@@ -4,6 +4,9 @@ export class CreateProgressDto {
   module_id?: number;
   user_email?: string;
   activity_id?: string;
+  submodule_name?: string;
+  exercise_response?: string;
+  overall_progress?: number;
   percentage?: number;
   status?: string;
   completed_at?: Date;

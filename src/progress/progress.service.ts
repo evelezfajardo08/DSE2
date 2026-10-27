@@ -23,13 +23,26 @@ export class ProgressService {
       user_email: data.user_email || '',
       activity_id: String(data.activity_id || ''),
       module_id: Number(data.module_id ?? 1),
-      percentage: Number(data.percentage ?? 100),
-      status: data.status ?? 'completed',
+      submodule_name: data.submodule_name || '',
+      exercise_response: data.exercise_response ?? '',
+      overall_progress: Number(data.overall_progress ?? 0),
+      percentage: Number(data.percentage ?? 0),
+      status: data.status ?? 'not_started',
       completed_at: data.completed_at ?? new Date(),
     };
 
     if (!activityData.user_id || !activityData.activity_id) {
       throw new NotFoundException('Faltan datos para registrar la actividad completada.');
+    }
+
+    // Limpiar registros antiguos que no correspondan al esquema de 5 submódulos (submodulo-1..5)
+    if (/^submodulo-[1-5]$/.test(activityData.activity_id)) {
+      await this.progressModel
+        .deleteMany({
+          user_id: activityData.user_id,
+          activity_id: { $nin: ['submodulo-1', 'submodulo-2', 'submodulo-3', 'submodulo-4', 'submodulo-5'] },
+        })
+        .exec();
     }
 
     const existingProgress = await this.progressModel
@@ -42,14 +55,21 @@ export class ProgressService {
           { _id: existingProgress._id },
           {
             ...activityData,
-            percentage: Math.max(existingProgress.percentage ?? 0, activityData.percentage),
+            exercise_response:
+              activityData.exercise_response !== undefined && activityData.exercise_response !== ''
+                ? activityData.exercise_response
+                : existingProgress.exercise_response || '',
+            percentage: activityData.percentage,
           },
           { new: true },
         )
         .exec();
     }
 
-    const createdProgress = await this.progressModel.create(activityData);
+    const createdProgress = await this.progressModel.create({
+      ...activityData,
+      id: Date.now() + Math.floor(Math.random() * 100000),
+    });
     if (typeof (createdProgress as any).save === 'function') {
       return (createdProgress as any).save();
     }

@@ -1,18 +1,77 @@
-import { useEffect, useState } from 'react';
-import { Home, Dumbbell, TrendingUp, GraduationCap, X, LogOut, Moon, Sun } from 'lucide-react';
-import { Header } from './components/Header';
-import { ChatPanel } from './components/ChatPanel';
-import { StatsPanel } from './components/StatsPanel';
-import { Activities } from './components/Activities';
-import { Progress } from './components/Progress';
-import { TeacherPanel } from './components/TeacherPanel';
-import { LoginScreen } from './components/LoginScreen';
-import { Button } from './components/ui/button';
-import { Card } from './components/ui/card';
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "motion/react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Award,
+  BookMarked,
+  BookOpen,
+  Bot,
+  BrainCircuit,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CircleDot,
+  ClipboardCheck,
+  Clock3,
+  ExternalLink,
+  FileText,
+  GraduationCap,
+  Lightbulb,
+  LockKeyhole,
+  LogOut,
+  Menu,
+  MessageCircleQuestion,
+  MessageSquare,
+  Moon,
+  Save,
+  Settings,
+  Sun,
+  Target,
+  Unlock,
+  User,
+  UserRound,
+  X,
+} from "lucide-react";
+import { Header } from "./components/Header";
+import { TeacherPanel } from "./components/TeacherPanel";
+import { LoginScreen } from "./components/LoginScreen";
+import { ChatPanel } from "./components/ChatPanel";
+import { DiagnosticView } from "./components/DiagnosticView";
+import { Button } from "./components/ui/button";
+import { Card } from "./components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./components/ui/dropdown-menu";
+import {
+  LeadershipModule,
+  ModuleStatus,
+  leadershipModules,
+  theoreticalFoundations,
+} from "./leadershipData";
+import { DiagnosticEvaluationResult } from "./diagnosticData";
 
-type Screen = 'home' | 'activities' | 'progress' | 'teacher' | 'profile' | 'settings';
+type View =
+  | "home"
+  | "intro"
+  | "evaluation"
+  | "complete"
+  | "diagnostic"
+  | "chatbot"
+  | "foundations"
+  | "responses"
+  | "profile"
+  | "settings";
+type TeacherScreen = "teacher" | "profile" | "settings";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.MODE === 'production' ? '' : 'http://localhost:4001');
+const API_BASE =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.MODE === "production" ? "" : "http://localhost:4001");
 
 interface AuthUser {
   id: number;
@@ -21,102 +80,88 @@ interface AuthUser {
   currentStreak: number;
 }
 
-const defaultSkillTotals: Record<string, number> = {
-  Liderazgo: 2,
-  Comunicación: 1,
-  'Toma de Decisiones': 1,
-  'Trabajo en Equipo': 2,
+export type ModuleWithProgress = LeadershipModule & {
+  status: ModuleStatus;
+  progress: number;
+  completedLevels: number;
+  isUnlocked: boolean;
+  stepOrderIndex: number;
+  unlockRequirementText: string;
 };
 
-const defaultSkillMap: Record<string, string> = {
-  '1': 'Liderazgo',
-  '2': 'Comunicación',
-  '3': 'Trabajo en Equipo',
-  '4': 'Liderazgo',
-  '5': 'Toma de Decisiones',
-  '6': 'Comunicación',
-  'generated-ai-quiz': 'Liderazgo',
-};
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
 
-const normalizeSkillName = (value?: string) => {
-  const normalizedValue = (value || '').toLowerCase();
-  switch (normalizedValue) {
-    case 'leadership':
-      return 'Liderazgo';
-    case 'communication':
-      return 'Comunicación';
-    case 'decision':
-      return 'Toma de Decisiones';
-    case 'teamwork':
-      return 'Trabajo en Equipo';
-    default:
-      return value || 'Liderazgo';
+function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
   }
-};
+  return name.slice(0, 2).toUpperCase() || "ES";
+}
 
-const buildSkillProgress = (completedIds: string[], completedSkillMap: Record<string, string>) => {
-  const skillNames = ['Liderazgo', 'Comunicación', 'Toma de Decisiones', 'Trabajo en Equipo'];
-  const colors = ['#1E3A8A', '#FACC15', '#10B981', '#8B5CF6'];
-
-  return skillNames.map((skill, index) => {
-    const total = defaultSkillTotals[skill] ?? 1;
-    const completed = completedIds.filter((activityId) => {
-      const rawSkill = completedSkillMap[activityId] || defaultSkillMap[activityId] || 'Liderazgo';
-      return normalizeSkillName(rawSkill) === skill;
-    }).length;
-
-    return {
-      name: skill,
-      level: Math.min(100, Math.round((completed / total) * 100)),
-      color: colors[index],
-    };
-  });
-};
-
-const studentStatsData = {
-  overallProgress: 0,
-  activitiesCompleted: 0,
-  currentStreak: 7,
-  skills: [
-    { name: 'Liderazgo', level: 85, color: '#1E3A8A' },
-    { name: 'Comunicación', level: 78, color: '#FACC15' },
-    { name: 'Toma de Decisiones', level: 70, color: '#10B981' },
-    { name: 'Trabajo en Equipo', level: 88, color: '#8B5CF6' },
-  ],
-  recentBadges: ['Primera Actividad', 'Racha de 7 días', 'Comunicador'],
-};
+function isAnswerValid(level: number, value?: string) {
+  if (!value) return false;
+  if (level === 5) {
+    const [part1 = "", part2 = ""] = value.split("|||");
+    return part1.trim().length > 0 && part2.trim().length > 0;
+  }
+  return value.trim().length > 0;
+}
 
 export default function App() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-  const [currentScreen, setCurrentScreen] = useState<Screen>('home');
-  const [userRole, setUserRole] = useState<'student' | 'teacher'>('student');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [settingsName, setSettingsName] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [settingsMessage, setSettingsMessage] = useState('');
-  const [settingsError, setSettingsError] = useState('');
-  const [completedActivityIds, setCompletedActivityIds] = useState<string[]>([]);
-  const [completedActivitySkills, setCompletedActivitySkills] = useState<Record<string, string>>({});
-  const [activityCompletionDates, setActivityCompletionDates] = useState<string[]>([]);
-  const [pendingChatQuiz, setPendingChatQuiz] = useState<any | null>(null);
-  const [pendingRecommendedActivityId, setPendingRecommendedActivityId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<"student" | "teacher">("student");
   const [isRestoringSession, setIsRestoringSession] = useState(true);
-  const [totalAvailableActivities, setTotalAvailableActivities] = useState(6);
-  const activityProgress = Math.min(
-    100,
-    Math.round((completedActivityIds.length / Math.max(totalAvailableActivities, 1)) * 100),
-  );
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
+
+  // Shared Settings State
+  const [settingsName, setSettingsName] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [settingsMessage, setSettingsMessage] = useState("");
+  const [settingsError, setSettingsError] = useState("");
+
+  // Teacher Navigation State
+  const [teacherScreen, setTeacherScreen] = useState<TeacherScreen>("teacher");
+  const [isTeacherMobileMenuOpen, setIsTeacherMobileMenuOpen] = useState(false);
+
+  // Student UI State
+  const [view, setView] = useState<View>("chatbot");
+  const [activeModuleId, setActiveModuleId] = useState(1);
+  const [level, setLevel] = useState(1);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [diagnosticAnswers, setDiagnosticAnswers] = useState<Record<number, string>>({});
+  const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticEvaluationResult | null>(null);
+  const [hasInteractedWithBot, setHasInteractedWithBot] = useState(false);
+  const [hasStartedSubmodule, setHasStartedSubmodule] = useState(false);
+  const [lockNotice, setLockNotice] = useState<string | null>(null);
+  const [pendingChatPrompt, setPendingChatPrompt] = useState<string | null>(null);
+  const [isFloatingChatOpen, setIsFloatingChatOpen] = useState(false);
+  const [mobileNav, setMobileNav] = useState(false);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    document.documentElement.classList.toggle("dark", isDarkMode);
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem("access_token");
     if (!token) {
       setIsRestoringSession(false);
       return;
@@ -127,9 +172,11 @@ export default function App() {
     })
       .then(async (response) => {
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'La sesión no es válida.');
+        if (!response.ok) throw new Error(data.message || "La sesión no es válida.");
         setUserRole(data.role);
-        setCurrentScreen(data.role === 'teacher' ? 'teacher' : 'home');
+        if (data.role === "teacher") {
+          setTeacherScreen("teacher");
+        }
         setAuthUser({
           id: Number(data.id),
           name: data.name,
@@ -138,131 +185,557 @@ export default function App() {
         });
       })
       .catch(() => {
-        localStorage.removeItem('access_token');
+        localStorage.removeItem("access_token");
       })
       .finally(() => setIsRestoringSession(false));
   }, []);
 
+  // Hydrate answers, bot interaction & diagnostic for logged-in student
   useEffect(() => {
     if (!authUser) return;
-
-    const hydrateFromLocalStorage = () => {
-      try {
-        const storedActivities = localStorage.getItem(`completed-activities:${authUser.email}`);
-        const parsedActivities = storedActivities ? JSON.parse(storedActivities) : [];
-        const validActivities = Array.isArray(parsedActivities)
-          ? parsedActivities.filter((id) => typeof id === 'string' && !id.startsWith('generated'))
-          : [];
-        setCompletedActivityIds(validActivities);
-
-        // Remove old generated quiz keys
-        localStorage.removeItem(`generated-quiz:${authUser.email}`);
-        localStorage.removeItem(`completed-generated-quizzes:${authUser.email}`);
-
-        const storedSkillMap = localStorage.getItem(`completed-activity-skills:${authUser.email}`);
-        const parsedSkillMap = storedSkillMap ? JSON.parse(storedSkillMap) : {};
-        setCompletedActivitySkills(parsedSkillMap && typeof parsedSkillMap === 'object' ? parsedSkillMap : {});
-
-        const storedCompletionDates = localStorage.getItem(`activity-completion-dates:${authUser.email}`);
-        const parsedCompletionDates = storedCompletionDates ? JSON.parse(storedCompletionDates) : [];
-        setActivityCompletionDates(Array.isArray(parsedCompletionDates) ? parsedCompletionDates : []);
-      } catch {
-        setCompletedActivityIds([]);
-        setCompletedActivitySkills({});
-        setActivityCompletionDates([]);
+    try {
+      const saved = localStorage.getItem(`liderabot-module-answers:${authUser.email}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          setAnswers(parsed);
+        }
+      } else {
+        setAnswers({});
       }
-    };
 
-    const hydrateAvailableActivities = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/activities`);
-        if (response.ok) {
-          const data = await response.json();
-          const count = Array.isArray(data) ? data.length : 0;
-          setTotalAvailableActivities(Math.max(1, count || 1));
+      const savedDiagAns = localStorage.getItem(`liderabot-diagnostic-answers:${authUser.email}`);
+      if (savedDiagAns) {
+        const parsedDiagAns = JSON.parse(savedDiagAns);
+        if (parsedDiagAns && typeof parsedDiagAns === "object") {
+          setDiagnosticAnswers(parsedDiagAns);
+        }
+      } else {
+        setDiagnosticAnswers({});
+      }
+
+      const savedBotInteracted = localStorage.getItem(
+        `liderabot-bot-interacted:${authUser.email}`,
+      );
+      const savedSubStarted = localStorage.getItem(
+        `liderabot-submodule-started:${authUser.email}`,
+      );
+      setHasStartedSubmodule(savedSubStarted === "true");
+
+      const savedDiagRes = localStorage.getItem(`liderabot-diagnostic-result:${authUser.email}`);
+      if (savedDiagRes) {
+        const parsedDiagRes = JSON.parse(savedDiagRes);
+        if (parsedDiagRes && typeof parsedDiagRes === "object") {
+          setDiagnosticResult(parsedDiagRes);
+          setHasInteractedWithBot(true);
+          setView("home");
           return;
         }
-      } catch {
-        // ignore and keep default fallback
       }
 
-      setTotalAvailableActivities(6);
-    };
-
-    hydrateFromLocalStorage();
-    void hydrateAvailableActivities();
-
-    const hydrateFromBackend = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/progress/user/${authUser.id}`);
-        if (!response.ok) return;
-        const records = await response.json();
-        const backendActivityIds = Array.from(
-          new Set(
-            (records || [])
-              .map((record: { activity_id?: string }) => record.activity_id)
-              .filter((activityId): activityId is string => Boolean(activityId) && !activityId.startsWith('generated')),
-          ),
-        );
-
-        if (backendActivityIds.length > 0) {
-          setCompletedActivityIds(backendActivityIds);
-          localStorage.setItem(`completed-activities:${authUser.email}`, JSON.stringify(backendActivityIds));
-        }
-      } catch {
-        hydrateFromLocalStorage();
-      }
-    };
-
-    void hydrateFromBackend();
+      setDiagnosticResult(null);
+      setHasInteractedWithBot(savedBotInteracted === "true");
+      setView("chatbot");
+    } catch {
+      setAnswers({});
+      setDiagnosticAnswers({});
+      setDiagnosticResult(null);
+      setHasInteractedWithBot(false);
+      setHasStartedSubmodule(false);
+      setView("chatbot");
+    }
   }, [authUser]);
 
-  const completeActivity = (activityId: string, activitySkill?: string) => {
-    setCompletedActivityIds((currentIds) => {
-      if (currentIds.includes(activityId) || !authUser) return currentIds;
-      const nextIds = [...currentIds, activityId];
-      localStorage.setItem(`completed-activities:${authUser.email}`, JSON.stringify(nextIds));
+  const handleBotInteraction = () => {
+    if (!hasInteractedWithBot) {
+      setHasInteractedWithBot(true);
+      if (authUser) {
+        localStorage.setItem(`liderabot-bot-interacted:${authUser.email}`, "true");
+      }
+      setLockNotice(null);
+    }
+  };
 
-      const skillName = normalizeSkillName(activitySkill || defaultSkillMap[activityId] || 'Liderazgo');
-      setCompletedActivitySkills((currentSkills) => {
-        const nextSkills = { ...currentSkills, [activityId]: skillName };
-        localStorage.setItem(`completed-activity-skills:${authUser.email}`, JSON.stringify(nextSkills));
-        return nextSkills;
-      });
+  const handleSaveDiagnosticProgress = (
+    nextAnswers: Record<number, string>,
+    nextResult: DiagnosticEvaluationResult | null,
+  ) => {
+    setDiagnosticAnswers(nextAnswers);
+    setDiagnosticResult(nextResult);
+    if (authUser) {
+      localStorage.setItem(
+        `liderabot-diagnostic-answers:${authUser.email}`,
+        JSON.stringify(nextAnswers),
+      );
+      if (nextResult) {
+        setHasInteractedWithBot(true);
+        localStorage.setItem(`liderabot-bot-interacted:${authUser.email}`, "true");
+        localStorage.setItem(
+          `liderabot-diagnostic-result:${authUser.email}`,
+          JSON.stringify(nextResult),
+        );
+        if (nextResult.recommendedStartingSubmoduleId) {
+          setActiveModuleId(nextResult.recommendedStartingSubmoduleId);
+        }
+        fetch(`${API_BASE}/results`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: Date.now(),
+            user_id: authUser.id,
+            evaluation_id: 1,
+            score: nextResult.overallPercentage,
+            evaluation_date: new Date().toISOString(),
+          }),
+        }).catch(() => undefined);
+      }
+    }
+  };
 
-      const today = new Date().toISOString().slice(0, 10);
-      setActivityCompletionDates((currentDates) => {
-        const nextDates = [...currentDates, today];
-        localStorage.setItem(`activity-completion-dates:${authUser.email}`, JSON.stringify(nextDates));
-        return nextDates;
-      });
+  // Compute recommended stepped unlocking order
+  const recommendedSubmoduleOrder = useMemo(() => {
+    if (!diagnosticResult) return [1, 2, 3, 4, 5];
+    const rawOrder = diagnosticResult.recommendedSubmoduleOrder;
+    if (Array.isArray(rawOrder) && rawOrder.length === 5) {
+      return rawOrder;
+    }
+    const startId = diagnosticResult.recommendedStartingSubmoduleId || 1;
+    return [startId, ...[1, 2, 3, 4, 5].filter((id) => id !== startId)];
+  }, [diagnosticResult]);
 
-      fetch(`${API_BASE}/progress/activity-completed`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: authUser.id,
-          user_email: authUser.email,
-          activity_id: activityId,
-          module_id: 1,
-          percentage: 100,
-          status: 'completed',
-        }),
-      }).catch(() => undefined);
+  // Compute which submodules are currently unlocked (Stepped Unlocking)
+  const unlockedSubmoduleIds = useMemo(() => {
+    if (!diagnosticResult) return [];
+    const unlocked: number[] = [];
+    for (let i = 0; i < recommendedSubmoduleOrder.length; i++) {
+      const modId = recommendedSubmoduleOrder[i];
+      if (i === 0) {
+        unlocked.push(modId);
+      } else {
+        const prevModId = recommendedSubmoduleOrder[i - 1];
+        const prevCompleted =
+          [1, 2, 3, 4, 5].filter((lvl) => isAnswerValid(lvl, answers[`${prevModId}-${lvl}`]))
+            .length === 5;
+        if (prevCompleted && unlocked.includes(prevModId)) {
+          unlocked.push(modId);
+        } else {
+          break;
+        }
+      }
+    }
+    return unlocked;
+  }, [diagnosticResult, recommendedSubmoduleOrder, answers]);
 
-      return nextIds;
+  // Compute dynamic progress across all 5 modules (25 total levels) + lock status
+  const computedModules: ModuleWithProgress[] = useMemo(() => {
+    return leadershipModules.map((mod) => {
+      const completedLevels = [1, 2, 3, 4, 5].filter((lvl) =>
+        isAnswerValid(lvl, answers[`${mod.id}-${lvl}`]),
+      ).length;
+      const progress = Math.round((completedLevels / 5) * 100);
+      const status: ModuleStatus =
+        completedLevels === 5
+          ? "Completado"
+          : completedLevels > 0
+            ? "En progreso"
+            : "No iniciado";
+
+      const isUnlocked = unlockedSubmoduleIds.includes(mod.id);
+      const stepOrderIndex = recommendedSubmoduleOrder.indexOf(mod.id);
+
+      let unlockRequirementText = "";
+      if (!hasInteractedWithBot) {
+        unlockRequirementText = "Bloqueado · Habla primero con LideraBot";
+      } else if (!diagnosticResult) {
+        unlockRequirementText = "Bloqueado · Realiza la Prueba Diagnóstica";
+      } else if (!isUnlocked && stepOrderIndex > 0) {
+        const prevModId = recommendedSubmoduleOrder[stepOrderIndex - 1];
+        unlockRequirementText = `Bloqueado · Completa antes el Submódulo 0${prevModId}`;
+      }
+
+      return {
+        ...mod,
+        completedLevels,
+        progress,
+        status,
+        isUnlocked,
+        stepOrderIndex: stepOrderIndex === -1 ? mod.id - 1 : stepOrderIndex,
+        unlockRequirementText,
+      };
     });
+  }, [answers, unlockedSubmoduleIds, recommendedSubmoduleOrder, hasInteractedWithBot, diagnosticResult]);
+
+  const completedAnswerKeys = useMemo(() => {
+    const keys: string[] = [];
+    for (const mod of leadershipModules) {
+      for (const lvl of [1, 2, 3, 4, 5]) {
+        if (isAnswerValid(lvl, answers[`${mod.id}-${lvl}`])) {
+          keys.push(`${mod.id}-${lvl}`);
+        }
+      }
+    }
+    return keys;
+  }, [answers]);
+
+  const totalCompletedLevels = completedAnswerKeys.length;
+  const overallProgress = Math.round((totalCompletedLevels / 25) * 100);
+
+  const activeModule = useMemo(
+    () => computedModules.find((item) => item.id === activeModuleId) ?? computedModules[0],
+    [computedModules, activeModuleId],
+  );
+
+  const answerKey = `${activeModuleId}-${level}`;
+  const currentAnswer = answers[answerKey] ?? "";
+
+  const showTemporaryNotice = (msg: string) => {
+    setLockNotice(msg);
+    setTimeout(() => {
+      setLockNotice((current) => (current === msg ? null : current));
+    }, 5500);
+  };
+
+  const handleOpenDiagnosticGuarded = () => {
+    setMobileNav(false);
+    if (!hasInteractedWithBot && !diagnosticResult) {
+      setView("chatbot");
+      showTemporaryNotice(
+        "Para desbloquear la Prueba Diagnóstica Inicial, primero envía un mensaje o interactúa con LideraBot.",
+      );
+      return;
+    }
+    setLockNotice(null);
+    setView("diagnostic");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const chooseModule = (item: ModuleWithProgress) => {
+    if (!item.isUnlocked) {
+      if (!hasInteractedWithBot) {
+        setView("chatbot");
+        showTemporaryNotice(
+          "Primero interactúa con LideraBot para desbloquear la Prueba Diagnóstica Inicial.",
+        );
+        return;
+      }
+      if (!diagnosticResult) {
+        setView("diagnostic");
+        showTemporaryNotice(
+          "Realiza primero la Prueba Diagnóstica Inicial para que LideraBot desbloquee tu primer módulo recomendado.",
+        );
+        return;
+      }
+      showTemporaryNotice(item.unlockRequirementText);
+      return;
+    }
+
+    setLockNotice(null);
+    setHasStartedSubmodule(true);
+    if (authUser) {
+      localStorage.setItem(`liderabot-submodule-started:${authUser.email}`, "true");
+    }
+    setActiveModuleId(item.id);
+    const firstPending =
+      [1, 2, 3, 4, 5].find((lvl) => !isAnswerValid(lvl, answers[`${item.id}-${lvl}`])) ?? 1;
+    setLevel(firstPending);
+    setView("intro");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goHome = () => {
+    setMobileNav(false);
+    if (!hasInteractedWithBot && !diagnosticResult) {
+      setView("chatbot");
+      showTemporaryNotice(
+        "Interactúa primero con LideraBot para desbloquear la Prueba Diagnóstica y los módulos.",
+      );
+      return;
+    }
+    setView("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleAskChatbotWithPrompt = (promptText: string) => {
+    handleBotInteraction();
+    setPendingChatPrompt(promptText);
+    setIsFloatingChatOpen(false);
+    setView("chatbot");
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
+    localStorage.removeItem("access_token");
     setAuthUser(null);
   };
 
-  const skillProgressData = buildSkillProgress(completedActivityIds, completedActivitySkills);
+  const openSettings = () => {
+    if (!authUser) return;
+    setSettingsName(authUser.name);
+    setSettingsMessage("");
+    setSettingsError("");
+    if (userRole === "teacher") {
+      setTeacherScreen("settings");
+    } else {
+      setView("settings");
+      setMobileNav(false);
+    }
+  };
+
+  const openProfile = () => {
+    if (userRole === "teacher") {
+      setTeacherScreen("profile");
+    } else {
+      setView("profile");
+      setMobileNav(false);
+    }
+  };
+
+  const saveName = async () => {
+    if (!authUser) return;
+    setSettingsMessage("");
+    setSettingsError("");
+    try {
+      const response = await fetch(`${API_BASE}/auth/profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: authUser.email, name: settingsName }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "No se pudo actualizar el nombre.");
+      setAuthUser((previous) => (previous ? { ...previous, name: data.name } : previous));
+      setSettingsMessage("Nombre actualizado correctamente.");
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "No se pudo actualizar el nombre.");
+    }
+  };
+
+  const savePassword = async () => {
+    if (!authUser) return;
+    setSettingsMessage("");
+    setSettingsError("");
+    if (newPassword !== confirmNewPassword) {
+      setSettingsError("Las nuevas contraseñas no coinciden.");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE}/auth/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: authUser.email,
+          current_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "No se pudo cambiar la contraseña.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setSettingsMessage(data.message);
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "No se pudo cambiar la contraseña.");
+    }
+  };
+
+  const saveAnswer = (value: string) => {
+    setAnswers((previous) => {
+      const next = { ...previous, [answerKey]: value };
+      if (authUser) {
+        localStorage.setItem(`liderabot-module-answers:${authUser.email}`, JSON.stringify(next));
+      }
+      return next;
+    });
+  };
+
+  const syncAllSubmodulesToBackend = (currentAnswers: Record<string, string>) => {
+    if (!authUser || userRole !== "student") return;
+    const totalDone = leadershipModules.reduce((acc, mod) => {
+      return (
+        acc +
+        [1, 2, 3, 4, 5].filter((lvl) => isAnswerValid(lvl, currentAnswers[`${mod.id}-${lvl}`]))
+          .length
+      );
+    }, 0);
+    const totalPct = Math.round((totalDone / 25) * 100);
+
+    for (const mod of leadershipModules) {
+      const doneLevels = [1, 2, 3, 4, 5].filter((lvl) =>
+        isAnswerValid(lvl, currentAnswers[`${mod.id}-${lvl}`]),
+      ).length;
+      const modPct = Math.round((doneLevels / 5) * 100);
+      const exerciseResp = currentAnswers[`${mod.id}-5`] ?? "";
+
+      fetch(`${API_BASE}/progress/activity-completed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: authUser.id,
+          user_email: authUser.email,
+          activity_id: `submodulo-${mod.id}`,
+          module_id: mod.id,
+          submodule_name: mod.name,
+          exercise_response: exerciseResp,
+          overall_progress: totalPct,
+          percentage: modPct,
+          status:
+            doneLevels === 5 ? "completed" : doneLevels > 0 ? "in_progress" : "not_started",
+        }),
+      }).catch(() => undefined);
+    }
+  };
+
+  useEffect(() => {
+    if (!authUser || userRole !== "student") return;
+    syncAllSubmodulesToBackend(answers);
+  }, [authUser, userRole, answers]);
+
+  const continueEvaluation = () => {
+    let updatedAnswers = answers;
+    if (level < 5 && !isAnswerValid(level, answers[answerKey])) {
+      updatedAnswers = { ...answers, [answerKey]: "CONTENIDO_ESTUDIADO" };
+      setAnswers(updatedAnswers);
+      if (authUser) {
+        localStorage.setItem(
+          `liderabot-module-answers:${authUser.email}`,
+          JSON.stringify(updatedAnswers),
+        );
+      }
+    }
+
+    syncAllSubmodulesToBackend(updatedAnswers);
+
+    if (level < 5) {
+      setLevel((current) => current + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      setView("complete");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const renderProfileSection = () => {
+    if (!authUser) return null;
+    return (
+      <div className="max-w-3xl mx-auto py-8 px-5">
+        <Card className="p-6 shadow-md">
+          <div className="flex items-center gap-4 border-b pb-5">
+            <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center text-xl font-semibold">
+              <User className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h2>Mi Perfil</h2>
+              <p className="text-muted-foreground">Información de tu cuenta</p>
+            </div>
+          </div>
+          <div className="grid gap-4 pt-5 sm:grid-cols-2">
+            <div className="rounded-lg bg-muted/40 p-4">
+              <p className="text-sm text-muted-foreground">Nombre completo</p>
+              <p className="font-semibold mt-1">{authUser.name}</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-4">
+              <p className="text-sm text-muted-foreground">Correo electrónico</p>
+              <p className="font-semibold mt-1 break-all">{authUser.email}</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-4">
+              <p className="text-sm text-muted-foreground">Nivel Diagnóstico</p>
+              <p className="font-semibold mt-1">
+                {diagnosticResult
+                  ? `${diagnosticResult.overallLevelTitle} (${diagnosticResult.overallPercentage}%)`
+                  : "Pendiente por presentar"}
+              </p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-4">
+              <p className="text-sm text-muted-foreground">Submódulos Desbloqueados</p>
+              <p className="font-semibold text-[#0F3B8F] mt-1">
+                {unlockedSubmoduleIds.length} de 5 ({overallProgress}% global)
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  };
+
+  const renderSettingsSection = () => {
+    if (!authUser) return null;
+    return (
+      <div className="max-w-3xl mx-auto space-y-6 py-8 px-5">
+        <div>
+          <h2>Configuración</h2>
+          <p className="text-muted-foreground mt-1">Personaliza tu cuenta y tus preferencias.</p>
+        </div>
+        {settingsMessage && (
+          <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{settingsMessage}</p>
+        )}
+        {settingsError && (
+          <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{settingsError}</p>
+        )}
+        <Card className="p-6 shadow-md">
+          <h3 className="mb-4">Datos personales</h3>
+          <label className="block text-sm font-medium mb-1.5">Nombre</label>
+          <input
+            value={settingsName}
+            onChange={(event) => setSettingsName(event.target.value)}
+            className="w-full rounded-lg border border-gray-200 px-3 py-2"
+            placeholder={authUser.name}
+          />
+          <Button className="mt-4" onClick={saveName}>
+            Guardar nombre
+          </Button>
+        </Card>
+        <Card className="p-6 shadow-md">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3>Tema oscuro</h3>
+              <p className="text-sm text-muted-foreground">
+                Cambia la apariencia de la aplicación.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => setIsDarkMode((value) => !value)}>
+              {isDarkMode ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+              {isDarkMode ? "Claro" : "Oscuro"}
+            </Button>
+          </div>
+        </Card>
+        <Card className="p-6 shadow-md">
+          <h3 className="mb-4">Cambiar contraseña</h3>
+          <div className="space-y-3">
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              placeholder="Contraseña actual"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2"
+            />
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              placeholder="Nueva contraseña (mínimo 6 caracteres)"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2"
+            />
+            <input
+              type="password"
+              value={confirmNewPassword}
+              onChange={(event) => setConfirmNewPassword(event.target.value)}
+              placeholder="Confirmar nueva contraseña"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2"
+            />
+          </div>
+          <Button className="mt-4" onClick={savePassword}>
+            Cambiar contraseña
+          </Button>
+        </Card>
+      </div>
+    );
+  };
 
   if (isRestoringSession) {
-    return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Cargando sesión...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
+        Cargando sesión...
+      </div>
+    );
   }
 
   if (!authUser) {
@@ -270,393 +743,1673 @@ export default function App() {
       <LoginScreen
         onLogin={(role, userData) => {
           setUserRole(role);
-          setCurrentScreen(role === 'teacher' ? 'teacher' : 'home');
+          if (role === "teacher") {
+            setTeacherScreen("teacher");
+          } else {
+            setView("chatbot");
+          }
           setAuthUser(userData);
         }}
       />
     );
   }
 
-  const navigation = [
-    { id: 'home', label: 'Inicio', icon: Home, roles: ['student'] },
-    { id: 'activities', label: 'Actividades', icon: Dumbbell, roles: ['student'] },
-    { id: 'progress', label: 'Mi Progreso', icon: TrendingUp, roles: ['student'] },
-    { id: 'teacher', label: 'Panel Docente', icon: GraduationCap, roles: ['teacher'] },
-  ];
+  // TEACHER VIEW (Preserved)
+  if (userRole === "teacher") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header
+          userRole={userRole}
+          userName={authUser.name}
+          userEmail={authUser.email}
+          onMenuClick={() => setIsTeacherMobileMenuOpen(!isTeacherMobileMenuOpen)}
+          onHomeClick={() => {
+            setTeacherScreen("teacher");
+            setIsTeacherMobileMenuOpen(false);
+          }}
+          onProfile={openProfile}
+          onSettings={openSettings}
+          onLogout={handleLogout}
+        />
 
-  const filteredNavigation = navigation.filter((item) =>
-    item.roles.includes(userRole)
-  );
+        <div className="flex">
+          <aside className="hidden lg:block w-64 border-r bg-white min-h-[calc(100vh-4rem)] sticky top-16">
+            <div className="p-4 flex flex-col h-full">
+              <div className="mb-6 p-3 bg-primary/5 rounded-lg border border-primary/10">
+                <p className="text-xs text-muted-foreground">Sesión iniciada como</p>
+                <p className="font-semibold text-primary text-sm truncate">{authUser.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{authUser.email}</p>
+                <p className="text-xs text-muted-foreground capitalize">Docente</p>
+              </div>
 
-  const renderContent = () => {
-    if (currentScreen === 'settings') {
-      const saveName = async () => {
-        setSettingsMessage('');
-        setSettingsError('');
-        try {
-          const response = await fetch(`${API_BASE}/auth/profile`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: authUser.email, name: settingsName }),
-          });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.message || 'No se pudo actualizar el nombre.');
-          setAuthUser((previous) => previous ? { ...previous, name: data.name } : previous);
-          setSettingsMessage('Nombre actualizado correctamente.');
-        } catch (error) {
-          setSettingsError(error instanceof Error ? error.message : 'No se pudo actualizar el nombre.');
-        }
-      };
+              <div className="space-y-1 flex-1">
+                <button
+                  onClick={() => setTeacherScreen("teacher")}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    teacherScreen === "teacher"
+                      ? "bg-primary text-white"
+                      : "text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <GraduationCap className="w-5 h-5" />
+                  <span>Panel Docente</span>
+                </button>
+              </div>
 
-      const savePassword = async () => {
-        setSettingsMessage('');
-        setSettingsError('');
-        if (newPassword !== confirmNewPassword) {
-          setSettingsError('Las nuevas contraseñas no coinciden.');
-          return;
-        }
-        try {
-          const response = await fetch(`${API_BASE}/auth/change-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: authUser.email,
-              current_password: currentPassword,
-              new_password: newPassword,
-            }),
-          });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.message || 'No se pudo cambiar la contraseña.');
-          setCurrentPassword('');
-          setNewPassword('');
-          setConfirmNewPassword('');
-          setSettingsMessage(data.message);
-        } catch (error) {
-          setSettingsError(error instanceof Error ? error.message : 'No se pudo cambiar la contraseña.');
-        }
-      };
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-4"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Cerrar Sesión</span>
+              </button>
+            </div>
+          </aside>
 
-      return (
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div>
-            <h2>Configuración</h2>
-            <p className="text-muted-foreground mt-1">Personaliza tu cuenta y tus preferencias.</p>
+          {isTeacherMobileMenuOpen && (
+            <div
+              className="lg:hidden fixed inset-0 z-50 bg-black/50"
+              onClick={() => setIsTeacherMobileMenuOpen(false)}
+            >
+              <aside className="w-64 bg-white h-full" onClick={(e) => e.stopPropagation()}>
+                <div className="p-4 flex flex-col h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3>Menú</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsTeacherMobileMenuOpen(false)}
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
+                  </div>
+
+                  <div className="mb-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
+                    <p className="text-xs text-muted-foreground">Sesión iniciada como</p>
+                    <p className="font-semibold text-primary text-sm truncate">{authUser.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">Docente</p>
+                  </div>
+
+                  <div className="space-y-1 flex-1">
+                    <button
+                      onClick={() => {
+                        setTeacherScreen("teacher");
+                        setIsTeacherMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        teacherScreen === "teacher"
+                          ? "bg-primary text-white"
+                          : "text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <GraduationCap className="w-5 h-5" />
+                      <span>Panel Docente</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsTeacherMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-4"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Cerrar Sesión</span>
+                  </button>
+                </div>
+              </aside>
+            </div>
+          )}
+
+          <main className="flex-1 p-6 lg:p-8 max-w-7xl mx-auto w-full">
+            {teacherScreen === "profile" && renderProfileSection()}
+            {teacherScreen === "settings" && renderSettingsSection()}
+            {teacherScreen === "teacher" && <TeacherPanel />}
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // STUDENT VIEW (Full-Screen Chatbot + Stepped Diagnostic & Module Unlocking)
+  return (
+    <div
+      className={cn(
+        "bg-background text-foreground selection:bg-[#FACC15]/60",
+        view === "chatbot" ? "h-screen overflow-hidden flex flex-col" : "min-h-screen",
+      )}
+    >
+      <header className="sticky top-0 z-40 shrink-0 border-b border-white/10 bg-[#0B2D70] text-white shadow-[0_8px_24px_rgba(15,59,143,0.16)]">
+        <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 lg:px-8">
+          <button
+            onClick={() => {
+              if (!diagnosticResult) {
+                setView("chatbot");
+              } else {
+                goHome();
+              }
+            }}
+            className="flex items-center gap-3 text-left"
+            aria-label="Ir al inicio"
+          >
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#FACC15] text-[#0F3B8F] shadow-[inset_0_-2px_0_rgba(0,0,0,.12)]">
+              <BrainCircuit className="h-6 w-6" />
+            </span>
+            <span>
+              <span className="block text-lg font-extrabold tracking-[-0.03em]">LideraBot</span>
+              <span className="hidden text-[10px] font-semibold uppercase tracking-[0.19em] text-blue-200 sm:block">
+                Laboratorio de liderazgo
+              </span>
+            </span>
+          </button>
+
+          <div className="hidden items-center gap-1.5 md:flex">
+            <button
+              onClick={() => {
+                setView("chatbot");
+                setIsFloatingChatOpen(false);
+                setMobileNav(false);
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
+                view === "chatbot"
+                  ? "bg-[#FACC15] text-[#0F3B8F] font-extrabold"
+                  : "text-blue-100 hover:bg-white/10",
+              )}
+            >
+              <Bot className="h-4 w-4" />
+              Chatbot LideraBot
+            </button>
+
+            <button
+              onClick={handleOpenDiagnosticGuarded}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
+                view === "diagnostic"
+                  ? "bg-white/20 text-white font-bold"
+                  : hasInteractedWithBot || diagnosticResult
+                    ? "text-blue-100 hover:bg-white/10"
+                    : "text-blue-300/60 hover:bg-white/5",
+              )}
+            >
+              {hasInteractedWithBot || diagnosticResult ? (
+                <ClipboardCheck className="h-4 w-4 text-[#FACC15]" />
+              ) : (
+                <LockKeyhole className="h-3.5 w-3.5 text-blue-300" />
+              )}
+              Prueba Diagnóstica
+            </button>
+
+            <button
+              onClick={goHome}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
+                view === "home" || view === "intro" || view === "evaluation" || view === "complete"
+                  ? "bg-white/20 text-white font-bold"
+                  : diagnosticResult
+                    ? "text-blue-100 hover:bg-white/10"
+                    : "text-blue-300/60 hover:bg-white/5",
+              )}
+            >
+              {!diagnosticResult && <LockKeyhole className="h-3.5 w-3.5 text-blue-300" />}
+              Módulos ({unlockedSubmoduleIds.length}/5)
+            </button>
+
+            <button
+              onClick={() => {
+                setView("foundations");
+                setMobileNav(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className={cn(
+                "rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
+                view === "foundations"
+                  ? "bg-white/15 text-white"
+                  : "text-blue-100 hover:bg-white/10",
+              )}
+            >
+              Fundamentación
+            </button>
+
+            <button
+              onClick={() => {
+                setView("responses");
+                setMobileNav(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className={cn(
+                "rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
+                view === "responses"
+                  ? "bg-white/15 text-white"
+                  : "text-blue-100 hover:bg-white/10",
+              )}
+            >
+              Progreso ({overallProgress}%)
+            </button>
           </div>
-          {settingsMessage && <p className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{settingsMessage}</p>}
-          {settingsError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{settingsError}</p>}
-          <Card className="p-6 shadow-md">
-            <h3 className="mb-4">Datos personales</h3>
-            <label className="block text-sm font-medium mb-1.5">Nombre</label>
-            <input
-              value={settingsName}
-              onChange={(event) => setSettingsName(event.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2"
-              placeholder={authUser.name}
-            />
-            <Button className="mt-4" onClick={saveName}>Guardar nombre</Button>
-          </Card>
-          <Card className="p-6 shadow-md">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3>Tema oscuro</h3>
-                <p className="text-sm text-muted-foreground">Cambia la apariencia de la aplicación.</p>
-              </div>
-              <Button variant="outline" onClick={() => setIsDarkMode((value) => !value)}>
-                {isDarkMode ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-                {isDarkMode ? 'Claro' : 'Oscuro'}
-              </Button>
-            </div>
-          </Card>
-          <Card className="p-6 shadow-md">
-            <h3 className="mb-4">Cambiar contraseña</h3>
-            <div className="space-y-3">
-              <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} placeholder="Contraseña actual" className="w-full rounded-lg border border-gray-200 px-3 py-2" />
-              <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Nueva contraseña (mínimo 6 caracteres)" className="w-full rounded-lg border border-gray-200 px-3 py-2" />
-              <input type="password" value={confirmNewPassword} onChange={(event) => setConfirmNewPassword(event.target.value)} placeholder="Confirmar nueva contraseña" className="w-full rounded-lg border border-gray-200 px-3 py-2" />
-            </div>
-            <Button className="mt-4" onClick={savePassword}>Cambiar contraseña</Button>
-          </Card>
+
+          <div className="flex items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="hidden items-center gap-3 border-l border-white/20 pl-5 sm:flex text-left outline-none hover:opacity-90 transition-opacity">
+                  <div className="text-right">
+                    <p className="text-sm font-bold leading-tight">{authUser.name}</p>
+                    <p className="text-[11px] text-blue-200">Estudiante · {overallProgress}%</p>
+                  </div>
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-[#A855F7] font-bold">
+                    <User className="h-5 w-5 text-white" />
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-3 py-2">
+                  <p className="text-sm font-semibold text-foreground truncate">{authUser.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{authUser.email}</p>
+                  <p className="text-xs text-muted-foreground">Estudiante</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={openProfile}>
+                  <User className="w-4 h-4 mr-2" />
+                  Mi Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={openSettings}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Configuración
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-500 focus:text-red-500"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Cerrar Sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <button
+              onClick={() => setMobileNav(!mobileNav)}
+              className="grid h-10 w-10 place-items-center rounded-lg bg-white/10 md:hidden"
+              aria-label="Abrir menú"
+            >
+              {mobileNav ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
-      );
-    }
+        {mobileNav && (
+          <div className="border-t border-white/10 px-5 py-4 md:hidden space-y-1">
+            <button
+              onClick={() => {
+                setView("chatbot");
+                setMobileNav(false);
+              }}
+              className="block w-full rounded-lg bg-white/10 px-4 py-3 text-left text-sm font-semibold text-[#FACC15]"
+            >
+              Chatbot LideraBot
+            </button>
+            <button
+              onClick={handleOpenDiagnosticGuarded}
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-blue-100"
+            >
+              <span>Prueba Diagnóstica Inicial</span>
+              {!hasInteractedWithBot && !diagnosticResult && <LockKeyhole className="h-4 w-4" />}
+            </button>
+            <button
+              onClick={goHome}
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-blue-100"
+            >
+              <span>Módulos ({unlockedSubmoduleIds.length}/5 desbloqueados)</span>
+              {!diagnosticResult && <LockKeyhole className="h-4 w-4" />}
+            </button>
+            <button
+              onClick={() => {
+                setView("foundations");
+                setMobileNav(false);
+              }}
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
+            >
+              Fundamentación Teórica
+            </button>
+            <button
+              onClick={() => {
+                setView("responses");
+                setMobileNav(false);
+              }}
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
+            >
+              Progreso ({overallProgress}%)
+            </button>
+            <button
+              onClick={openProfile}
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
+            >
+              Mi Perfil
+            </button>
+            <button
+              onClick={openSettings}
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
+            >
+              Configuración
+            </button>
+            <button
+              onClick={handleLogout}
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-red-300"
+            >
+              Cerrar Sesión
+            </button>
+          </div>
+        )}
+      </header>
 
-    if (currentScreen === 'profile') {
-      return (
-        <div className="max-w-3xl mx-auto">
-          <Card className="p-6 shadow-md">
-            <div className="flex items-center gap-4 border-b pb-5">
-              <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center text-xl font-semibold">
-                {authUser.name.slice(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <h2>Mi Perfil</h2>
-                <p className="text-muted-foreground">Información de tu cuenta</p>
-              </div>
-            </div>
-            <div className="grid gap-4 pt-5 sm:grid-cols-2">
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-sm text-muted-foreground">Nombre completo</p>
-                <p className="font-semibold mt-1">{authUser.name}</p>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-sm text-muted-foreground">Correo electrónico</p>
-                <p className="font-semibold mt-1 break-all">{authUser.email}</p>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-sm text-muted-foreground">Tipo de cuenta</p>
-                <p className="font-semibold mt-1">{userRole === 'teacher' ? 'Docente' : 'Estudiante'}</p>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-4">
-                <p className="text-sm text-muted-foreground">Estado</p>
-                <p className="font-semibold text-green-600 mt-1">Sesión activa</p>
-              </div>
-            </div>
-          </Card>
+      {/* Lock Notice Toast Banner */}
+      {lockNotice && (
+        <div className="bg-[#FFF5C2] border-b border-[#F0D567] px-5 py-2.5 text-center text-xs font-extrabold text-[#5A4E1D] flex items-center justify-center gap-2 shrink-0">
+          <LockKeyhole className="h-4 w-4 text-[#0F3B8F] shrink-0" />
+          <span>{lockNotice}</span>
+          <button
+            onClick={() => setLockNotice(null)}
+            className="ml-2 rounded-md px-2 py-0.5 text-[11px] underline"
+          >
+            Entendido
+          </button>
         </div>
-      );
-    }
+      )}
 
-    if (userRole === 'teacher') {
-      return <TeacherPanel />;
-    }
+      {/* FULL-SCREEN CHATBOT VIEW (No outer page scroll needed) */}
+      {view === "chatbot" && (
+        <main className="flex-1 min-h-0 w-full max-w-[960px] mx-auto px-3 py-3 sm:px-6 sm:py-4 flex flex-col overflow-hidden">
+          <ChatPanel
+            userId={authUser.id}
+            userEmail={authUser.email}
+            userName={authUser.name}
+            completedActivityIds={completedAnswerKeys}
+            totalAvailableActivities={25}
+            moduleAnswers={answers}
+            diagnosticResult={diagnosticResult}
+            hasInteractedWithBot={hasInteractedWithBot}
+            unlockedSubmoduleIds={unlockedSubmoduleIds}
+            initialPrompt={pendingChatPrompt}
+            onPromptHandled={() => setPendingChatPrompt(null)}
+            onBotInteraction={handleBotInteraction}
+            onOpenDiagnostic={handleOpenDiagnosticGuarded}
+            onOpenSubmodule={(modId, lvl) => {
+              const target = computedModules.find((m) => m.id === modId);
+              if (!target || !target.isUnlocked) {
+                showTemporaryNotice(
+                  target?.unlockRequirementText ||
+                    "Completa primero la Prueba Diagnóstica Inicial para desbloquear tu módulo recomendado.",
+                );
+                return;
+              }
+              setHasStartedSubmodule(true);
+              if (authUser) {
+                localStorage.setItem(`liderabot-submodule-started:${authUser.email}`, "true");
+              }
+              setActiveModuleId(modId);
+              setLevel(lvl ?? 1);
+              setView("intro");
+            }}
+          />
+        </main>
+      )}
 
-    switch (currentScreen) {
-      case 'home':
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Chat Panel - Takes 2 columns on large screens */}
-            <div className="lg:col-span-2 h-[600px]">
+      {view === "home" && (
+        <HomeView
+          modules={computedModules}
+          overallProgress={overallProgress}
+          totalCompletedLevels={totalCompletedLevels}
+          diagnosticResult={diagnosticResult}
+          hasInteractedWithBot={hasInteractedWithBot}
+          unlockedSubmoduleIds={unlockedSubmoduleIds}
+          recommendedSubmoduleOrder={recommendedSubmoduleOrder}
+          onChoose={chooseModule}
+          onOpenDiagnostic={handleOpenDiagnosticGuarded}
+          onOpenChatbot={() => {
+            setView("chatbot");
+          }}
+          onOpenFoundations={() => {
+            setView("foundations");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
+      )}
+      {view === "intro" && (
+        <IntroView
+          item={activeModule}
+          onBack={goHome}
+          onStart={() => {
+            setView("evaluation");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
+      )}
+      {view === "evaluation" && (
+        <EvaluationView
+          item={activeModule}
+          level={level}
+          answer={currentAnswer}
+          answers={answers}
+          onAnswer={saveAnswer}
+          onLevel={(nextLevel) => {
+            setLevel(nextLevel);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onAskAiFeedback={(prompt) => handleAskChatbotWithPrompt(prompt)}
+          onBack={() => {
+            setView("intro");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onContinue={continueEvaluation}
+        />
+      )}
+      {view === "complete" && (
+        <CompleteView
+          item={activeModule}
+          answers={answers}
+          modules={computedModules}
+          recommendedSubmoduleOrder={recommendedSubmoduleOrder}
+          onAskAiFeedback={() =>
+            handleAskChatbotWithPrompt(
+              `Acabo de completar satisfactoriamente el Submódulo ${activeModule.id} (${activeModule.name}). Revisa mis 5 respuestas registradas, dame retroalimentación basada en ${activeModule.authorsSummary} e indícame cuál es el siguiente submódulo que se ha desbloqueado en mi ruta escalonada.`,
+            )
+          }
+          onReview={() => {
+            setLevel(1);
+            setView("evaluation");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onHome={goHome}
+          onNext={() => {
+            const currentOrderPos = recommendedSubmoduleOrder.indexOf(activeModule.id);
+            const nextModId =
+              currentOrderPos !== -1 && currentOrderPos + 1 < recommendedSubmoduleOrder.length
+                ? recommendedSubmoduleOrder[currentOrderPos + 1]
+                : recommendedSubmoduleOrder[0];
+            const nextMod = computedModules.find((m) => m.id === nextModId) ?? computedModules[0];
+            chooseModule(nextMod);
+          }}
+        />
+      )}
+      {view === "diagnostic" && (
+        <DiagnosticView
+          studentName={authUser.name}
+          savedAnswers={diagnosticAnswers}
+          savedResult={diagnosticResult}
+          unlockedSubmoduleIds={unlockedSubmoduleIds}
+          completedSubmoduleIds={computedModules
+            .filter((m) => m.status === "Completado")
+            .map((m) => m.id)}
+          hasStartedSubmodule={
+            hasStartedSubmodule || Object.values(answers).some((v) => v.trim().length > 0)
+          }
+          onSaveProgress={handleSaveDiagnosticProgress}
+          onAskChatbotFeedback={handleAskChatbotWithPrompt}
+          onOpenSubmodule={(modId) => {
+            const target = computedModules.find((m) => m.id === modId) ?? computedModules[0];
+            chooseModule(target);
+          }}
+          onBack={() => {
+            if (diagnosticResult) {
+              goHome();
+            } else {
+              setView("chatbot");
+            }
+          }}
+        />
+      )}
+      {view === "foundations" && (
+        <FoundationsView
+          modules={computedModules}
+          onChoose={chooseModule}
+          onBack={goHome}
+        />
+      )}
+      {view === "responses" && (
+        <ResponsesView
+          modules={computedModules}
+          answers={answers}
+          onAskAiFeedback={(prompt) => handleAskChatbotWithPrompt(prompt)}
+          onOpenModuleLevel={(mod, lvl) => {
+            if (!mod.isUnlocked) {
+              showTemporaryNotice(mod.unlockRequirementText);
+              return;
+            }
+            setActiveModuleId(mod.id);
+            setLevel(lvl);
+            setView("evaluation");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          onBack={goHome}
+        />
+      )}
+      {view === "profile" && renderProfileSection()}
+      {view === "settings" && renderSettingsSection()}
+
+      {/* Floating Chatbot Drawer Button (visible on all screens except full chatbot screen) */}
+      {view !== "chatbot" && (
+        <>
+          {isFloatingChatOpen && (
+            <div className="fixed bottom-20 right-5 z-50 w-[92vw] max-w-[440px] h-[540px] shadow-2xl">
               <ChatPanel
                 userId={authUser.id}
                 userEmail={authUser.email}
-                completedActivityIds={completedActivityIds}
-                totalAvailableActivities={totalAvailableActivities}
-                onOpenActivitiesWithQuiz={(quiz) => {
-                  setPendingChatQuiz(quiz);
-                  setPendingRecommendedActivityId(null);
-                  setCurrentScreen('activities');
+                userName={authUser.name}
+                completedActivityIds={completedAnswerKeys}
+                totalAvailableActivities={25}
+                moduleAnswers={answers}
+                diagnosticResult={diagnosticResult}
+                hasInteractedWithBot={hasInteractedWithBot}
+                unlockedSubmoduleIds={unlockedSubmoduleIds}
+                initialPrompt={pendingChatPrompt}
+                onPromptHandled={() => setPendingChatPrompt(null)}
+                onBotInteraction={handleBotInteraction}
+                onOpenDiagnostic={() => {
+                  setIsFloatingChatOpen(false);
+                  handleOpenDiagnosticGuarded();
                 }}
-                onOpenRecommendedActivity={(activityId) => {
-                  setPendingChatQuiz(null);
-                  setPendingRecommendedActivityId(activityId);
-                  setCurrentScreen('activities');
-                }}
-              />
-            </div>
-
-            {/* Stats Panel - Takes 1 column */}
-            <div className="lg:col-span-1">
-              <StatsPanel
-                data={{
-                  ...studentStatsData,
-                  overallProgress: activityProgress,
-                  activitiesCompleted: completedActivityIds.length,
-                  currentStreak: authUser.currentStreak,
-                  skills: skillProgressData,
-                  recentBadges: [
-                    completedActivityIds.length > 0 ? 'Primera práctica' : 'Sin prácticas aún',
-                    authUser.currentStreak > 0 ? `Racha de ${authUser.currentStreak} días` : 'Comienza tu racha',
-                    'Comunicador',
-                  ],
+                onOpenSubmodule={(modId, lvl) => {
+                  const target = computedModules.find((m) => m.id === modId);
+                  if (!target || !target.isUnlocked) {
+                    showTemporaryNotice(
+                      target?.unlockRequirementText ||
+                        "Completa primero la Prueba Diagnóstica Inicial.",
+                    );
+                    return;
+                  }
+                  setIsFloatingChatOpen(false);
+                  setActiveModuleId(modId);
+                  setLevel(lvl ?? 1);
+                  setView("evaluation");
                 }}
               />
             </div>
+          )}
+          <button
+            onClick={() => setIsFloatingChatOpen(!isFloatingChatOpen)}
+            className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2.5 rounded-full bg-[#0F3B8F] px-5 py-3.5 text-sm font-extrabold text-white shadow-[0_12px_30px_rgba(15,59,143,0.35)] border-2 border-[#FACC15] hover:bg-[#174AA6] transition-transform hover:scale-105"
+          >
+            {isFloatingChatOpen ? (
+              <>
+                <X className="h-5 w-5 text-[#FACC15]" />
+                <span>Cerrar LideraBot</span>
+              </>
+            ) : (
+              <>
+                <MessageSquare className="h-5 w-5 text-[#FACC15]" />
+                <span>Mentor IA · LideraBot</span>
+              </>
+            )}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
-            {/* Quick Actions */}
-            <div className="lg:col-span-3">
-              <Card className="p-6 shadow-md">
-                <h3 className="mb-4">Acciones Rápidas</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button
-                    variant="outline"
-                    className="h-auto py-4 flex-col gap-2 hover:border-primary hover:bg-primary/5"
-                    onClick={() => setCurrentScreen('activities')}
-                  >
-                    <Dumbbell className="w-6 h-6 text-primary" />
-                    <div>
-                      <p>Ejercicios</p>
-                      <p className="text-xs text-muted-foreground">Practica liderazgo</p>
-                    </div>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="h-auto py-4 flex-col gap-2 hover:border-primary hover:bg-primary/5"
-                    onClick={() => setCurrentScreen('progress')}
-                  >
-                    <TrendingUp className="w-6 h-6 text-primary" />
-                    <div>
-                      <p>Mi Progreso</p>
-                      <p className="text-xs text-muted-foreground">Ver estadísticas</p>
-                    </div>
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          </div>
-        );
-      case 'activities':
-        return (
-          <Activities
-            userEmail={authUser.email}
-            completedActivityIds={completedActivityIds}
-            onCompleteActivity={completeActivity}
-            currentStreak={authUser.currentStreak}
-            pendingQuiz={pendingChatQuiz}
-            onQuizHandled={() => setPendingChatQuiz(null)}
-            pendingActivityId={pendingRecommendedActivityId}
-            onRecommendedActivityHandled={() => setPendingRecommendedActivityId(null)}
-          />
-        );
-      case 'progress':
-        return (
-          <Progress
-            userId={authUser.id}
-            completedActivities={completedActivityIds.length}
-            totalActivities={totalAvailableActivities}
-            currentStreak={authUser.currentStreak}
-            activityCompletionDates={activityCompletionDates}
-            completedActivityIds={completedActivityIds}
-            completedActivitySkills={completedActivitySkills}
-            userEmail={authUser.email}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+function HomeView({
+  modules,
+  overallProgress,
+  totalCompletedLevels,
+  diagnosticResult,
+  hasInteractedWithBot,
+  unlockedSubmoduleIds,
+  recommendedSubmoduleOrder,
+  onChoose,
+  onOpenDiagnostic,
+  onOpenChatbot,
+  onOpenFoundations,
+}: {
+  modules: ModuleWithProgress[];
+  overallProgress: number;
+  totalCompletedLevels: number;
+  diagnosticResult: DiagnosticEvaluationResult | null;
+  hasInteractedWithBot: boolean;
+  unlockedSubmoduleIds: number[];
+  recommendedSubmoduleOrder: number[];
+  onChoose: (item: ModuleWithProgress) => void;
+  onOpenDiagnostic: () => void;
+  onOpenChatbot: () => void;
+  onOpenFoundations: () => void;
+}) {
+  const inProgressCount = modules.filter((m) => m.status === "En progreso").length;
+  const completedCount = modules.filter((m) => m.status === "Completado").length;
+  const activeRecommendedModule =
+    modules.find((m) => m.isUnlocked && m.status !== "Completado") ??
+    modules.find((m) => m.isUnlocked) ??
+    modules[0];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header
-        userRole={userRole}
-        userName={authUser.name}
-        userEmail={authUser.email}
-        onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        onHomeClick={() => {
-          setCurrentScreen(userRole === 'teacher' ? 'teacher' : 'home');
-          setIsMobileMenuOpen(false);
-        }}
-        onProfile={() => setCurrentScreen('profile')}
-        onSettings={() => {
-          setSettingsName(authUser.name);
-          setSettingsMessage('');
-          setSettingsError('');
-          setCurrentScreen('settings');
-        }}
-        onLogout={handleLogout}
-      />
+    <main className="mx-auto max-w-[1140px] px-5 py-8 lg:px-8">
+      {/* Encabezado simple con breve introducción */}
+      <section className="rounded-[24px] bg-[#0F3B8F] p-6 text-white md:p-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="max-w-2xl">
+            <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+              Módulo de Liderazgo
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-blue-100">
+              Fortalece tu capacidad para guiar equipos y tomar decisiones estratégicas mediante 5
+              submódulos prácticos.
+            </p>
+          </div>
 
-      <div className="flex">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 border-r bg-white min-h-[calc(100vh-4rem)] sticky top-16">
-          <div className="p-4 flex flex-col h-full">
-            {/* User info */}
-            <div className="mb-6 p-3 bg-primary/5 rounded-lg border border-primary/10">
-              <p className="text-xs text-muted-foreground">Sesión iniciada como</p>
-              <p className="font-semibold text-primary text-sm truncate">{authUser.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{authUser.email}</p>
-              <p className="text-xs text-muted-foreground capitalize">{userRole === 'student' ? 'Estudiante' : 'Docente'}</p>
+          <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-blue-200">Progreso</p>
+            <p className="mt-1 text-2xl font-extrabold text-[#FACC15]">{overallProgress}%</p>
+            <p className="text-[11px] text-blue-100">
+              {unlockedSubmoduleIds.length}/5 desbloqueados
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Distribución: Módulo desbloqueado a la izquierda y módulos bloqueados/completados a la derecha */}
+      <section className="mt-8 grid gap-6 md:grid-cols-[1.25fr_0.95fr] items-start">
+        {/* Lado izquierdo: Submódulo desbloqueado actual */}
+        <div className="space-y-4">
+          {modules.filter((m) => m.isUnlocked && m.status !== "Completado").length > 0 ? (
+            modules
+              .filter((m) => m.isUnlocked && m.status !== "Completado")
+              .map((item, index) => (
+                <ModuleCard
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  onChoose={() => onChoose(item)}
+                />
+              ))
+          ) : (
+            <div className="rounded-[20px] border border-[#DCE3EF] bg-white p-6 text-center shadow-sm">
+              <p className="text-sm font-extrabold text-[#10264F]">
+                {unlockedSubmoduleIds.length === 0
+                  ? "Realiza primero la Prueba Diagnóstica para desbloquear tu módulo aquí"
+                  : "¡Has completado todos los submódulos de Liderazgo!"}
+              </p>
+              {unlockedSubmoduleIds.length === 0 && (
+                <button
+                  onClick={onOpenDiagnostic}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-5 py-2.5 text-xs font-extrabold text-white hover:bg-[#174AA6]"
+                >
+                  Ir a la Prueba Diagnóstica <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
+          )}
+        </div>
 
-            <div className="space-y-1 flex-1">
-              {filteredNavigation.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentScreen === item.id;
+        {/* Lado derecho: Submódulos bloqueados y completados */}
+        <div className="space-y-3">
+          {modules
+            .filter((m) => !m.isUnlocked || m.status === "Completado")
+            .map((item, index) => (
+              <ModuleCard
+                key={item.id}
+                item={item}
+                index={index}
+                onChoose={() => onChoose(item)}
+              />
+            ))}
+        </div>
+      </section>
+    </main>
+  );
+}
 
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setCurrentScreen(item.id as Screen)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-primary text-white'
-                        : 'text-foreground hover:bg-muted'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+function ModuleCard({
+  item,
+  index,
+  onChoose,
+}: {
+  item: ModuleWithProgress;
+  index: number;
+  onChoose: () => void;
+}) {
+  const Icon = item.icon;
+  const isCompleted = item.isUnlocked && item.status === "Completado";
 
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-4"
+  // 1. Estado Bloqueado: sombreado, solo título y candadito
+  if (!item.isUnlocked) {
+    return (
+      <motion.article
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05 }}
+        className="rounded-[18px] border border-[#D5DFEE] bg-[#E9EEF6] px-5 py-4 opacity-75 select-none flex items-center justify-between gap-3"
+      >
+        <h3 className="text-sm font-bold text-[#64728A] md:text-base">
+          0{item.id}. {item.name}
+        </h3>
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#DCE3EF] text-[#64728A]">
+          <LockKeyhole className="h-4 w-4" />
+        </span>
+      </motion.article>
+    );
+  }
+
+  // 2. Estado Completado: solo título y chulito en verde
+  if (isCompleted) {
+    return (
+      <motion.article
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05 }}
+        onClick={onChoose}
+        className="cursor-pointer rounded-[18px] border border-[#CBEAD9] bg-[#F2FBF7] px-5 py-4 transition-all hover:shadow-sm flex items-center justify-between gap-3"
+      >
+        <h3 className="text-sm font-extrabold text-[#0E785F] md:text-base">
+          0{item.id}. {item.name}
+        </h3>
+        <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#DFF5ED] px-3 py-1.5 text-xs font-extrabold text-[#0E785F]">
+          <CheckCircle2 className="h-4 w-4 text-[#10856B]" />
+          Completado
+        </span>
+      </motion.article>
+    );
+  }
+
+  // 3. Estado Desbloqueado Activo: título, breve introducción y botón
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="rounded-[22px] border-2 border-[#2D6BFF] bg-white p-6 shadow-md flex flex-col justify-between"
+    >
+      <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+              style={{ color: item.color, backgroundColor: item.tint }}
             >
-              <LogOut className="w-5 h-5" />
-              <span>Cerrar Sesión</span>
+              <Icon className="h-5 w-5" />
+            </span>
+            <h3 className="text-base font-extrabold text-[#10264F] md:text-lg">
+              0{item.id}. {item.name}
+            </h3>
+          </div>
+          <span className="rounded-full bg-[#EAF0FF] px-2.5 py-1 text-xs font-extrabold text-[#2457D5]">
+            Desbloqueado
+          </span>
+        </div>
+
+        <p className="mt-3 text-sm leading-6 text-[#4A5870]">{item.description}</p>
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-[#E9EDF4] flex items-center justify-end">
+        <button
+          onClick={onChoose}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F3B8F] px-5 py-2.5 text-xs font-extrabold text-white hover:bg-[#174AA6]"
+        >
+          {item.status === "En progreso" ? "Continuar submódulo" : "Iniciar submódulo"}
+          <ArrowRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </motion.article>
+  );
+}
+
+function IntroView({
+  item,
+  onBack,
+  onStart,
+}: {
+  item: ModuleWithProgress;
+  onBack: () => void;
+  onStart: () => void;
+}) {
+  const Icon = item.icon;
+  return (
+    <main className="mx-auto max-w-[820px] px-5 py-8 lg:px-8">
+      <button
+        onClick={onBack}
+        className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F]"
+      >
+        <ArrowLeft className="h-4 w-4" /> Volver a submódulos
+      </button>
+
+      <section className="rounded-[24px] border border-[#DCE3EF] bg-white p-6 md:p-8 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <span className="text-xs font-extrabold uppercase tracking-wider text-[#2D6BFF]">
+              Submódulo 0{item.id}
+            </span>
+            <h1 className="mt-1 text-2xl font-extrabold text-[#10264F] md:text-3xl">
+              {item.name}
+            </h1>
+          </div>
+          <span
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl"
+            style={{ color: item.color, backgroundColor: item.tint }}
+          >
+            <Icon className="h-6 w-6" />
+          </span>
+        </div>
+
+        <p className="mt-4 text-sm leading-6 text-[#4A5870]">{item.description}</p>
+        <p className="mt-3 text-sm leading-6 text-[#31415E]">
+          {item.intro}
+        </p>
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onStart}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-6 py-3 text-sm font-extrabold text-white hover:bg-[#174AA6]"
+          >
+            Comenzar contenido del submódulo <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function EvaluationView({
+  item,
+  level,
+  answer,
+  answers,
+  onAnswer,
+  onLevel,
+  onAskAiFeedback,
+  onBack,
+  onContinue,
+}: {
+  item: ModuleWithProgress;
+  level: number;
+  answer: string;
+  answers: Record<string, string>;
+  onAnswer: (value: string) => void;
+  onLevel: (level: number) => void;
+  onAskAiFeedback: (prompt: string) => void;
+  onBack: () => void;
+  onContinue: () => void;
+}) {
+  const currentTopic = item.topics[level - 1] ?? item.topics[0];
+  const isFinal = level === 5;
+  const isSaved = isAnswerValid(level, answer);
+  const canContinue = isFinal ? isSaved : true;
+
+  return (
+    <main className="mx-auto max-w-[1160px] px-5 py-8 lg:px-8 lg:py-12">
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F]"
+        >
+          <ArrowLeft className="h-4 w-4" /> Volver a la introducción del submódulo
+        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {isFinal && isSaved && (
+            <button
+              onClick={() =>
+                onAskAiFeedback(
+                  `Dame retroalimentación académica sobre mi ejercicio práctico del Submódulo ${item.id} (${item.name}). Mi respuesta fue: "${answer.replace("|||", " / ")}"`,
+                )
+              }
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#EAF0FF] px-3 py-1 text-xs font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF]"
+            >
+              <Bot className="h-3.5 w-3.5 text-[#2D6BFF]" />
+              Pedir retroalimentación a LideraBot sobre este ejercicio
             </button>
+          )}
+          <Pill
+            className={
+              isSaved ? "bg-[#E7F8F1] text-[#0E785F]" : "bg-[#EAF0FF] text-[#0F3B8F]"
+            }
+          >
+            {isSaved ? (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            ) : (
+              <BookOpen className="h-3.5 w-3.5" />
+            )}
+            {isFinal
+              ? isSaved
+                ? "Ejercicio guardado"
+                : "Ejercicio pendiente"
+              : isSaved
+                ? "Contenido completado"
+                : "Lectura de contenido"}
+          </Pill>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+        <aside className="h-fit rounded-[22px] bg-[#0F3B8F] p-5 text-white lg:sticky lg:top-24">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-blue-200">
+            Submódulo 0{item.id}
+          </p>
+          <h2 className="mt-2 text-xl font-extrabold leading-tight">{item.shortName}</h2>
+          <p className="mt-1 text-xs text-blue-200">{item.authorsSummary}</p>
+          <div className="my-5 h-px bg-white/15" />
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-blue-200">
+            Contenidos y Ejercicio
+          </p>
+          <div className="space-y-2">
+            {item.topics.map((topicEntry) => {
+              const number = topicEntry.level;
+              const saved = isAnswerValid(number, answers[`${item.id}-${number}`]);
+              const available = number <= level || saved;
+              return (
+                <button
+                  key={number}
+                  onClick={() => available && onLevel(number)}
+                  disabled={!available}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
+                    number === level
+                      ? "bg-white text-[#0F3B8F]"
+                      : "text-blue-100 hover:bg-white/10",
+                    !available && "cursor-not-allowed opacity-45",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-extrabold",
+                      saved && number !== level
+                        ? "border-[#FACC15] bg-[#FACC15] text-[#0F3B8F]"
+                        : "border-current",
+                    )}
+                  >
+                    {saved && number !== level ? <Check className="h-3.5 w-3.5" /> : number}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold text-xs">
+                      {number === 5
+                        ? "Ejercicio Práctico Final"
+                        : topicEntry.topicTitle.replace(/^Tema \d+:\s*/, "")}
+                    </p>
+                    <p
+                      className={cn(
+                        "truncate text-[10px]",
+                        number === level ? "text-[#2D6BFF]" : "text-blue-200",
+                      )}
+                    >
+                      {number === 5 ? "Evaluación del submódulo" : `Contenido ${number} (Lectura)`}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </aside>
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}>
-            <aside className="w-64 bg-white h-full" onClick={(e) => e.stopPropagation()}>
-              <div className="p-4 flex flex-col h-full">
-                <div className="flex items-center justify-between mb-4">
-                  <h3>Menú</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
+        <section>
+          <div className="mb-5 rounded-[18px] border border-[#DCE3EF] bg-white px-5 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-extrabold text-[#10264F]">
+                  {isFinal
+                    ? "Paso 5 de 5 · Ejercicio Práctico del Submódulo"
+                    : `Paso ${level} de 5 · Contenido Teórico (Solo lectura)`}
+                </p>
+                <p className="mt-0.5 text-xs text-[#6C7990]">
+                  {isFinal
+                    ? `Actividad práctica integradora de ${item.name}`
+                    : currentTopic.topicTitle}
+                </p>
+              </div>
+              <p className="text-sm font-extrabold text-[#2D6BFF]">{level * 20}%</p>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E9EDF4]">
+              <motion.div
+                animate={{ width: `${level * 20}%` }}
+                className="h-full rounded-full bg-[#2D6BFF]"
+              />
+            </div>
+          </div>
+
+          <motion.article
+            key={`${item.id}-${level}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="overflow-hidden rounded-[24px] border border-[#DCE3EF] bg-white shadow-[0_14px_40px_rgba(29,55,96,.07)]"
+          >
+            <div className="border-b border-[#E3E8F0] bg-[#F8FAFD] px-6 py-5 md:px-8">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Pill className="bg-[#EAF0FF] text-[#2457D5]">
+                    {isFinal ? "Ejercicio Práctico Evaluativo" : "Contenido de Estudio (Lectura)"}
+                  </Pill>
+                  <Pill className="bg-[#F5EBFF] text-[#7E22CE]">
+                    <BookMarked className="h-3.5 w-3.5" />
+                    {currentTopic.authorCitation}
+                  </Pill>
                 </div>
+                <span className="text-xs font-semibold text-[#78859A]">
+                  Tiempo estimado: {currentTopic.suggestedMinutes} min
+                </span>
+              </div>
+            </div>
 
-                {/* User info */}
-                <div className="mb-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                  <p className="text-xs text-muted-foreground">Sesión iniciada como</p>
-                  <p className="font-semibold text-primary text-sm truncate">{authUser.name}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{userRole === 'student' ? 'Estudiante' : 'Docente'}</p>
+            <div className="p-6 md:p-8">
+              {/* VISTA DE CONTENIDOS TEÓRICOS (PASOS 1 AL 4) */}
+              {!isFinal && (
+                <>
+                  <div className="mb-5 rounded-xl border border-[#DCE3EF] bg-[#F8FAFD] px-4 py-3 text-xs font-semibold text-[#4A5870] flex items-center gap-2.5">
+                    <BookOpen className="h-4 w-4 shrink-0 text-[#2D6BFF]" />
+                    <span>
+                      <strong>Sección de lectura teórica ({level}/4):</strong> Analiza este
+                      contenido y su ejemplo resuelto. Al terminar los 4 temas realizarás el{" "}
+                      <strong>Ejercicio Práctico</strong> en el Paso 5.
+                    </span>
+                  </div>
+
+                  <h1 className="text-xl font-extrabold leading-snug tracking-[-0.02em] text-[#10264F] md:text-2xl">
+                    {currentTopic.topicTitle}
+                  </h1>
+
+                  {/* Contenido teórico completo */}
+                  <div className="mt-4 space-y-3 text-sm leading-7 text-[#31415E] whitespace-pre-line">
+                    {currentTopic.theoreticalContent}
+                  </div>
+
+                  {/* Si estamos en el Contenido 4, incluimos también el cierre teórico del Tema 5 para que toda la teoría quede vista antes del ejercicio */}
+                  {level === 4 && item.topics[4] && (
+                    <div className="mt-6 pt-6 border-t border-[#E3E8F0]">
+                      <h2 className="text-lg font-extrabold text-[#10264F]">
+                        {item.topics[4].topicTitle}
+                      </h2>
+                      <div className="mt-3 space-y-3 text-sm leading-7 text-[#31415E] whitespace-pre-line">
+                        {item.topics[4].theoreticalContent}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Idea clave del tema */}
+                  <div className="mt-6 rounded-2xl border border-[#DCE3EF] bg-[#F6F8FC] p-5">
+                    <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
+                      <Lightbulb className="h-4 w-4 text-[#2D6BFF]" />
+                      Idea Clave
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-[#31415E] font-semibold">
+                      {currentTopic.keyTakeaway}
+                    </p>
+                  </div>
+
+                  {/* Ejemplo práctico RESUELTO (con la solución explicada para que no parezca una pregunta incompleta) */}
+                  {currentTopic.scenarioTitle && currentTopic.scenarioContext && (
+                    <div className="mt-6 rounded-2xl border-l-4 border-[#2D6BFF] bg-[#F4F8FF] p-5 space-y-3">
+                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
+                        Ejemplo Resuelto · {currentTopic.scenarioTitle}
+                      </p>
+                      <p className="text-sm leading-6 text-[#293B5C]">
+                        <strong>Situación:</strong> {currentTopic.scenarioContext}
+                      </p>
+                      {currentTopic.options &&
+                        currentTopic.correctOptionIndex !== undefined &&
+                        currentTopic.options[currentTopic.correctOptionIndex] && (
+                          <div className="rounded-xl bg-white/90 border border-[#CBEAD9] p-3.5 text-sm leading-6 text-[#065F46]">
+                            <strong>✓ Cómo actúa el líder según este enfoque:</strong>{" "}
+                            {currentTopic.options[currentTopic.correctOptionIndex]}
+                          </div>
+                        )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* VISTA DEL EJERCICIO PRÁCTICO FINAL (PASO 5) */}
+              {isFinal && (
+                <div>
+                  <div className="mb-6 rounded-2xl border border-[#DCE3EF] bg-[#EAF0FF] p-4 text-xs sm:text-sm text-[#0F3B8F] leading-6">
+                    <strong>¿Qué debes hacer en este ejercicio práctico?</strong> Lee el caso
+                    práctico a continuación y aplica los conceptos estudiados en los 4 contenidos
+                    anteriores respondiendo las dos preguntas de desarrollo. Al finalizar, haz clic
+                    en <strong>"Finalizar submódulo y desbloquear siguiente"</strong>.
+                  </div>
+
+                  {currentTopic.scenarioTitle && currentTopic.scenarioContext && (
+                    <div className="mb-6 rounded-2xl border-l-4 border-[#A855F7] bg-[#F8F1FF] p-5">
+                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#8C39D7]">
+                        Caso Práctico · {currentTopic.scenarioTitle}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-[#293B5C] font-medium">
+                        {currentTopic.scenarioContext}
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#2D6BFF]">
+                    Ejercicio Práctico Final · Submódulo 0{item.id}
+                  </p>
+                  <h1 className="mt-2 text-lg font-extrabold leading-snug text-[#10264F] md:text-2xl">
+                    {currentTopic.questionPrompt}
+                  </h1>
+
+                  <div className="mt-6">
+                    <OpenResponse
+                      level={level}
+                      value={answer}
+                      subPrompts={currentTopic.openSubPrompts}
+                      onChange={onAnswer}
+                    />
+                  </div>
                 </div>
+              )}
 
-                <div className="space-y-1 flex-1">
-                  {filteredNavigation.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = currentScreen === item.id;
-
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setCurrentScreen(item.id as Screen);
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                          isActive
-                            ? 'bg-primary text-white'
-                            : 'text-foreground hover:bg-muted'
-                        }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
+              <div className="mt-8 flex flex-col-reverse items-center justify-between gap-4 border-t border-[#E3E8F0] pt-6 sm:flex-row">
                 <button
-                  onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition-colors mt-4"
+                  onClick={() => level > 1 && onLevel(level - 1)}
+                  disabled={level === 1}
+                  className="inline-flex items-center gap-2 text-sm font-bold text-[#65728A] disabled:opacity-30"
                 >
-                  <LogOut className="w-5 h-5" />
-                  <span>Cerrar Sesión</span>
+                  <ArrowLeft className="h-4 w-4" /> Tema anterior
+                </button>
+                <button
+                  onClick={onContinue}
+                  disabled={!canContinue}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F3B8F] px-6 py-3.5 font-bold text-white shadow-md transition-all hover:bg-[#174AA6] disabled:cursor-not-allowed disabled:bg-[#B8C2D1] sm:w-auto"
+                >
+                  {isFinal
+                    ? "Finalizar submódulo y desbloquear siguiente"
+                    : level === 4
+                      ? "Continuar al Ejercicio Práctico Final"
+                      : "Siguiente contenido"}{" "}
+                  <ArrowRight className="h-5 w-5" />
                 </button>
               </div>
-            </aside>
-          </div>
-        )}
-
-        {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8 max-w-7xl mx-auto w-full">
-          {renderContent()}
-        </main>
+            </div>
+          </motion.article>
+        </section>
       </div>
+    </main>
+  );
+}
+
+function MultipleChoice({
+  options,
+  correctOptionIndex,
+  value,
+  onChange,
+}: {
+  options: string[];
+  correctOptionIndex?: number;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const selectedIndex = options.findIndex((opt) => opt === value);
+  const isCorrectSelection =
+    selectedIndex !== -1 &&
+    correctOptionIndex !== undefined &&
+    selectedIndex === correctOptionIndex;
+
+  return (
+    <div className="space-y-3" role="radiogroup" aria-label="Opciones de respuesta">
+      {options.map((option, index) => {
+        const selected = option === value;
+        return (
+          <button
+            key={option}
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(option)}
+            className={cn(
+              "flex w-full items-start gap-4 rounded-2xl border p-4 text-left transition-all md:p-5",
+              selected
+                ? "border-[#2D6BFF] bg-[#EEF3FF] shadow-[0_0_0_3px_rgba(45,107,255,.10)]"
+                : "border-[#DCE3EF] bg-white hover:border-[#9DB6EF] hover:bg-[#FAFBFE]",
+            )}
+          >
+            <span
+              className={cn(
+                "grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm font-extrabold",
+                selected
+                  ? "border-[#2D6BFF] bg-[#2D6BFF] text-white"
+                  : "border-[#C9D2E1] text-[#68758B]",
+              )}
+            >
+              {String.fromCharCode(65 + index)}
+            </span>
+            <span className="pt-1 text-sm font-semibold leading-6 text-[#31415E] md:text-base">
+              {option}
+            </span>
+            {selected && <Check className="ml-auto mt-1.5 h-5 w-5 shrink-0 text-[#2D6BFF]" />}
+          </button>
+        );
+      })}
+
+      {selectedIndex !== -1 && correctOptionIndex !== undefined && (
+        <div
+          className={cn(
+            "mt-4 rounded-2xl border p-4 text-sm leading-6",
+            isCorrectSelection
+              ? "border-[#A7F3D0] bg-[#ECFDF5] text-[#065F46]"
+              : "border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]",
+          )}
+        >
+          {isCorrectSelection ? (
+            <p className="font-semibold">
+              ✓ ¡Excelente análisis! Tu elección está alineada con el marco teórico de los autores de
+              este submódulo.
+            </p>
+          ) : (
+            <p className="font-semibold">
+              Nota formativa: Tu respuesta ha sido registrada. Revisa cómo los principios del autor
+              priorizan el desarrollo, la ética y la coherencia con el equipo antes de continuar.
+            </p>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+function OpenResponse({
+  level,
+  value,
+  subPrompts,
+  onChange,
+}: {
+  level: number;
+  value: string;
+  subPrompts?: [string, string];
+  onChange: (value: string) => void;
+}) {
+  if (level === 5) {
+    const [decision = "", justification = ""] = value.split("|||");
+    const prompt1 = subPrompts?.[0] ?? "1. ¿Qué decisión tomarías?";
+    const prompt2 = subPrompts?.[1] ?? "2. ¿Cómo la sustentas desde los autores?";
+    return (
+      <div className="space-y-5">
+        <label className="block">
+          <span className="mb-2 block text-sm font-extrabold text-[#31415E]">{prompt1}</span>
+          <textarea
+            value={decision}
+            onChange={(event) => onChange(`${event.target.value}|||${justification}`)}
+            className="min-h-32 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-4 text-sm leading-6 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
+            placeholder="Describe la estrategia y decisión que tomarías..."
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-extrabold text-[#31415E]">{prompt2}</span>
+          <textarea
+            value={justification}
+            onChange={(event) => onChange(`${decision}|||${event.target.value}`)}
+            className="min-h-36 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-4 text-sm leading-6 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
+            placeholder="Sustenta tu respuesta conectando con los conceptos de los autores estudiados..."
+          />
+        </label>
+      </div>
+    );
+  }
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-extrabold text-[#31415E]">
+        Tu reflexión y análisis
+      </span>
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="min-h-48 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-5 leading-7 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
+        placeholder="Escribe aquí tu análisis basándote en el aporte teórico del autor..."
+      />
+      <span className="mt-2 block text-right text-xs text-[#7A879B]">
+        {value.length} caracteres · Guardado automático
+      </span>
+    </label>
+  );
+}
+
+function CompleteView({
+  item,
+  answers,
+  modules,
+  recommendedSubmoduleOrder,
+  onAskAiFeedback,
+  onReview,
+  onHome,
+  onNext,
+}: {
+  item: ModuleWithProgress;
+  answers: Record<string, string>;
+  modules: ModuleWithProgress[];
+  recommendedSubmoduleOrder: number[];
+  onAskAiFeedback: () => void;
+  onReview: () => void;
+  onHome: () => void;
+  onNext: () => void;
+}) {
+  const savedCount = [1, 2, 3, 4, 5].filter((lvl) =>
+    isAnswerValid(lvl, answers[`${item.id}-${lvl}`]),
+  ).length;
+  const currentOrderPos = recommendedSubmoduleOrder.indexOf(item.id);
+  const nextModId =
+    currentOrderPos !== -1 && currentOrderPos + 1 < recommendedSubmoduleOrder.length
+      ? recommendedSubmoduleOrder[currentOrderPos + 1]
+      : null;
+  const nextModule = nextModId ? modules.find((m) => m.id === nextModId) : null;
+
+  return (
+    <main className="mx-auto max-w-[900px] px-5 py-12 lg:px-8 lg:py-16">
+      <section className="overflow-hidden rounded-[28px] border border-[#DCE3EF] bg-white shadow-[0_18px_50px_rgba(29,55,96,.09)]">
+        <div className="bg-[#0F3B8F] px-6 py-11 text-center text-white md:px-10">
+          <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-[#FACC15] text-[#0F3B8F] shadow-[0_0_0_10px_rgba(255,255,255,.08)]">
+            <CheckCircle2 className="h-10 w-10" />
+          </span>
+          <Pill className="mt-7 bg-white/10 text-blue-100">
+            Submódulo 0{item.id} completado satisfactoriamente
+          </Pill>
+          <h1 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] md:text-4xl">
+            ¡Escalón superado!
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl leading-7 text-blue-100">
+            {item.name} · {item.authorsSummary}
+          </p>
+        </div>
+        <div className="p-6 md:p-9">
+          <div className="rounded-2xl bg-[#F6F8FC] p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#64728A]">
+                  Registro de actividad
+                </p>
+                <p className="mt-2 font-extrabold text-[#10264F]">
+                  {savedCount} de 5 pasos completados (4 contenidos y 1 ejercicio práctico)
+                </p>
+              </div>
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#E7F8F1] text-[#10856B]">
+                <Save className="h-6 w-6" />
+              </span>
+            </div>
+            <div className="mt-5 grid grid-cols-5 gap-2">
+              {[1, 2, 3, 4, 5].map((number) => {
+                const done = isAnswerValid(number, answers[`${item.id}-${number}`]);
+                return (
+                  <div
+                    key={number}
+                    className={cn(
+                      "rounded-lg py-2 text-center text-xs font-extrabold",
+                      done ? "bg-[#DFF5ED] text-[#0E785F]" : "bg-[#E8ECF2] text-[#79869A]",
+                    )}
+                  >
+                    {number === 5 ? "Ejercicio" : `C${number}`} {done && "✓"}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {nextModule && (
+            <div className="mt-5 rounded-2xl border border-[#CBEAD9] bg-[#F2FBF7] p-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#DFF5ED] text-[#0E785F]">
+                  <Unlock className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-[#0E785F]">
+                    Nuevo Submódulo Desbloqueado en tu Ruta Escalonada:
+                  </p>
+                  <p className="text-sm font-extrabold text-[#10264F]">
+                    Submódulo 0{nextModule.id}: {nextModule.name}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-5">
+            <button
+              onClick={onAskAiFeedback}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#2D6BFF] bg-[#EAF0FF] p-4 text-sm font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF]"
+            >
+              <Bot className="h-5 w-5 text-[#2D6BFF]" />
+              Pedir a LideraBot retroalimentación de mi ejercicio práctico en este submódulo
+            </button>
+          </div>
+
+          <div className="mt-7 grid gap-3 sm:grid-cols-3">
+            <button
+              onClick={onReview}
+              className="rounded-xl border border-[#BAC6D8] px-4 py-3 text-sm font-extrabold text-[#0F3B8F] hover:bg-[#F4F7FB]"
+            >
+              Revisar respuestas
+            </button>
+            <button
+              onClick={onHome}
+              className="rounded-xl border border-[#BAC6D8] px-4 py-3 text-sm font-extrabold text-[#0F3B8F] hover:bg-[#F4F7FB]"
+            >
+              Volver a módulos
+            </button>
+            <button
+              onClick={onNext}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F3B8F] px-4 py-3 text-sm font-extrabold text-white"
+            >
+              {nextModule
+                ? `Ir al Submódulo 0${nextModule.id} Desbloqueado`
+                : "Ver todos los submódulos"}{" "}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function FoundationsView({
+  modules: _modules,
+  onChoose: _onChoose,
+  onBack,
+}: {
+  modules: ModuleWithProgress[];
+  onChoose: (item: ModuleWithProgress) => void;
+  onBack: () => void;
+}) {
+  return (
+    <main className="mx-auto max-w-[1040px] px-5 py-8 lg:px-8 lg:py-10">
+      <button
+        onClick={onBack}
+        className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F]"
+      >
+        <ArrowLeft className="h-4 w-4" /> Volver al inicio
+      </button>
+
+      <section className="rounded-[28px] bg-[#0F3B8F] px-6 py-8 text-white md:px-10">
+        <Pill className="mb-3 bg-white/10 text-blue-100">
+          Introducción y Referencias del Módulo
+        </Pill>
+        <h1 className="text-2xl font-extrabold tracking-tight md:text-4xl">
+          Módulo de Formación en Liderazgo
+        </h1>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-blue-100 md:text-base">
+          Este módulo integra cinco enfoques esenciales de liderazgo para fortalecer la toma de
+          decisiones, la empatía y la dirección de equipos en entornos reales y educativos.
+        </p>
+      </section>
+
+      <section className="mt-6 rounded-[24px] border border-[#DCE3EF] bg-white p-6 md:p-8 shadow-sm">
+        <h2 className="text-xl font-extrabold text-[#10264F]">
+          Referencias Académicas del Módulo
+        </h2>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {theoreticalFoundations.map((foundation) => (
+            <article
+              key={foundation.authors}
+              className="rounded-2xl border border-[#DCE3EF] bg-[#F8FAFD] p-5 flex flex-col justify-between"
+            >
+              <div>
+                <h3 className="text-base font-extrabold text-[#10264F]">
+                  {foundation.authors} ({foundation.year})
+                </h3>
+                <p className="mt-1.5 text-xs leading-5 text-[#4A5870]">
+                  {foundation.contribution}
+                </p>
+              </div>
+              <div className="mt-4 border-t border-[#E4EAF3] pt-3 space-y-1.5">
+                {foundation.links.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 text-xs font-bold text-[#2D6BFF] hover:underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                    <span>{link.label}</span>
+                  </a>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function ResponsesView({
+  modules,
+  answers,
+  onOpenModuleLevel,
+  onBack,
+}: {
+  modules: ModuleWithProgress[];
+  answers: Record<string, string>;
+  onAskAiFeedback: (prompt: string) => void;
+  onOpenModuleLevel: (mod: ModuleWithProgress, level: number) => void;
+  onBack: () => void;
+}) {
+  const [expandedModuleId, setExpandedModuleId] = useState<number | null>(null);
+
+  const totalStepsDone = modules.reduce((acc, m) => acc + m.completedLevels, 0);
+  const overallProgress = Math.round((totalStepsDone / 25) * 100);
+
+  return (
+    <main className="mx-auto max-w-[860px] px-5 py-8 lg:px-8">
+      {/* Botón Volver */}
+      <div className="mb-6 flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F] transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Volver
+        </button>
+      </div>
+
+      {/* Progreso General */}
+      <section className="mb-6 rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl font-bold text-[#10264F]">Progreso General</h1>
+          <span className="text-2xl font-black text-[#2D6BFF]">{overallProgress}%</span>
+        </div>
+        <div className="h-3 w-full overflow-hidden rounded-full bg-[#EDF2F7]">
+          <div
+            className="h-full rounded-full bg-[#2D6BFF] transition-all duration-500"
+            style={{ width: `${overallProgress}%` }}
+          />
+        </div>
+      </section>
+
+      {/* Lista de submódulos */}
+      <div className="space-y-3.5">
+        {modules.map((mod) => {
+          const rawExerciseAnswer = answers[`${mod.id}-5`] ?? "";
+          const isExerciseAnswered = isAnswerValid(5, rawExerciseAnswer);
+          const [part1 = "", part2 = ""] = rawExerciseAnswer.split("|||");
+          const isExpanded = expandedModuleId === mod.id;
+
+          return (
+            <div
+              key={mod.id}
+              className={cn(
+                "rounded-xl border bg-white p-5 transition-all shadow-sm",
+                mod.isUnlocked ? "border-[#E2E8F0]" : "border-[#E9EDF4] bg-[#F8FAFC] opacity-70",
+              )}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold",
+                      mod.status === "Completado"
+                        ? "bg-[#DFF5ED] text-[#0E785F]"
+                        : mod.status === "En progreso"
+                        ? "bg-[#EAF0FF] text-[#2457D5]"
+                        : "bg-[#F1F3F7] text-[#65728A]",
+                    )}
+                  >
+                    0{mod.id}
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-[#10264F]">{mod.name}</h2>
+                    <span className="text-xs font-semibold text-[#64728A]">
+                      {mod.status === "Completado"
+                        ? "Completado"
+                        : mod.status === "En progreso"
+                        ? "En progreso"
+                        : "No iniciado"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-black text-[#10264F]">{mod.progress}%</span>
+                  {mod.isUnlocked && (
+                    <button
+                      onClick={() =>
+                        onOpenModuleLevel(
+                          mod,
+                          isExerciseAnswered
+                            ? 5
+                            : mod.completedLevels + 1 <= 5
+                            ? mod.completedLevels + 1
+                            : 5,
+                        )
+                      }
+                      className="rounded-lg bg-[#F1F4F9] px-3 py-1.5 text-xs font-bold text-[#0F3B8F] hover:bg-[#E2E8F0] transition-colors"
+                    >
+                      Ir al submódulo
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Barra de progreso */}
+              <div className="mt-3.5 h-2 w-full overflow-hidden rounded-full bg-[#EDF2F7]">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-300",
+                    mod.status === "Completado" ? "bg-[#10B981]" : "bg-[#2D6BFF]",
+                  )}
+                  style={{ width: `${mod.progress}%` }}
+                />
+              </div>
+
+              {/* Ver respuesta del ejercicio práctico si fue respondido */}
+              {isExerciseAnswered && (
+                <div className="mt-3 pt-3 border-t border-[#F1F4F9]">
+                  <button
+                    onClick={() => setExpandedModuleId(isExpanded ? null : mod.id)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#2D6BFF] hover:underline"
+                  >
+                    <ChevronDown
+                      className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-180")}
+                    />
+                    {isExpanded ? "Ocultar respuesta" : "Ver respuesta del ejercicio"}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="mt-3 rounded-lg border border-[#E9EDF4] bg-[#F8FAFC] p-3 text-xs text-[#31415E] space-y-2">
+                      <div>
+                        <span className="font-bold text-[#0F3B8F]">Respuesta:</span>
+                        <p className="mt-1 whitespace-pre-line text-[#4A5568]">{part1}</p>
+                      </div>
+                      {part2 && (
+                        <div className="pt-2 border-t border-[#E9EDF4]">
+                          <span className="font-bold text-[#0F3B8F]">Sustentación:</span>
+                          <p className="mt-1 whitespace-pre-line text-[#4A5568]">{part2}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </main>
   );
 }

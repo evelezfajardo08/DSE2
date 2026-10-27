@@ -14,7 +14,7 @@ interface QuizQuestion {
   points?: number;
 }
 
-interface GeneratedQuiz {z
+interface GeneratedQuiz {
   title: string;
   description?: string;
   category?: string;
@@ -156,6 +156,18 @@ export class ChatService {
     return null;
   }
 
+  private sanitizePlainMarkdown(text: string): string {
+    return text
+      .replace(/\\text\{([^}]*)\}/g, '$1')
+      .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
+      .replace(/\\textit\{([^}]*)\}/g, '*$1*')
+      .replace(/\\rightarrow|\\to|\\longrightarrow|\\Rightarrow/g, '→')
+      .replace(/\\leftarrow|\\longleftarrow/g, '←')
+      .replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, '**$1**')
+      .replace(/\$\s*([^$\n]+?)\s*\$/g, '$1')
+      .trim();
+  }
+
   private async generateGroundedResponse(
     prompt: string,
     systemInstruction: string,
@@ -180,7 +192,7 @@ export class ChatService {
       model,
       contents: prompt,
       config: {
-        systemInstruction: `${systemInstruction}\n\nFundamenta las respuestas en la información de File Search. Redacta de forma natural y fluida como un mentor personal. JAMÁS insertes citas de fuentes, títulos de documentos, ni aclaraciones bibliográficas entre paréntesis dentro del texto explicativo (evita frases como "(según se advierte en...)", "(fuente:...)", "(como señala...)"). Limítate a explicar el concepto pedagógico de forma natural; las fuentes se listarán automáticamente al final.`,
+        systemInstruction: `${systemInstruction}\n\nFundamenta las respuestas en la información de File Search y en el marco teórico de los módulos. Redacta de forma natural y fluida como un mentor personal. PROHIBIDO usar sintaxis LaTeX o fórmulas matemáticas (no uses $$, $, \\text{}, \\rightarrow ni bloques matemáticos); usa texto normal con flechas Unicode simples (→) y formato Markdown estándar.`,
         tools: [{
           fileSearch: {
             fileSearchStoreNames: [storeName],
@@ -203,7 +215,7 @@ export class ChatService {
     }
 
     return {
-      text: (response.text || '').trim(),
+      text: this.sanitizePlainMarkdown(response.text || ''),
       sources: [...sources],
     };
   }
@@ -391,25 +403,39 @@ Devuelve solo JSON válido con este formato: {"score":0,"feedback":"retroaliment
     history: ChatHistoryEntry[] = [],
   ) {
     const trimmedMessage = message.trim();
+
+    const moduleProgressBlock = context?.moduleProgressSummary
+      ? `Avance en los Módulos y Respuestas registradas por el estudiante:\n${context.moduleProgressSummary}`
+      : '';
+    const diagnosticBlock = context?.diagnosticSummary
+      ? `Resultado de la Prueba Diagnóstica Inicial del estudiante:\n${context.diagnosticSummary}`
+      : 'El estudiante aún no ha completado la Prueba Diagnóstica Inicial de 14 preguntas.';
+
     const contextSummary = context
-      ? `Contexto del usuario: completó ${context.completedActivitiesCount ?? 0} actividades, su progreso general es ${context.progressPercent ?? 0}%, y su última actividad fue "${context.lastActivityTitle || 'sin actividad registrada'}". Habilidades registradas: ${JSON.stringify(context.skills || {})}. Promedios recientes por habilidad: ${JSON.stringify(context.skillScores || {})}. Últimos intentos y siguientes pasos: ${JSON.stringify(context.recentActivityAttempts || [])}.`
+      ? [
+          `Contexto general del estudiante: completó ${context.completedActivitiesCount ?? 0} niveles/actividades, progreso general en el Módulo 1 de Liderazgo: ${context.progressPercent ?? 0}%.`,
+          diagnosticBlock,
+          moduleProgressBlock,
+        ]
+          .filter(Boolean)
+          .join('\n\n')
       : '';
 
     if (this.isGreeting(trimmedMessage)) {
+      const hasDiagnostic = Boolean(context?.hasCompletedDiagnostic);
+      if (!hasDiagnostic) {
+        onChunk({
+          type: 'text',
+          payload:
+            '¡Hola! Soy **LideraBot**, tu chatbot y guía en esta plataforma. ¡Bienvenido! Para iniciar nuestro proceso de interacción en la aplicación, lo primero que haremos es realizar una **Prueba Diagnóstica Inicial**. Con tus resultados te diré cuáles son tus fortalezas y debilidades, qué módulo te recomiendo estudiar primero y cómo iremos escalonando paso a paso para desbloquear los demás módulos a medida que los termines satisfactoriamente.\n\n¡Acabo de desbloquear tu **Prueba Diagnóstica**! Haz clic en el botón **"Iniciar Prueba Diagnóstica"** aquí abajo para comenzar.',
+        });
+        return;
+      }
+
       onChunk({
         type: 'text',
         payload:
-          '¡Hola! Soy LideraBot. Estoy aquí para ayudarte con liderazgo, comunicación, toma de decisiones y ejercicios prácticos. ¿En qué te puedo apoyar?',
-      });
-      return;
-    }
-
-    const wantsProgressFeedback = /(progreso|avance|retroalimentaci[oó]n|qué hice|actividad que hice|qué actividad (hice|completé|realicé|terminé)|mi progreso|cuánto he avanzado|cómo voy)/i.test(trimmedMessage);
-    if (wantsProgressFeedback && contextSummary) {
-      const lastTitle = context.lastActivityTitle ? `Tu última actividad fue "${context.lastActivityTitle}".` : 'Todavía no has registrado una actividad reciente.';
-      onChunk({
-        type: 'text',
-        payload: `He visto que llevas ${context.completedActivitiesCount ?? 0} actividades completadas y tu progreso general es ${context.progressPercent ?? 0}%. ${lastTitle} Te recomiendo seguir con una actividad que fortalezca tu área más débil y mantener el ritmo de práctica.`,
+          '¡Hola de nuevo! Soy **LideraBot**. Ya completaste tu Prueba Diagnóstica Inicial, así que podemos revisar el módulo que tienes desbloqueado actualmente, analizar tus respuestas o ver cómo vas escalonando hacia el siguiente módulo. ¿En qué te ayudo hoy?',
       });
       return;
     }
@@ -418,28 +444,42 @@ Devuelve solo JSON válido con este formato: {"score":0,"feedback":"retroaliment
       onChunk({
         type: 'text',
         payload:
-          'Puedo ayudarte con ideas, ejercicios y orientación de liderazgo, pero no puedo generar imágenes desde este chat actual. Si quieres, puedo describirte una imagen o ayudarte a crear un prompt para otra herramienta.',
+          'Puedo ayudarte con retroalimentación de tus respuestas en los módulos, análisis de tu prueba diagnóstica y orientación en liderazgo, comunicación, toma de decisiones y trabajo en equipo, pero no genero imágenes.',
       });
       return;
     }
 
     const systemInstruction = this.configService.get<string>('GEMINI_SYSTEM_INSTRUCTION') ||
-      'Eres LideraBot, un mentor virtual en español especializado en desarrollo de liderazgo. Responde de forma clara, práctica y motivadora. No inventes datos académicos del estudiante.';
+      'Eres LideraBot, un mentor virtual universitario en español especializado en Liderazgo, Comunicación, Toma de Decisiones y Trabajo en Equipo. Responde con rigor académico, calidez y sentido práctico.';
     const recentConversation = history.slice(-8)
       .map((entry) => `${entry.role === 'assistant' ? 'LideraBot' : 'Estudiante'}: ${entry.content}`)
       .join('\n');
-    const activityOptions = ACTIVITY_CATALOG.map((activity) =>
-      `- "${activity.title}" (${activity.skill}, ${activity.difficulty})`,
-    ).join('\n');
 
     try {
       const prompt = [
         contextSummary,
         recentConversation ? `Conversación reciente:\n${recentConversation}` : '',
         `Mensaje actual del estudiante: ${trimmedMessage}`,
-        `Actividades preestablecidas disponibles:\n${activityOptions}`,
       ].filter(Boolean).join('\n\n');
-      const mentorInstruction = `${systemInstruction}\n\nUsa la conversación reciente y el progreso para entender qué habilidad necesita practicar. Recomienda únicamente las actividades preestablecidas del catálogo usando sus títulos exactos entre comillas (por ejemplo "El liderazgo que necesita el equipo") y explica por qué encaja. No intentes crear ni ofrecer cuestionarios o quizzes dinámicos; únicamente orienta al usuario hacia una de las 6 actividades preestablecidas disponibles. JAMÁS incluyas identificadores internos, slugs, claves técnicas ni títulos/citas de fuentes entre paréntesis dentro del texto principal (como "(situational-leadership)" o "(según se advierte en...)"). No digas frases como "respaldado por la fuente" ni "según la fuente", habla con naturalidad y fluidez. No digas que una actividad está completada hasta ver ese dato en el progreso.`;
+
+      const mentorInstruction = `${systemInstruction}
+
+INSTRUCCIONES CLAVE DE RETROALIMENTACIÓN Y DIAGNÓSTICO:
+1. Tienes acceso completo a las respuestas que el estudiante ha escrito o seleccionado en los submódulos y en la Prueba Diagnóstica Inicial (14 preguntas sobre Comunicación, Liderazgo, Toma de Decisiones y Trabajo en Equipo).
+2. Cuando el estudiante pida retroalimentación de sus respuestas o módulos, analiza específicamente lo que respondió comparándolo con la base de datos documental y los autores fundamentales:
+   - Submódulo 1 (Liderazgo Transformacional): James MacGregor Burns (1978) y Bernard M. Bass (1985 - las 4 I's: Influencia Idealizada, Motivación Inspiradora, Estimulación Intelectual, Consideración Individualizada).
+   - Submódulo 2 (Liderazgo Participativo / Democrático): Kurt Lewin, Lippitt y White (1939) y Daniel Goleman et al. (2000/2002).
+   - Submódulo 3 (Liderazgo estilo Coaching): Daniel Goleman, Boyatzis y McKee (2000/2002).
+   - Submódulo 4 (Liderazgo Delegativo / Laissez-Faire): Kurt Lewin, Lippitt y White (1939).
+   - Submódulo 5 (Liderazgo Situacional / Adaptativo): Paul Hersey y Kenneth Blanchard (1969 - niveles de madurez M1 a M4 y estilos E1 a E4).
+   - Además de los marcos de Comunicación Efectiva/Asertiva, Toma de Decisiones (Vroom-Yetton, racionalidad limitada, sesgos cognitivos) y Trabajo en Equipo (etapas de Tuckman y las 5 C).
+3. Cuando consulte sobre su Prueba Diagnóstica o ruta de estudio, indícale claramente:
+   - Qué Módulos Generales (1. Liderazgo, 2. Comunicación, 3. Toma de Decisiones, 4. Trabajo en Equipo) y qué Submódulos debe estudiar con prioridad y cuáles ya domina o no necesita cursar a fondo.
+   - En qué temas específicos debe reforzar.
+   - Cuáles son sus habilidades actuales, fortalezas y debilidades detectadas.
+4. Habla con naturalidad como un mentor académico cercano y riguroso.
+5. BOTÓN PARA ABRIR SUBMÓDULO: Tienes la capacidad de mostrarle al estudiante un botón interactivo para abrir un submódulo escribiendo al final de tu respuesta la etiqueta exacta [ABRIR_SUBMODULO:X] (donde X es el número del submódulo desbloqueado del 1 al 5, por ejemplo [ABRIR_SUBMODULO:1]). Incluye esta etiqueta ÚNICAMENTE cuando decidas que es el momento oportuno y necesario para que el estudiante entre al submódulo (por ejemplo, cuando el estudiante confirme que está listo para comenzar, pida abrir/iniciar el submódulo o cuando lo envíes directamente a resolver las actividades del submódulo). NO incluyas la etiqueta si apenas estás conversando, explicando conceptos o preguntándole si está listo.`;
+
       const result = await this.generateGroundedResponse(prompt, mentorInstruction);
       if (!result.text) throw new Error('Gemini devolvió una respuesta vacía.');
 
@@ -450,16 +490,21 @@ Devuelve solo JSON válido con este formato: {"score":0,"feedback":"retroaliment
     } catch (error) {
       console.error('[Chat] Error al consultar Gemini:', error);
       const localAnswer = await this.getLocalKnowledgeFallback(trimmedMessage);
-      const apiError = error as { status?: number; statusCode?: number; error?: { code?: string } };
-      const rateLimited = apiError.status === 429
-        || apiError.statusCode === 429
-        || apiError.error?.code === 'too_many_requests';
-      const notice = rateLimited
-        ? 'Gemini alcanzó el límite diario de solicitudes. Mientras se restablece, esta respuesta se recuperó de la base local:'
-        : 'Gemini no está disponible. Esta respuesta se recuperó de la base local:';
-      const fallbackMessage = localAnswer
-        ? `${notice}\n\n${localAnswer}`
-        : 'No pude consultar Gemini y no encontré una respuesta pertinente en la base local. Inténtalo de nuevo más tarde.';
+      const contextualFallback = [
+        context?.diagnosticSummary
+          ? `**Resumen de tu Diagnóstico y Ruta:**\n${context.diagnosticSummary}`
+          : '',
+        context?.moduleProgressSummary
+          ? `**Estado de tus respuestas en los Submódulos:**\n${context.moduleProgressSummary}`
+          : '',
+        localAnswer ? `**Base de Conocimiento de LideraBot:**\n${localAnswer}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n\n');
+
+      const fallbackMessage = contextualFallback
+        ? `Aquí tienes la retroalimentación basada en tu registro y en la base de conocimiento local de LideraBot:\n\n${contextualFallback}`
+        : 'En este momento el servicio de IA externo tiene alta demanda. Revisa tus respuestas registradas en los submódulos o completa la Prueba Diagnóstica para obtener tu análisis detallado.';
       onChunk({ type: 'text', payload: fallbackMessage });
     }
   }
