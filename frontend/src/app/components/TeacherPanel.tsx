@@ -558,9 +558,9 @@ export function TeacherPanel() {
       {/* Header y Pestañas Principales del Panel */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4">
         <div>
-          <h2 className="text-2xl font-black text-[#10264F]">Panel de Control Docente</h2>
+          <h2 className="text-2xl font-black text-[#10264F] tracking-wide">PANEL DE CONTROL DOCENTE</h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Monitorea el progreso real por habilidades, conexiones de estudiantes y buzón de sugerencias
+            Monitorea el progreso por habilidades, conexiones de estudiantes y buzón de sugerencias
           </p>
         </div>
 
@@ -573,7 +573,7 @@ export function TeacherPanel() {
             className="text-xs font-bold"
           >
             <Filter className="w-3.5 h-3.5 mr-1.5" />
-            Filtrar
+            FILTRAR
           </Button>
           <Button
             size="sm"
@@ -582,7 +582,7 @@ export function TeacherPanel() {
             disabled={isLoading || Boolean(loadError)}
           >
             <Download className="w-3.5 h-3.5 mr-1.5 text-[#FACC15]" />
-            Exportar Reporte PDF
+            EXPORTAR REPORTE PDF
           </Button>
         </div>
       </div>
@@ -598,7 +598,7 @@ export function TeacherPanel() {
           }`}
         >
           <TrendingUp className="h-4 w-4" />
-          <span>Monitoreo y Progreso Real</span>
+          <span>MONITOREO Y PROGRESO REAL</span>
         </button>
 
         <button
@@ -613,7 +613,7 @@ export function TeacherPanel() {
           }`}
         >
           <MessageSquare className="h-4 w-4" />
-          <span>Buzón de Mensajes y PQRS</span>
+          <span>BUZÓN DE MENSAJES Y PQRS</span>
           {pendingSuggestionsCount > 0 && (
             <span className="rounded-full bg-amber-500 px-2 py-0.2 text-[10px] text-white font-extrabold">
               {pendingSuggestionsCount}
@@ -630,7 +630,7 @@ export function TeacherPanel() {
           }`}
         >
           <Clock className="h-4 w-4" />
-          <span>Solicitudes Docentes</span>
+          <span>SOLICITUDES DOCENTES</span>
           {teacherRequests.length > 0 && (
             <span className="rounded-full bg-[#0F3B8F] px-2 py-0.2 text-[10px] text-white font-extrabold">
               {teacherRequests.length}
@@ -646,11 +646,11 @@ export function TeacherPanel() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="p-5 shadow-sm border border-slate-200">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-[#0F3B8F]">
+                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-[#0F3B8F] shrink-0">
                   <Users className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-500">Total Estudiantes</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">TOTAL ESTUDIANTES</p>
                   <p className="text-2xl font-black text-[#10264F]">{totalStudents}</p>
                 </div>
               </div>
@@ -658,11 +658,11 @@ export function TeacherPanel() {
 
             <Card className="p-5 shadow-sm border border-slate-200">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
                   <TrendingUp className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-500">Estudiantes Activos</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">ESTUDIANTES ACTIVOS</p>
                   <p className="text-2xl font-black text-emerald-700">{activeStudents}</p>
                 </div>
               </div>
@@ -670,11 +670,11 @@ export function TeacherPanel() {
 
             <Card className="p-5 shadow-sm border border-slate-200">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
                   <FileText className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-500">Progreso Promedio Real</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">PROGRESO PROMEDIO REAL</p>
                   <p className="text-2xl font-black text-amber-700">{averageProgress}%</p>
                 </div>
               </div>
@@ -682,11 +682,11 @@ export function TeacherPanel() {
 
             <Card className="p-5 shadow-sm border border-slate-200">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 shrink-0">
                   <Calendar className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-500">Evaluaciones Realizadas</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">EVALUACIONES REALIZADAS</p>
                   <p className="text-2xl font-black text-purple-700">
                     {studentsData.reduce((sum, s) => sum + s.evaluations, 0)}
                   </p>
@@ -696,24 +696,24 @@ export function TeacherPanel() {
           </div>
 
           {/* Gráficas de Progreso Real (Actualizadas según requerimiento) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Gráfica 1: Progreso Real por Habilidades y Competencias */}
-            <Card className="p-6 shadow-sm border border-slate-200">
-              <div className="mb-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-black text-[#10264F]">
-                    Progreso Real por Habilidades
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            {/* Gráfica 1: Progreso por Habilidades */}
+            <Card className="p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 min-h-[36px]">
+                  <h3 className="text-base font-black text-[#10264F] tracking-wide">
+                    PROGRESO POR HABILIDADES
                   </h3>
-                  <Badge variant="outline" className="text-[10px] font-bold text-[#0F3B8F]">
+                  <Badge variant="outline" className="text-[10px] font-bold text-[#0F3B8F] shrink-0">
                     Basado en actividades reales
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-muted-foreground mt-1">
                   Promedio de desempeño y avance grupal en cada una de las competencias
                 </p>
               </div>
 
-              <div className="h-[270px]">
+              <div className="h-[270px] mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={realSkillsData} margin={{ top: 10, right: 10, left: -15, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
@@ -742,22 +742,22 @@ export function TeacherPanel() {
             </Card>
 
             {/* Gráfica 2: Distribución de Estudiantes por Nivel de Avance */}
-            <Card className="p-6 shadow-sm border border-slate-200">
-              <div className="mb-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-black text-[#10264F]">
-                    Distribución de Estudiantes por Avance
+            <Card className="p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 min-h-[36px]">
+                  <h3 className="text-base font-black text-[#10264F] tracking-wide">
+                    DISTRIBUCIÓN DE ESTUDIANTES POR AVANCE
                   </h3>
-                  <Badge variant="outline" className="text-[10px] font-bold text-emerald-700">
+                  <Badge variant="outline" className="text-[10px] font-bold text-emerald-700 shrink-0">
                     {totalStudents} estudiantes
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-muted-foreground mt-1">
                   Cantidad real de estudiantes según su porcentaje de progreso general
                 </p>
               </div>
 
-              <div className="h-[270px]">
+              <div className="h-[270px] mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={realDistributionData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
@@ -789,8 +789,10 @@ export function TeacherPanel() {
           <Card className="shadow-sm border border-slate-200">
             <div className="p-5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-base font-black text-[#10264F]">Estudiantes y Cuentas Registradas</h3>
-                <p className="text-xs text-muted-foreground">
+                <h3 className="text-base font-black text-[#10264F] tracking-wide">
+                  ESTUDIANTES Y CUENTAS REGISTRADAS
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Visualiza el progreso real, la última conexión y gestiona las cuentas de usuario
                 </p>
               </div>
@@ -824,14 +826,14 @@ export function TeacherPanel() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50">
-                    <TableHead className="font-bold">Usuario</TableHead>
-                    <TableHead className="font-bold">Rol</TableHead>
-                    <TableHead className="font-bold">Progreso Real</TableHead>
-                    <TableHead className="font-bold">Última Conexión</TableHead>
-                    <TableHead className="text-center font-bold">Evaluaciones</TableHead>
-                    <TableHead className="text-center font-bold">Actividades</TableHead>
-                    <TableHead className="font-bold">Estado</TableHead>
-                    <TableHead className="text-right font-bold">Acciones</TableHead>
+                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-600">USUARIO</TableHead>
+                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-600">ROL</TableHead>
+                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-600">PROGRESO REAL</TableHead>
+                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-600">ÚLTIMA CONEXIÓN</TableHead>
+                    <TableHead className="text-center font-bold text-[11px] uppercase tracking-wider text-slate-600">EVALUACIONES</TableHead>
+                    <TableHead className="text-center font-bold text-[11px] uppercase tracking-wider text-slate-600">ACTIVIDADES</TableHead>
+                    <TableHead className="font-bold text-[11px] uppercase tracking-wider text-slate-600">ESTADO</TableHead>
+                    <TableHead className="text-right font-bold text-[11px] uppercase tracking-wider text-slate-600">ACCIONES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -935,8 +937,8 @@ export function TeacherPanel() {
           <Card className="p-6 border border-slate-200 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
               <div>
-                <h3 className="text-lg font-black text-[#10264F]">
-                  Buzón de Mensajes y Sugerencias de Estudiantes
+                <h3 className="text-lg font-black text-[#10264F] tracking-wide">
+                  BUZÓN DE MENSAJES Y SUGERENCIAS DE ESTUDIANTES
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Mensajes enviados por los estudiantes a través de su panel. Se notifican automáticamente a las cuentas de los docentes.
@@ -1037,7 +1039,7 @@ export function TeacherPanel() {
                 <Clock className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-black text-base text-[#10264F]">Solicitudes de Cuentas Docentes</h3>
+                <h3 className="font-black text-base text-[#10264F] tracking-wide">SOLICITUDES DE CUENTAS DOCENTES</h3>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   Revisa y aprueba las cuentas con rol docente que ya verificaron su correo institucional.
                 </p>
@@ -1100,8 +1102,8 @@ export function TeacherPanel() {
           >
             <div className="flex items-start justify-between gap-4 border-b p-5 shrink-0 bg-[#0F3B8F] text-white">
               <div>
-                <h3 id="user-details-title" className="text-lg font-black text-white">
-                  Detalles de la Cuenta y Progreso Real
+                <h3 id="user-details-title" className="text-lg font-black text-white tracking-wide">
+                  DETALLES DE LA CUENTA Y PROGRESO REAL
                 </h3>
                 <p className="mt-0.5 text-xs text-blue-100">
                   Información académica, última conexión y respuestas del estudiante.
@@ -1121,12 +1123,12 @@ export function TeacherPanel() {
             <div className="overflow-y-auto p-5 space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5">
-                  <p className="text-xs font-bold text-slate-500">Nombre completo</p>
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">NOMBRE COMPLETO</p>
                   <p className="mt-1 font-black text-sm text-[#10264F]">{selectedUser.name}</p>
                 </div>
 
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5">
-                  <p className="text-xs font-bold text-slate-500">Correo electrónico</p>
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">CORREO ELECTRÓNICO</p>
                   <p className="mt-1 break-all font-semibold text-xs text-[#10264F]">{selectedUser.email}</p>
                 </div>
 
@@ -1134,8 +1136,8 @@ export function TeacherPanel() {
                 <div className="rounded-xl bg-blue-50 border border-blue-200 p-3.5 sm:col-span-2">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-[#0F3B8F]" />
-                    <p className="text-xs font-black text-[#0F3B8F]">
-                      Última conexión en LideraBot:
+                    <p className="text-xs font-black text-[#0F3B8F] uppercase tracking-wide">
+                      ÚLTIMA CONEXIÓN EN LIDERABOT:
                     </p>
                   </div>
                   <p className="mt-1 text-sm font-extrabold text-[#10264F]">
@@ -1150,14 +1152,14 @@ export function TeacherPanel() {
                 </div>
 
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5">
-                  <p className="text-xs font-bold text-slate-500">Tipo de cuenta</p>
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">TIPO DE CUENTA</p>
                   <p className="mt-1 font-black text-xs text-[#10264F]">
                     {selectedUser.role === 'teacher' ? 'Docente' : 'Estudiante'}
                   </p>
                 </div>
 
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5">
-                  <p className="text-xs font-bold text-slate-500">Estado de cuenta</p>
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">ESTADO DE CUENTA</p>
                   <p className="mt-1 font-bold text-xs text-emerald-700">
                     {selectedUser.status === 'active' ? '✓ Activo' : 'Inactivo'}
                   </p>
@@ -1165,7 +1167,7 @@ export function TeacherPanel() {
 
                 {selectedUser.role === 'student' && (
                   <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 sm:col-span-2">
-                    <p className="text-xs font-bold text-slate-500">Resumen Académico Real</p>
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">RESUMEN ACADÉMICO REAL</p>
                     <p className="mt-1 font-black text-sm text-[#0F3B8F]">
                       {selectedUser.progress}% de progreso general real · {selectedUser.evaluations} evaluaciones completadas · {selectedUser.activities} submódulos activos
                     </p>
@@ -1200,14 +1202,14 @@ export function TeacherPanel() {
                           </div>
                           {hasExerciseAnswer ? (
                             <div className="mt-2 space-y-1.5 rounded-lg bg-slate-50 p-3 text-xs border border-slate-100">
-                              <p className="font-black text-[#0F3B8F]">
-                                Respuesta al Ejercicio Práctico:
+                              <p className="font-black text-[#0F3B8F] text-[11px] uppercase tracking-wide">
+                                RESPUESTA AL EJERCICIO PRÁCTICO:
                               </p>
                               <p>
-                                <strong>1. Estrategia:</strong> {part1}
+                                <strong className="uppercase text-[11px]">1. Estrategia:</strong> {part1}
                               </p>
                               <p>
-                                <strong>2. Sustentación teórica:</strong> {part2}
+                                <strong className="uppercase text-[11px]">2. Sustentación teórica:</strong> {part2}
                               </p>
                             </div>
                           ) : (
@@ -1263,7 +1265,7 @@ export function TeacherPanel() {
             <div className="bg-red-600 px-6 py-4 text-white flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <ShieldAlert className="h-5 w-5 text-amber-200" />
-                <h3 className="text-base font-black">Eliminar Cuenta de Usuario</h3>
+                <h3 className="text-base font-black tracking-wide">ELIMINAR CUENTA DE USUARIO</h3>
               </div>
               <button
                 type="button"
@@ -1301,8 +1303,8 @@ export function TeacherPanel() {
               )}
 
               <div>
-                <label className="block text-xs font-black text-[#10264F] mb-1.5">
-                  Motivo de la eliminación (Requerido - Se enviará al estudiante) *
+                <label className="block text-[11px] font-black text-[#10264F] uppercase tracking-wide mb-1.5">
+                  MOTIVO DE LA ELIMINACIÓN (REQUERIDO - SE NOTIFICARÁ AL ESTUDIANTE) *
                 </label>
                 <textarea
                   value={deleteReason}
@@ -1357,7 +1359,7 @@ export function TeacherPanel() {
           >
             <div className="flex items-center justify-between border-b p-5">
               <div>
-                <h3 className="font-black text-sm text-[#10264F]">Filtrar Estudiantes</h3>
+                <h3 className="font-black text-sm text-[#10264F] tracking-wide">FILTRAR ESTUDIANTES</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {visibleUsers.length} cuentas visibles de {registeredUsers.length}
                 </p>
@@ -1369,8 +1371,8 @@ export function TeacherPanel() {
 
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Buscar por nombre o correo
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  BUSCAR POR NOMBRE O CORREO
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
@@ -1386,7 +1388,7 @@ export function TeacherPanel() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Estado</label>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">ESTADO</label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full h-9 text-xs font-bold">
                       <SelectValue />
@@ -1400,7 +1402,7 @@ export function TeacherPanel() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Tipo de cuenta</label>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">TIPO DE CUENTA</label>
                   <Select value={roleFilter} onValueChange={setRoleFilter}>
                     <SelectTrigger className="w-full h-9 text-xs font-bold">
                       <SelectValue />

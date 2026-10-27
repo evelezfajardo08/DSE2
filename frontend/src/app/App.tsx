@@ -215,7 +215,6 @@ export default function App() {
   const [hasStartedSubmodule, setHasStartedSubmodule] = useState(false);
   const [lockNotice, setLockNotice] = useState<string | null>(null);
   const [pendingChatPrompt, setPendingChatPrompt] = useState<string | null>(null);
-  const [isFloatingChatOpen, setIsFloatingChatOpen] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
 
   useEffect(() => {
@@ -1209,23 +1208,6 @@ export default function App() {
             >
               Progreso ({overallProgress}%)
             </button>
-
-            <button
-              onClick={() => {
-                setView("suggestions");
-                setMobileNav(false);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className={cn(
-                "rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5",
-                view === "suggestions"
-                  ? "bg-white/15 text-white"
-                  : "text-blue-100 hover:bg-white/10",
-              )}
-            >
-              <MessageSquare className="h-3.5 w-3.5 text-[#FACC15]" />
-              Sugerencias / PQRS
-            </button>
           </div>
 
           <div className="flex items-center gap-3">
@@ -1327,15 +1309,6 @@ export default function App() {
               className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
             >
               Progreso ({overallProgress}%)
-            </button>
-            <button
-              onClick={() => {
-                setView("suggestions");
-                setMobileNav(false);
-              }}
-              className="block w-full px-4 py-3 text-left text-sm font-semibold text-[#FACC15]"
-            >
-              Buzón de Sugerencias y PQRS
             </button>
             <button
               onClick={openProfile}
@@ -1570,65 +1543,7 @@ export default function App() {
       {view === "profile" && renderProfileSection()}
       {view === "settings" && renderSettingsSection()}
 
-      {/* Floating Chatbot Drawer Button (visible on all screens except full chatbot screen) */}
-      {view !== "chatbot" && (
-        <>
-          {isFloatingChatOpen && (
-            <div className="fixed bottom-20 right-5 z-50 w-[92vw] max-w-[440px] h-[540px] shadow-2xl">
-              <ChatPanel
-                userId={authUser.id}
-                userEmail={authUser.email}
-                userName={authUser.name}
-                completedActivityIds={completedAnswerKeys}
-                totalAvailableActivities={25}
-                moduleAnswers={answers}
-                diagnosticResult={diagnosticResult}
-                hasInteractedWithBot={hasInteractedWithBot}
-                unlockedSubmoduleIds={unlockedSubmoduleIds}
-                initialPrompt={pendingChatPrompt}
-                onPromptHandled={() => setPendingChatPrompt(null)}
-                onBotInteraction={handleBotInteraction}
-                onOpenDiagnostic={() => {
-                  setIsFloatingChatOpen(false);
-                  handleOpenDiagnosticGuarded();
-                }}
-                onOpenSubmodule={(modId, lvl) => {
-                  const target = computedModules.find((m) => m.id === modId);
-                  if (!target || !target.isUnlocked) {
-                    showTemporaryNotice(
-                      target?.unlockRequirementText ||
-                        "Completa primero la Prueba Diagnóstica Inicial.",
-                    );
-                    return;
-                  }
-                  setIsFloatingChatOpen(false);
-                  setActiveModuleId(modId);
-                  setLevel(lvl ?? 1);
-                  setView("evaluation");
-                }}
-              />
-            </div>
-          )}
-          <button
-            onClick={() => setIsFloatingChatOpen(!isFloatingChatOpen)}
-            className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2.5 rounded-full bg-[#0F3B8F] px-5 py-3.5 text-sm font-extrabold text-white shadow-[0_12px_30px_rgba(15,59,143,0.35)] border-2 border-[#FACC15] hover:bg-[#174AA6] transition-transform hover:scale-105"
-          >
-            {isFloatingChatOpen ? (
-              <>
-                <X className="h-5 w-5 text-[#FACC15]" />
-                <span>Cerrar LideraBot</span>
-              </>
-            ) : (
-              <>
-                <MessageSquare className="h-5 w-5 text-[#FACC15]" />
-                <span>Mentor IA · LideraBot</span>
-              </>
-            )}
-          </button>
-        </>
-      )}
-
-      {/* Botón flotante permanente de PQRS en la esquina inferior izquierda */}
+      {/* Botón permanente de PQRS en la esquina inferior izquierda (icono estático) */}
       <button
         onClick={() => {
           if (view === "suggestions") {
@@ -1639,18 +1554,14 @@ export default function App() {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         className={cn(
-          "fixed bottom-5 left-5 z-40 inline-flex items-center gap-2.5 rounded-full px-4 py-3.5 text-xs md:text-sm font-extrabold shadow-[0_10px_25px_rgba(0,0,0,0.14)] border transition-all hover:scale-105 active:scale-95 group",
+          "fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 rounded-full px-4 py-3 text-xs md:text-sm font-extrabold shadow-md border",
           view === "suggestions"
-            ? "bg-[#0F3B8F] text-white border-[#0F3B8F] shadow-[0_12px_28px_rgba(15,59,143,0.35)] ring-2 ring-[#FACC15]"
-            : "bg-white text-[#10264F] border-[#DCE3EF] hover:border-[#2D6BFF] hover:bg-[#F8FAFD] hover:text-[#0F3B8F]",
+            ? "bg-[#0F3B8F] text-white border-[#0F3B8F] ring-2 ring-[#FACC15]"
+            : "bg-white text-[#10264F] border-[#DCE3EF] hover:bg-[#F8FAFD] hover:text-[#0F3B8F]",
         )}
         title="Buzón de Sugerencias y PQRS"
       >
-        <span className="relative flex h-2.5 w-2.5 items-center justify-center">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2D6BFF] opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#2D6BFF]"></span>
-        </span>
-        <Mail className="h-4 w-4 text-[#2D6BFF] group-hover:scale-110 transition-transform" />
+        <Mail className="h-4 w-4 text-[#2D6BFF]" />
         <span className="tracking-wide">
           {view === "suggestions" ? "Cerrar PQRS" : "PQRS / Sugerencias"}
         </span>
