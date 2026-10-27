@@ -49,6 +49,7 @@ async function bootstrap() {
         req.path.startsWith('/modules') ||
         req.path.startsWith('/contents') ||
         req.path.startsWith('/assessments') ||
+        req.path.startsWith('/suggestions') ||
         req.path.startsWith('/bots')
       ) {
         return next();
