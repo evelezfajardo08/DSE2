@@ -21,6 +21,7 @@ import {
   Lightbulb,
   LockKeyhole,
   LogOut,
+  Mail,
   Menu,
   MessageCircleQuestion,
   MessageSquare,
@@ -1626,6 +1627,34 @@ export default function App() {
           </button>
         </>
       )}
+
+      {/* Botón flotante permanente de PQRS en la esquina inferior izquierda */}
+      <button
+        onClick={() => {
+          if (view === "suggestions") {
+            setView("home");
+          } else {
+            setView("suggestions");
+          }
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        className={cn(
+          "fixed bottom-5 left-5 z-40 inline-flex items-center gap-2.5 rounded-full px-4 py-3.5 text-xs md:text-sm font-extrabold shadow-[0_10px_25px_rgba(0,0,0,0.14)] border transition-all hover:scale-105 active:scale-95 group",
+          view === "suggestions"
+            ? "bg-[#0F3B8F] text-white border-[#0F3B8F] shadow-[0_12px_28px_rgba(15,59,143,0.35)] ring-2 ring-[#FACC15]"
+            : "bg-white text-[#10264F] border-[#DCE3EF] hover:border-[#2D6BFF] hover:bg-[#F8FAFD] hover:text-[#0F3B8F]",
+        )}
+        title="Buzón de Sugerencias y PQRS"
+      >
+        <span className="relative flex h-2.5 w-2.5 items-center justify-center">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2D6BFF] opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#2D6BFF]"></span>
+        </span>
+        <Mail className="h-4 w-4 text-[#2D6BFF] group-hover:scale-110 transition-transform" />
+        <span className="tracking-wide">
+          {view === "suggestions" ? "Cerrar PQRS" : "PQRS / Sugerencias"}
+        </span>
+      </button>
     </div>
   );
 }
