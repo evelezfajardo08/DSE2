@@ -32,7 +32,10 @@ async function bootstrap() {
   if (existsSync(frontendDist)) {
     const server = app.getHttpAdapter().getInstance();
     server.use(express.static(frontendDist));
-    server.get('*', (req: any, res: any, next: any) => {
+    server.use((req: any, res: any, next: any) => {
+      if (req.method !== 'GET') {
+        return next();
+      }
       if (
         req.path.startsWith('/api') ||
         req.path.startsWith('/auth') ||
