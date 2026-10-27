@@ -27,6 +27,7 @@ import {
   Moon,
   Save,
   Settings,
+  Sparkles,
   Sun,
   Target,
   Unlock,
@@ -54,7 +55,58 @@ import {
   leadershipModules,
   theoreticalFoundations,
 } from "./leadershipData";
+import { communicationModules } from "./communicationData";
+import { decisionModules, DecisionTopicLevel } from "./decisionData";
 import { DiagnosticEvaluationResult } from "./diagnosticData";
+
+export type DisciplineKey = "leadership" | "communication" | "decision";
+
+export interface DisciplineInfo {
+  key: DisciplineKey;
+  number: number;
+  title: string;
+  shortTitle: string;
+  tagline: string;
+  color: string;
+  icon: typeof Sparkles;
+}
+
+export const disciplines: DisciplineInfo[] = [
+  {
+    key: "leadership",
+    number: 1,
+    title: "Módulo 1: Formación en Liderazgo",
+    shortTitle: "Liderazgo",
+    tagline: "Fortalece tu capacidad para guiar equipos y tomar decisiones estratégicas mediante 5 enfoques esenciales.",
+    color: "#0F3B8F",
+    icon: Sparkles,
+  },
+  {
+    key: "communication",
+    number: 2,
+    title: "Módulo 2: Competencias en Comunicación Educativa",
+    shortTitle: "Comunicación Educativa",
+    tagline: "Domina la mediación pedagógica, la interacción dialógica y la educomunicación crítica en 5 ejes temáticos.",
+    color: "#0891B2",
+    icon: MessageSquare,
+  },
+  {
+    key: "decision",
+    number: 3,
+    title: "Módulo 3: Toma de Decisiones y Resolución de Problemas",
+    shortTitle: "Toma de Decisiones",
+    tagline: "Desarrolla competencias analíticas, mitigación de sesgos cognitivos y criterios éticos para resolver problemas complejos.",
+    color: "#7C3AED",
+    icon: Target,
+  },
+];
+
+export function getAnswerKey(discipline: DisciplineKey, modId: number, lvl: number) {
+  if (discipline === "leadership") {
+    return `${modId}-${lvl}`;
+  }
+  return `${discipline}-${modId}-${lvl}`;
+}
 
 type View =
   | "home"
@@ -116,7 +168,7 @@ function getInitials(name: string) {
 
 function isAnswerValid(level: number, value?: string) {
   if (!value) return false;
-  if (level === 5) {
+  if (value.includes("|||")) {
     const [part1 = "", part2 = ""] = value.split("|||");
     return part1.trim().length > 0 && part2.trim().length > 0;
   }
@@ -143,6 +195,7 @@ export default function App() {
 
   // Student UI State
   const [view, setView] = useState<View>("chatbot");
+  const [currentDiscipline, setCurrentDiscipline] = useState<DisciplineKey>("leadership");
   const [activeModuleId, setActiveModuleId] = useState(1);
   const [level, setLevel] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -292,8 +345,21 @@ export default function App() {
     }
   };
 
+  const rawDisciplineModules = useMemo(() => {
+    switch (currentDiscipline) {
+      case "communication":
+        return communicationModules;
+      case "decision":
+        return decisionModules;
+      case "leadership":
+      default:
+        return leadershipModules;
+    }
+  }, [currentDiscipline]);
+
   // Compute recommended stepped unlocking order
   const recommendedSubmoduleOrder = useMemo(() => {
+    if (currentDiscipline !== "leadership") return [1, 2, 3, 4, 5];
     if (!diagnosticResult) return [1, 2, 3, 4, 5];
     const rawOrder = diagnosticResult.recommendedSubmoduleOrder;
     if (Array.isArray(rawOrder) && rawOrder.length === 5) {
@@ -301,36 +367,55 @@ export default function App() {
     }
     const startId = diagnosticResult.recommendedStartingSubmoduleId || 1;
     return [startId, ...[1, 2, 3, 4, 5].filter((id) => id !== startId)];
-  }, [diagnosticResult]);
+  }, [currentDiscipline, diagnosticResult]);
 
   // Compute which submodules are currently unlocked (Stepped Unlocking)
   const unlockedSubmoduleIds = useMemo(() => {
-    if (!diagnosticResult) return [];
-    const unlocked: number[] = [];
-    for (let i = 0; i < recommendedSubmoduleOrder.length; i++) {
-      const modId = recommendedSubmoduleOrder[i];
-      if (i === 0) {
-        unlocked.push(modId);
-      } else {
-        const prevModId = recommendedSubmoduleOrder[i - 1];
-        const prevCompleted =
-          [1, 2, 3, 4, 5].filter((lvl) => isAnswerValid(lvl, answers[`${prevModId}-${lvl}`]))
-            .length === 5;
-        if (prevCompleted && unlocked.includes(prevModId)) {
+    if (currentDiscipline === "leadership") {
+      if (!diagnosticResult) return [];
+      const unlocked: number[] = [];
+      for (let i = 0; i < recommendedSubmoduleOrder.length; i++) {
+        const modId = recommendedSubmoduleOrder[i];
+        if (i === 0) {
           unlocked.push(modId);
         } else {
-          break;
+          const prevModId = recommendedSubmoduleOrder[i - 1];
+          const prevCompleted =
+            [1, 2, 3, 4, 5].filter((lvl) =>
+              isAnswerValid(lvl, answers[getAnswerKey("leadership", prevModId, lvl)]),
+            ).length === 5;
+          if (prevCompleted && unlocked.includes(prevModId)) {
+            unlocked.push(modId);
+          } else {
+            break;
+          }
         }
+      }
+      return unlocked;
+    }
+
+    // Para Comunicación y Toma de Decisiones: el Eje 1 inicia desbloqueado y los siguientes se desbloquean secuencialmente al completar 5/5
+    const unlocked: number[] = [1];
+    for (let modId = 2; modId <= 5; modId++) {
+      const prevModId = modId - 1;
+      const prevCompleted =
+        [1, 2, 3, 4, 5].filter((lvl) =>
+          isAnswerValid(lvl, answers[getAnswerKey(currentDiscipline, prevModId, lvl)]),
+        ).length === 5;
+      if (prevCompleted && unlocked.includes(prevModId)) {
+        unlocked.push(modId);
+      } else {
+        break;
       }
     }
     return unlocked;
-  }, [diagnosticResult, recommendedSubmoduleOrder, answers]);
+  }, [currentDiscipline, diagnosticResult, recommendedSubmoduleOrder, answers]);
 
   // Compute dynamic progress across all 5 modules (25 total levels) + lock status
   const computedModules: ModuleWithProgress[] = useMemo(() => {
-    return leadershipModules.map((mod) => {
+    return rawDisciplineModules.map((mod) => {
       const completedLevels = [1, 2, 3, 4, 5].filter((lvl) =>
-        isAnswerValid(lvl, answers[`${mod.id}-${lvl}`]),
+        isAnswerValid(lvl, answers[getAnswerKey(currentDiscipline, mod.id, lvl)]),
       ).length;
       const progress = Math.round((completedLevels / 5) * 100);
       const status: ModuleStatus =
@@ -341,16 +426,22 @@ export default function App() {
             : "No iniciado";
 
       const isUnlocked = unlockedSubmoduleIds.includes(mod.id);
-      const stepOrderIndex = recommendedSubmoduleOrder.indexOf(mod.id);
+      const stepOrderIndex = mod.id - 1;
 
       let unlockRequirementText = "";
-      if (!hasInteractedWithBot) {
-        unlockRequirementText = "Bloqueado · Habla primero con LideraBot";
-      } else if (!diagnosticResult) {
-        unlockRequirementText = "Bloqueado · Realiza la Prueba Diagnóstica";
-      } else if (!isUnlocked && stepOrderIndex > 0) {
-        const prevModId = recommendedSubmoduleOrder[stepOrderIndex - 1];
-        unlockRequirementText = `Bloqueado · Completa antes el Submódulo 0${prevModId}`;
+      if (currentDiscipline === "leadership") {
+        if (!hasInteractedWithBot) {
+          unlockRequirementText = "Bloqueado · Habla primero con LideraBot";
+        } else if (!diagnosticResult) {
+          unlockRequirementText = "Bloqueado · Realiza la Prueba Diagnóstica";
+        } else if (!isUnlocked && stepOrderIndex > 0) {
+          const prevModId = recommendedSubmoduleOrder[stepOrderIndex - 1];
+          unlockRequirementText = `Bloqueado · Completa antes el Submódulo 0${prevModId}`;
+        }
+      } else {
+        if (!isUnlocked) {
+          unlockRequirementText = `Bloqueado · Completa los 5 niveles del Eje 0${mod.id - 1} para desbloquear`;
+        }
       }
 
       return {
@@ -363,21 +454,39 @@ export default function App() {
         unlockRequirementText,
       };
     });
-  }, [answers, unlockedSubmoduleIds, recommendedSubmoduleOrder, hasInteractedWithBot, diagnosticResult]);
+  }, [
+    rawDisciplineModules,
+    currentDiscipline,
+    answers,
+    unlockedSubmoduleIds,
+    recommendedSubmoduleOrder,
+    hasInteractedWithBot,
+    diagnosticResult,
+  ]);
 
   const completedAnswerKeys = useMemo(() => {
     const keys: string[] = [];
-    for (const mod of leadershipModules) {
-      for (const lvl of [1, 2, 3, 4, 5]) {
-        if (isAnswerValid(lvl, answers[`${mod.id}-${lvl}`])) {
-          keys.push(`${mod.id}-${lvl}`);
+    const allDisciplines: DisciplineKey[] = ["leadership", "communication", "decision"];
+    for (const disc of allDisciplines) {
+      const list =
+        disc === "communication"
+          ? communicationModules
+          : disc === "decision"
+            ? decisionModules
+            : leadershipModules;
+      for (const mod of list) {
+        for (const lvl of [1, 2, 3, 4, 5]) {
+          const k = getAnswerKey(disc, mod.id, lvl);
+          if (isAnswerValid(lvl, answers[k])) {
+            keys.push(k);
+          }
         }
       }
     }
     return keys;
   }, [answers]);
 
-  const totalCompletedLevels = completedAnswerKeys.length;
+  const totalCompletedLevels = computedModules.reduce((acc, m) => acc + m.completedLevels, 0);
   const overallProgress = Math.round((totalCompletedLevels / 25) * 100);
 
   const activeModule = useMemo(
@@ -385,7 +494,7 @@ export default function App() {
     [computedModules, activeModuleId],
   );
 
-  const answerKey = `${activeModuleId}-${level}`;
+  const answerKey = getAnswerKey(currentDiscipline, activeModuleId, level);
   const currentAnswer = answers[answerKey] ?? "";
 
   const showTemporaryNotice = (msg: string) => {
@@ -436,7 +545,9 @@ export default function App() {
     }
     setActiveModuleId(item.id);
     const firstPending =
-      [1, 2, 3, 4, 5].find((lvl) => !isAnswerValid(lvl, answers[`${item.id}-${lvl}`])) ?? 1;
+      [1, 2, 3, 4, 5].find(
+        (lvl) => !isAnswerValid(lvl, answers[getAnswerKey(currentDiscipline, item.id, lvl)]),
+      ) ?? 1;
     setLevel(firstPending);
     setView("intro");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -549,39 +660,49 @@ export default function App() {
 
   const syncAllSubmodulesToBackend = (currentAnswers: Record<string, string>) => {
     if (!authUser || userRole !== "student") return;
-    const totalDone = leadershipModules.reduce((acc, mod) => {
-      return (
-        acc +
-        [1, 2, 3, 4, 5].filter((lvl) => isAnswerValid(lvl, currentAnswers[`${mod.id}-${lvl}`]))
-          .length
-      );
-    }, 0);
-    const totalPct = Math.round((totalDone / 25) * 100);
 
-    for (const mod of leadershipModules) {
-      const doneLevels = [1, 2, 3, 4, 5].filter((lvl) =>
-        isAnswerValid(lvl, currentAnswers[`${mod.id}-${lvl}`]),
-      ).length;
-      const modPct = Math.round((doneLevels / 5) * 100);
-      const exerciseResp = currentAnswers[`${mod.id}-5`] ?? "";
+    const allDisciplines: { key: DisciplineKey; name: string; list: LeadershipModule[] }[] = [
+      { key: "leadership", name: "Liderazgo", list: leadershipModules },
+      { key: "communication", name: "Comunicación Educativa", list: communicationModules },
+      { key: "decision", name: "Toma de Decisiones", list: decisionModules },
+    ];
 
-      fetch(`${API_BASE}/progress/activity-completed`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: authUser.id,
-          user_email: authUser.email,
-          activity_id: `submodulo-${mod.id}`,
-          module_id: mod.id,
-          submodule_name: mod.name,
-          exercise_response: exerciseResp,
-          overall_progress: totalPct,
-          percentage: modPct,
-          status:
-            doneLevels === 5 ? "completed" : doneLevels > 0 ? "in_progress" : "not_started",
-        }),
-      }).catch(() => undefined);
-    }
+    allDisciplines.forEach(({ key, name, list }) => {
+      const discTotalDone = list.reduce((acc, mod) => {
+        return (
+          acc +
+          [1, 2, 3, 4, 5].filter((lvl) =>
+            isAnswerValid(lvl, currentAnswers[getAnswerKey(key, mod.id, lvl)]),
+          ).length
+        );
+      }, 0);
+      const discPct = Math.round((discTotalDone / 25) * 100);
+
+      list.forEach((mod) => {
+        const doneLevels = [1, 2, 3, 4, 5].filter((lvl) =>
+          isAnswerValid(lvl, currentAnswers[getAnswerKey(key, mod.id, lvl)]),
+        ).length;
+        const modPct = Math.round((doneLevels / 5) * 100);
+        const exerciseResp = currentAnswers[getAnswerKey(key, mod.id, 5)] ?? "";
+
+        fetch(`${API_BASE}/progress/activity-completed`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: authUser.id,
+            user_email: authUser.email,
+            activity_id: `submodulo-${key}-${mod.id}`,
+            module_id: mod.id,
+            submodule_name: `[${name}] ${mod.name}`,
+            exercise_response: exerciseResp,
+            overall_progress: discPct,
+            percentage: modPct,
+            status:
+              doneLevels === 5 ? "completed" : doneLevels > 0 ? "in_progress" : "not_started",
+          }),
+        }).catch(() => undefined);
+      });
+    });
   };
 
   useEffect(() => {
@@ -591,7 +712,11 @@ export default function App() {
 
   const continueEvaluation = () => {
     let updatedAnswers = answers;
-    if (level < 5 && !isAnswerValid(level, answers[answerKey])) {
+    if (
+      currentDiscipline === "leadership" &&
+      level < 5 &&
+      !isAnswerValid(level, answers[answerKey])
+    ) {
       updatedAnswers = { ...answers, [answerKey]: "CONTENIDO_ESTUDIADO" };
       setAnswers(updatedAnswers);
       if (authUser) {
@@ -1156,6 +1281,13 @@ export default function App() {
 
       {view === "home" && (
         <HomeView
+          currentDiscipline={currentDiscipline}
+          onSelectDiscipline={(disc) => {
+            setCurrentDiscipline(disc);
+            setActiveModuleId(1);
+            setLevel(1);
+          }}
+          disciplines={disciplines}
           modules={computedModules}
           overallProgress={overallProgress}
           totalCompletedLevels={totalCompletedLevels}
@@ -1177,6 +1309,7 @@ export default function App() {
       {view === "intro" && (
         <IntroView
           item={activeModule}
+          discipline={currentDiscipline}
           onBack={goHome}
           onStart={() => {
             setView("evaluation");
@@ -1187,6 +1320,7 @@ export default function App() {
       {view === "evaluation" && (
         <EvaluationView
           item={activeModule}
+          discipline={currentDiscipline}
           level={level}
           answer={currentAnswer}
           answers={answers}
@@ -1206,12 +1340,13 @@ export default function App() {
       {view === "complete" && (
         <CompleteView
           item={activeModule}
+          discipline={currentDiscipline}
           answers={answers}
           modules={computedModules}
           recommendedSubmoduleOrder={recommendedSubmoduleOrder}
           onAskAiFeedback={() =>
             handleAskChatbotWithPrompt(
-              `Acabo de completar satisfactoriamente el Submódulo ${activeModule.id} (${activeModule.name}). Revisa mis 5 respuestas registradas, dame retroalimentación basada en ${activeModule.authorsSummary} e indícame cuál es el siguiente submódulo que se ha desbloqueado en mi ruta escalonada.`,
+              `Acabo de completar satisfactoriamente el ${currentDiscipline === "leadership" ? "Submódulo" : "Eje"} 0${activeModule.id} (${activeModule.name}) de ${disciplines.find((d) => d.key === currentDiscipline)?.shortTitle}. Revisa mis 5 respuestas registradas, dame retroalimentación basada en ${activeModule.authorsSummary} e indícame cuál es el siguiente paso en mi ruta de aprendizaje.`,
             )
           }
           onReview={() => {
@@ -1267,10 +1402,15 @@ export default function App() {
       )}
       {view === "responses" && (
         <ResponsesView
-          modules={computedModules}
+          currentDiscipline={currentDiscipline}
+          onSelectDiscipline={setCurrentDiscipline}
+          disciplines={disciplines}
           answers={answers}
           onAskAiFeedback={(prompt) => handleAskChatbotWithPrompt(prompt)}
-          onOpenModuleLevel={(mod, lvl) => {
+          onOpenModuleLevel={(disc, mod, lvl) => {
+            if (disc !== currentDiscipline) {
+              setCurrentDiscipline(disc);
+            }
             if (!mod.isUnlocked) {
               showTemporaryNotice(mod.unlockRequirementText);
               return;
@@ -1348,6 +1488,9 @@ export default function App() {
 }
 
 function HomeView({
+  currentDiscipline,
+  disciplines: discList,
+  onSelectDiscipline,
   modules,
   overallProgress,
   totalCompletedLevels,
@@ -1360,6 +1503,9 @@ function HomeView({
   onOpenChatbot,
   onOpenFoundations,
 }: {
+  currentDiscipline: DisciplineKey;
+  disciplines: DisciplineInfo[];
+  onSelectDiscipline: (key: DisciplineKey) => void;
   modules: ModuleWithProgress[];
   overallProgress: number;
   totalCompletedLevels: number;
@@ -1372,25 +1518,52 @@ function HomeView({
   onOpenChatbot: () => void;
   onOpenFoundations: () => void;
 }) {
-  const inProgressCount = modules.filter((m) => m.status === "En progreso").length;
-  const completedCount = modules.filter((m) => m.status === "Completado").length;
-  const activeRecommendedModule =
-    modules.find((m) => m.isUnlocked && m.status !== "Completado") ??
-    modules.find((m) => m.isUnlocked) ??
-    modules[0];
+  const activeDiscipline =
+    discList.find((d) => d.key === currentDiscipline) ?? discList[0];
 
   return (
     <main className="mx-auto max-w-[1140px] px-5 py-8 lg:px-8">
-      {/* Encabezado simple con breve introducción */}
-      <section className="rounded-[24px] bg-[#0F3B8F] p-6 text-white md:p-8">
+      {/* Selector de Disciplinas / Módulos */}
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
+        {discList.map((d) => {
+          const Icon = d.icon;
+          const isActive = currentDiscipline === d.key;
+          return (
+            <button
+              key={d.key}
+              onClick={() => onSelectDiscipline(d.key)}
+              className={cn(
+                "flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-xs sm:text-sm font-extrabold transition-all",
+                isActive
+                  ? "bg-white text-[#0F3B8F] shadow-sm border border-[#DCE3EF]"
+                  : "text-[#5A6A85] hover:text-[#0F3B8F] hover:bg-white/60",
+              )}
+            >
+              <Icon
+                className="h-4 w-4 shrink-0"
+                style={{ color: isActive ? d.color : undefined }}
+              />
+              <span className="truncate">{d.shortTitle}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Encabezado con información del módulo activo */}
+      <section
+        className="rounded-[24px] p-6 text-white md:p-8 transition-colors"
+        style={{ backgroundColor: activeDiscipline.color }}
+      >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="max-w-2xl">
+            <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white mb-2">
+              {activeDiscipline.title}
+            </span>
             <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
-              Módulo de Liderazgo
+              {activeDiscipline.shortTitle}
             </h1>
             <p className="mt-2 text-sm leading-6 text-blue-100">
-              Fortalece tu capacidad para guiar equipos y tomar decisiones estratégicas mediante 5
-              submódulos prácticos.
+              {activeDiscipline.tagline}
             </p>
           </div>
 
@@ -1424,7 +1597,7 @@ function HomeView({
               <p className="text-sm font-extrabold text-[#10264F]">
                 {unlockedSubmoduleIds.length === 0
                   ? "Realiza primero la Prueba Diagnóstica para desbloquear tu módulo aquí"
-                  : "¡Has completado todos los submódulos de Liderazgo!"}
+                  : `¡Has completado todos los submódulos de ${activeDiscipline.shortTitle}!`}
               </p>
               {unlockedSubmoduleIds.length === 0 && (
                 <button
@@ -1552,28 +1725,33 @@ function ModuleCard({
 
 function IntroView({
   item,
+  discipline = "leadership",
   onBack,
   onStart,
 }: {
   item: ModuleWithProgress;
+  discipline?: DisciplineKey;
   onBack: () => void;
   onStart: () => void;
 }) {
   const Icon = item.icon;
+  const isLeadership = discipline === "leadership";
+  const modLabel = isLeadership ? "Submódulo" : "Eje Temático";
+
   return (
     <main className="mx-auto max-w-[820px] px-5 py-8 lg:px-8">
       <button
         onClick={onBack}
         className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F]"
       >
-        <ArrowLeft className="h-4 w-4" /> Volver a submódulos
+        <ArrowLeft className="h-4 w-4" /> Volver a módulos
       </button>
 
       <section className="rounded-[24px] border border-[#DCE3EF] bg-white p-6 md:p-8 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <span className="text-xs font-extrabold uppercase tracking-wider text-[#2D6BFF]">
-              Submódulo 0{item.id}
+              {modLabel} 0{item.id}
             </span>
             <h1 className="mt-1 text-2xl font-extrabold text-[#10264F] md:text-3xl">
               {item.name}
@@ -1588,16 +1766,37 @@ function IntroView({
         </div>
 
         <p className="mt-4 text-sm leading-6 text-[#4A5870]">{item.description}</p>
-        <p className="mt-3 text-sm leading-6 text-[#31415E]">
-          {item.intro}
-        </p>
+        <p className="mt-3 text-sm leading-6 text-[#31415E]">{item.intro}</p>
+
+        {/* Lista de los 5 niveles */}
+        <div className="mt-6 pt-5 border-t border-[#E9EEF6]">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#64728A] mb-3">
+            Niveles que desarrollarás en este {modLabel.toLowerCase()}:
+          </h3>
+          <div className="grid gap-2">
+            {item.topics.map((t) => (
+              <div
+                key={t.level}
+                className="flex items-center gap-3 rounded-xl bg-[#F8FAFD] border border-[#E9EEF6] px-3.5 py-2.5 text-xs text-[#2A374E]"
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#0F3B8F] text-white font-extrabold text-[11px]">
+                  {t.level}
+                </span>
+                <span className="font-bold text-[#0F3B8F]">
+                  {t.difficultyLabel || `Tema ${t.level}`}:
+                </span>
+                <span className="truncate text-[#4A5870]">{t.topicTitle}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div className="mt-6 flex justify-end">
           <button
             onClick={onStart}
             className="inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-6 py-3 text-sm font-extrabold text-white hover:bg-[#174AA6]"
           >
-            Comenzar contenido del submódulo <ArrowRight className="h-4 w-4" />
+            Comenzar {modLabel.toLowerCase()} <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </section>
@@ -1607,6 +1806,7 @@ function IntroView({
 
 function EvaluationView({
   item,
+  discipline = "leadership",
   level,
   answer,
   answers,
@@ -1617,6 +1817,7 @@ function EvaluationView({
   onContinue,
 }: {
   item: ModuleWithProgress;
+  discipline?: DisciplineKey;
   level: number;
   answer: string;
   answers: Record<string, string>;
@@ -1626,10 +1827,13 @@ function EvaluationView({
   onBack: () => void;
   onContinue: () => void;
 }) {
+  const [showModelAnswer, setShowModelAnswer] = useState(false);
   const currentTopic = item.topics[level - 1] ?? item.topics[0];
+  const isLeadership = discipline === "leadership";
   const isFinal = level === 5;
   const isSaved = isAnswerValid(level, answer);
-  const canContinue = isFinal ? isSaved : true;
+  const canContinue = isLeadership ? (isFinal ? isSaved : true) : isSaved;
+  const modLabel = isLeadership ? "Submódulo" : "Eje Temático";
 
   return (
     <main className="mx-auto max-w-[1160px] px-5 py-8 lg:px-8 lg:py-12">
@@ -1638,20 +1842,22 @@ function EvaluationView({
           onClick={onBack}
           className="inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F]"
         >
-          <ArrowLeft className="h-4 w-4" /> Volver a la introducción del submódulo
+          <ArrowLeft className="h-4 w-4" /> Volver a la introducción
         </button>
         <div className="flex flex-wrap items-center gap-2">
-          {isFinal && isSaved && (
+          {isSaved && (
             <button
               onClick={() =>
                 onAskAiFeedback(
-                  `Dame retroalimentación académica sobre mi ejercicio práctico del Submódulo ${item.id} (${item.name}). Mi respuesta fue: "${answer.replace("|||", " / ")}"`,
+                  isLeadership
+                    ? `Dame retroalimentación académica sobre mi ejercicio práctico del Submódulo ${item.id} (${item.name}). Mi respuesta fue: "${answer.replace("|||", " / ")}"`
+                    : `Revisa pedagógicamente mi respuesta para el Nivel ${level} (${currentTopic.difficultyLabel}) del ${modLabel} "${item.name}". Mi respuesta es: "${answer}". Contrasta con el marco de ${currentTopic.authorCitation}.`,
                 )
               }
               className="inline-flex items-center gap-1.5 rounded-full bg-[#EAF0FF] px-3 py-1 text-xs font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF]"
             >
               <Bot className="h-3.5 w-3.5 text-[#2D6BFF]" />
-              Pedir retroalimentación a LideraBot sobre este ejercicio
+              Pedir retroalimentación a LideraBot
             </button>
           )}
           <Pill
@@ -1664,13 +1870,17 @@ function EvaluationView({
             ) : (
               <BookOpen className="h-3.5 w-3.5" />
             )}
-            {isFinal
-              ? isSaved
-                ? "Ejercicio guardado"
-                : "Ejercicio pendiente"
+            {isLeadership
+              ? isFinal
+                ? isSaved
+                  ? "Ejercicio guardado"
+                  : "Ejercicio pendiente"
+                : isSaved
+                  ? "Contenido completado"
+                  : "Lectura de contenido"
               : isSaved
-                ? "Contenido completado"
-                : "Lectura de contenido"}
+                ? "Nivel respondido"
+                : "Respuesta pendiente"}
           </Pill>
         </div>
       </div>
@@ -1678,23 +1888,44 @@ function EvaluationView({
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
         <aside className="h-fit rounded-[22px] bg-[#0F3B8F] p-5 text-white lg:sticky lg:top-24">
           <p className="text-xs font-bold uppercase tracking-[0.15em] text-blue-200">
-            Submódulo 0{item.id}
+            {modLabel} 0{item.id}
           </p>
           <h2 className="mt-2 text-xl font-extrabold leading-tight">{item.shortName}</h2>
           <p className="mt-1 text-xs text-blue-200">{item.authorsSummary}</p>
           <div className="my-5 h-px bg-white/15" />
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-blue-200">
-            Contenidos y Ejercicio
+            Niveles del Módulo
           </p>
           <div className="space-y-2">
             {item.topics.map((topicEntry) => {
               const number = topicEntry.level;
-              const saved = isAnswerValid(number, answers[`${item.id}-${number}`]);
+              const saved = isAnswerValid(
+                number,
+                answers[getAnswerKey(discipline, item.id, number)],
+              );
               const available = number <= level || saved;
+              const labelTitle = isLeadership
+                ? number === 5
+                  ? "Ejercicio Práctico Final"
+                  : topicEntry.topicTitle.replace(/^Tema \d+:\s*/, "")
+                : topicEntry.difficultyLabel || `Nivel ${number}`;
+              const labelSub = isLeadership
+                ? number === 5
+                  ? "Evaluación del submódulo"
+                  : `Contenido ${number} (Lectura)`
+                : number === 5
+                  ? "Pregunta Saber Pro"
+                  : topicEntry.topicTitle.replace(/^[A-ZÁÉÍÓÚa-záéíóú\s0-9]+:\s*/, "");
+
               return (
                 <button
                   key={number}
-                  onClick={() => available && onLevel(number)}
+                  onClick={() => {
+                    if (available) {
+                      setShowModelAnswer(false);
+                      onLevel(number);
+                    }
+                  }}
                   disabled={!available}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
@@ -1715,18 +1946,14 @@ function EvaluationView({
                     {saved && number !== level ? <Check className="h-3.5 w-3.5" /> : number}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-xs">
-                      {number === 5
-                        ? "Ejercicio Práctico Final"
-                        : topicEntry.topicTitle.replace(/^Tema \d+:\s*/, "")}
-                    </p>
+                    <p className="truncate font-bold text-xs">{labelTitle}</p>
                     <p
                       className={cn(
                         "truncate text-[10px]",
                         number === level ? "text-[#2D6BFF]" : "text-blue-200",
                       )}
                     >
-                      {number === 5 ? "Evaluación del submódulo" : `Contenido ${number} (Lectura)`}
+                      {labelSub}
                     </p>
                   </div>
                 </button>
@@ -1740,12 +1967,16 @@ function EvaluationView({
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-extrabold text-[#10264F]">
-                  {isFinal
-                    ? "Paso 5 de 5 · Ejercicio Práctico del Submódulo"
-                    : `Paso ${level} de 5 · Contenido Teórico (Solo lectura)`}
+                  {isLeadership
+                    ? isFinal
+                      ? "Paso 5 de 5 · Ejercicio Práctico del Submódulo"
+                      : `Paso ${level} de 5 · Contenido Teórico (Solo lectura)`
+                    : isFinal
+                      ? "Nivel 5 de 5 · Pregunta Evaluativa Saber Pro"
+                      : `Nivel ${level} de 5 · ${currentTopic.difficultyLabel}`}
                 </p>
                 <p className="mt-0.5 text-xs text-[#6C7990]">
-                  {isFinal
+                  {isLeadership && isFinal
                     ? `Actividad práctica integradora de ${item.name}`
                     : currentTopic.topicTitle}
                 </p>
@@ -1761,7 +1992,7 @@ function EvaluationView({
           </div>
 
           <motion.article
-            key={`${item.id}-${level}`}
+            key={`${discipline}-${item.id}-${level}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="overflow-hidden rounded-[24px] border border-[#DCE3EF] bg-white shadow-[0_14px_40px_rgba(29,55,96,.07)]"
@@ -1770,7 +2001,8 @@ function EvaluationView({
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Pill className="bg-[#EAF0FF] text-[#2457D5]">
-                    {isFinal ? "Ejercicio Práctico Evaluativo" : "Contenido de Estudio (Lectura)"}
+                    {currentTopic.difficultyLabel ||
+                      (isFinal ? "Ejercicio Práctico" : "Contenido de Estudio")}
                   </Pill>
                   <Pill className="bg-[#F5EBFF] text-[#7E22CE]">
                     <BookMarked className="h-3.5 w-3.5" />
@@ -1784,8 +2016,8 @@ function EvaluationView({
             </div>
 
             <div className="p-6 md:p-8">
-              {/* VISTA DE CONTENIDOS TEÓRICOS (PASOS 1 AL 4) */}
-              {!isFinal && (
+              {/* DISCIPLINA 1: LIDERAZGO (Niveles 1-4 Lectura) */}
+              {isLeadership && !isFinal && (
                 <>
                   <div className="mb-5 rounded-xl border border-[#DCE3EF] bg-[#F8FAFD] px-4 py-3 text-xs font-semibold text-[#4A5870] flex items-center gap-2.5">
                     <BookOpen className="h-4 w-4 shrink-0 text-[#2D6BFF]" />
@@ -1800,12 +2032,10 @@ function EvaluationView({
                     {currentTopic.topicTitle}
                   </h1>
 
-                  {/* Contenido teórico completo */}
                   <div className="mt-4 space-y-3 text-sm leading-7 text-[#31415E] whitespace-pre-line">
                     {currentTopic.theoreticalContent}
                   </div>
 
-                  {/* Si estamos en el Contenido 4, incluimos también el cierre teórico del Tema 5 para que toda la teoría quede vista antes del ejercicio */}
                   {level === 4 && item.topics[4] && (
                     <div className="mt-6 pt-6 border-t border-[#E3E8F0]">
                       <h2 className="text-lg font-extrabold text-[#10264F]">
@@ -1817,7 +2047,6 @@ function EvaluationView({
                     </div>
                   )}
 
-                  {/* Idea clave del tema */}
                   <div className="mt-6 rounded-2xl border border-[#DCE3EF] bg-[#F6F8FC] p-5">
                     <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
                       <Lightbulb className="h-4 w-4 text-[#2D6BFF]" />
@@ -1828,7 +2057,6 @@ function EvaluationView({
                     </p>
                   </div>
 
-                  {/* Ejemplo práctico RESUELTO (con la solución explicada para que no parezca una pregunta incompleta) */}
                   {currentTopic.scenarioTitle && currentTopic.scenarioContext && (
                     <div className="mt-6 rounded-2xl border-l-4 border-[#2D6BFF] bg-[#F4F8FF] p-5 space-y-3">
                       <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
@@ -1850,8 +2078,8 @@ function EvaluationView({
                 </>
               )}
 
-              {/* VISTA DEL EJERCICIO PRÁCTICO FINAL (PASO 5) */}
-              {isFinal && (
+              {/* DISCIPLINA 1: LIDERAZGO NIVEL 5 (Ejercicio práctico) */}
+              {isLeadership && isFinal && (
                 <div>
                   <div className="mb-6 rounded-2xl border border-[#DCE3EF] bg-[#EAF0FF] p-4 text-xs sm:text-sm text-[#0F3B8F] leading-6">
                     <strong>¿Qué debes hacer en este ejercicio práctico?</strong> Lee el caso
@@ -1889,24 +2117,218 @@ function EvaluationView({
                 </div>
               )}
 
+              {/* DISCIPLINAS 2 Y 3: COMUNICACIÓN Y TOMA DE DECISIONES (NIVELES 1 AL 4) */}
+              {!isLeadership && !isFinal && (
+                <div className="space-y-6">
+                  <div className="rounded-xl border border-[#DCE3EF] bg-[#F8FAFD] px-4 py-3 text-xs font-semibold text-[#4A5870] flex items-center gap-2.5">
+                    <BookOpen className="h-4 w-4 shrink-0 text-[#2D6BFF]" />
+                    <span>
+                      <strong>{currentTopic.difficultyLabel} ({level}/5):</strong> Lee con atención
+                      los fundamentos conceptuales y el escenario de aplicación. Luego redacta tu
+                      análisis y propuesta en el área de respuesta.
+                    </span>
+                  </div>
+
+                  <div>
+                    <h1 className="text-xl font-extrabold leading-snug tracking-[-0.02em] text-[#10264F] md:text-2xl">
+                      {currentTopic.topicTitle}
+                    </h1>
+                  </div>
+
+                  {/* Fundamentación Teórica */}
+                  <div className="space-y-3 text-sm leading-7 text-[#31415E] whitespace-pre-line bg-[#FBFCFE] p-5 rounded-2xl border border-[#E9EEF6]">
+                    {currentTopic.theoreticalContent}
+                  </div>
+
+                  {/* Idea Clave */}
+                  <div className="rounded-2xl border border-[#DCE3EF] bg-[#F6F8FC] p-5">
+                    <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
+                      <Lightbulb className="h-4 w-4 text-[#2D6BFF]" />
+                      Idea Clave / Concepto Esencial
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-[#31415E] font-semibold">
+                      {currentTopic.keyTakeaway}
+                    </p>
+                  </div>
+
+                  {/* Contexto del caso / escenario */}
+                  {currentTopic.scenarioContext && (
+                    <div className="rounded-2xl border-l-4 border-[#2D6BFF] bg-[#F4F8FF] p-5">
+                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
+                        {currentTopic.scenarioTitle || "Contexto de Aplicación"}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-[#293B5C] whitespace-pre-line">
+                        {currentTopic.scenarioContext}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Consigna y Pregunta de desarrollo */}
+                  <div className="rounded-2xl border border-[#CBD5E1] bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F] mb-2">
+                      <MessageCircleQuestion className="h-4 w-4 text-[#0F3B8F]" />
+                      Consigna Evaluativa · {currentTopic.difficultyLabel}
+                    </div>
+                    <h2 className="text-base font-extrabold text-[#10264F] md:text-lg">
+                      {currentTopic.questionPrompt}
+                    </h2>
+
+                    <div className="mt-4">
+                      <OpenResponse
+                        level={level}
+                        value={answer}
+                        placeholder={
+                          discipline === "communication"
+                            ? "Redacta tu análisis comunicativo, fundamentando tu respuesta según los postulados pedagógicos del autor..."
+                            : "Escribe tu análisis, identificación de sesgos, criterios o matriz decisional según lo solicitado..."
+                        }
+                        onChange={onAnswer}
+                      />
+                    </div>
+
+                    {isSaved && (
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onAskAiFeedback(
+                              `Revisa mi respuesta para el Nivel ${level} (${currentTopic.difficultyLabel}) del Eje "${item.name}" en ${discipline === "communication" ? "Comunicación Educativa" : "Toma de Decisiones"}. La consigna fue: "${currentTopic.questionPrompt}". Mi respuesta es: "${answer}". Bríndame retroalimentación pedagógica y sugerencias de mejora según el marco teórico de ${currentTopic.authorCitation}.`,
+                            )
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[#EAF0FF] px-4 py-2 text-xs font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF] transition-colors"
+                        >
+                          <Bot className="h-3.5 w-3.5 text-[#2D6BFF]" />
+                          Pedir retroalimentación a LideraBot sobre mi respuesta
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Respuesta Modelo Pedagógica (especialmente para Toma de Decisiones) */}
+                  {currentTopic.modelAnswer && (
+                    <div className="rounded-2xl border border-[#DCE3EF] bg-[#F7FAFD] p-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowModelAnswer((v) => !v)}
+                        className="flex w-full items-center justify-between text-left text-xs font-bold text-[#0F3B8F] hover:text-[#2D6BFF]"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Lightbulb className="h-4 w-4 text-[#F59E0B]" />
+                          {showModelAnswer
+                            ? "Ocultar respuesta modelo pedagógica y matriz"
+                            : "Ver respuesta modelo pedagógica y matriz de solución"}
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 transition-transform",
+                            showModelAnswer && "rotate-180",
+                          )}
+                        />
+                      </button>
+                      {showModelAnswer && (
+                        <div className="mt-3 pt-3 border-t border-[#E2E8F0] text-xs leading-6 text-[#2D3748] whitespace-pre-line bg-white rounded-xl p-4 border border-[#E2E8F0]">
+                          {currentTopic.modelAnswer}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* DISCIPLINAS 2 Y 3: NIVEL 5 (PREGUNTA SELECCIÓN MÚLTIPLE TIPO SABER PRO) */}
+              {!isLeadership && isFinal && (
+                <div className="space-y-6">
+                  <div className="rounded-2xl border border-[#DCE3EF] bg-[#EAF0FF] p-4 text-xs sm:text-sm text-[#0F3B8F] leading-6">
+                    <strong>Pregunta Evaluativa Tipo Saber Pro (Nivel 5 de 5):</strong> Lee con
+                    atención la situación y el enunciado pedagógico. Selecciona la opción que
+                    consideres correcta y revisa la justificación oficial de la clave.
+                  </div>
+
+                  {currentTopic.scenarioContext && (
+                    <div className="rounded-2xl border-l-4 border-[#7C3AED] bg-[#FAF5FF] p-5">
+                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#7C3AED]">
+                        {currentTopic.scenarioTitle || "Contexto Saber Pro"}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-[#293B5C] font-medium whitespace-pre-line">
+                        {currentTopic.scenarioContext}
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#2D6BFF]">
+                      Pregunta Saber Pro · {item.name}
+                    </p>
+                    <h1 className="mt-2 text-lg font-extrabold leading-snug text-[#10264F] md:text-xl">
+                      {currentTopic.questionPrompt}
+                    </h1>
+                  </div>
+
+                  <div className="mt-4">
+                    <MultipleChoice
+                      options={currentTopic.options || []}
+                      correctOptionIndex={currentTopic.correctOptionIndex}
+                      value={answer}
+                      onChange={onAnswer}
+                    />
+                  </div>
+
+                  {answer && currentTopic.explanation && (
+                    <div className="rounded-2xl border border-[#CBD5E1] bg-[#F8FAFC] p-5">
+                      <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F] mb-2">
+                        <Lightbulb className="h-4 w-4 text-[#F59E0B]" />
+                        Justificación Pedagógica de la Clave
+                      </div>
+                      <p className="text-xs sm:text-sm leading-6 text-[#334155] whitespace-pre-line">
+                        {currentTopic.explanation}
+                      </p>
+
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onAskAiFeedback(
+                              `Explícame con más profundidad por qué en la pregunta Saber Pro del Eje "${item.name}" la opción correcta es la seleccionada y por qué las demás son distractores inválidos según ${currentTopic.authorCitation}. La pregunta fue: "${currentTopic.questionPrompt}".`,
+                            )
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[#EAF0FF] px-4 py-2 text-xs font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF] transition-colors"
+                        >
+                          <Bot className="h-3.5 w-3.5 text-[#2D6BFF]" />
+                          Pedir a LideraBot profundizar en esta pregunta Saber Pro
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Botones de Navegación Inferior */}
               <div className="mt-8 flex flex-col-reverse items-center justify-between gap-4 border-t border-[#E3E8F0] pt-6 sm:flex-row">
                 <button
-                  onClick={() => level > 1 && onLevel(level - 1)}
+                  onClick={() => {
+                    if (level > 1) {
+                      setShowModelAnswer(false);
+                      onLevel(level - 1);
+                    }
+                  }}
                   disabled={level === 1}
                   className="inline-flex items-center gap-2 text-sm font-bold text-[#65728A] disabled:opacity-30"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Tema anterior
+                  <ArrowLeft className="h-4 w-4" /> Nivel anterior
                 </button>
                 <button
-                  onClick={onContinue}
+                  onClick={() => {
+                    setShowModelAnswer(false);
+                    onContinue();
+                  }}
                   disabled={!canContinue}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F3B8F] px-6 py-3.5 font-bold text-white shadow-md transition-all hover:bg-[#174AA6] disabled:cursor-not-allowed disabled:bg-[#B8C2D1] sm:w-auto"
                 >
                   {isFinal
                     ? "Finalizar submódulo y desbloquear siguiente"
-                    : level === 4
+                    : isLeadership && level === 4
                       ? "Continuar al Ejercicio Práctico Final"
-                      : "Siguiente contenido"}{" "}
+                      : `Continuar al Nivel ${level + 1}`}{" "}
                   <ArrowRight className="h-5 w-5" />
                 </button>
               </div>
@@ -1981,13 +2403,13 @@ function MultipleChoice({
         >
           {isCorrectSelection ? (
             <p className="font-semibold">
-              ✓ ¡Excelente análisis! Tu elección está alineada con el marco teórico de los autores de
-              este submódulo.
+              ✓ ¡Excelente análisis! Tu elección corresponde a la respuesta correcta según los
+              criterios pedagógicos oficiales.
             </p>
           ) : (
             <p className="font-semibold">
-              Nota formativa: Tu respuesta ha sido registrada. Revisa cómo los principios del autor
-              priorizan el desarrollo, la ética y la coherencia con el equipo antes de continuar.
+              Nota formativa: Tu opción ha sido registrada. Revisa la justificación pedagógica a
+              continuación para comprender el fundamento de la clave correcta.
             </p>
           )}
         </div>
@@ -2000,24 +2422,26 @@ function OpenResponse({
   level,
   value,
   subPrompts,
+  placeholder,
   onChange,
 }: {
   level: number;
   value: string;
   subPrompts?: [string, string];
+  placeholder?: string;
   onChange: (value: string) => void;
 }) {
-  if (level === 5) {
-    const [decision = "", justification = ""] = value.split("|||");
-    const prompt1 = subPrompts?.[0] ?? "1. ¿Qué decisión tomarías?";
-    const prompt2 = subPrompts?.[1] ?? "2. ¿Cómo la sustentas desde los autores?";
+  if (subPrompts) {
+    const [part1 = "", part2 = ""] = value.split("|||");
+    const prompt1 = subPrompts[0] ?? "1. ¿Qué decisión tomarías?";
+    const prompt2 = subPrompts[1] ?? "2. ¿Cómo la sustentas desde los autores?";
     return (
       <div className="space-y-5">
         <label className="block">
           <span className="mb-2 block text-sm font-extrabold text-[#31415E]">{prompt1}</span>
           <textarea
-            value={decision}
-            onChange={(event) => onChange(`${event.target.value}|||${justification}`)}
+            value={part1}
+            onChange={(event) => onChange(`${event.target.value}|||${part2}`)}
             className="min-h-32 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-4 text-sm leading-6 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
             placeholder="Describe la estrategia y decisión que tomarías..."
           />
@@ -2025,8 +2449,8 @@ function OpenResponse({
         <label className="block">
           <span className="mb-2 block text-sm font-extrabold text-[#31415E]">{prompt2}</span>
           <textarea
-            value={justification}
-            onChange={(event) => onChange(`${decision}|||${event.target.value}`)}
+            value={part2}
+            onChange={(event) => onChange(`${part1}|||${event.target.value}`)}
             className="min-h-36 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-4 text-sm leading-6 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
             placeholder="Sustenta tu respuesta conectando con los conceptos de los autores estudiados..."
           />
@@ -2036,14 +2460,11 @@ function OpenResponse({
   }
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-extrabold text-[#31415E]">
-        Tu reflexión y análisis
-      </span>
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-48 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-5 leading-7 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
-        placeholder="Escribe aquí tu análisis basándote en el aporte teórico del autor..."
+        className="min-h-44 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-5 leading-7 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
+        placeholder={placeholder || "Escribe aquí tu análisis basándote en los conceptos pedagógicos..."}
       />
       <span className="mt-2 block text-right text-xs text-[#7A879B]">
         {value.length} caracteres · Guardado automático
@@ -2054,6 +2475,7 @@ function OpenResponse({
 
 function CompleteView({
   item,
+  discipline = "leadership",
   answers,
   modules,
   recommendedSubmoduleOrder,
@@ -2063,6 +2485,7 @@ function CompleteView({
   onNext,
 }: {
   item: ModuleWithProgress;
+  discipline?: DisciplineKey;
   answers: Record<string, string>;
   modules: ModuleWithProgress[];
   recommendedSubmoduleOrder: number[];
@@ -2071,8 +2494,11 @@ function CompleteView({
   onHome: () => void;
   onNext: () => void;
 }) {
+  const isLeadership = discipline === "leadership";
+  const modLabel = isLeadership ? "Submódulo" : "Eje";
+
   const savedCount = [1, 2, 3, 4, 5].filter((lvl) =>
-    isAnswerValid(lvl, answers[`${item.id}-${lvl}`]),
+    isAnswerValid(lvl, answers[getAnswerKey(discipline, item.id, lvl)]),
   ).length;
   const currentOrderPos = recommendedSubmoduleOrder.indexOf(item.id);
   const nextModId =
@@ -2089,7 +2515,7 @@ function CompleteView({
             <CheckCircle2 className="h-10 w-10" />
           </span>
           <Pill className="mt-7 bg-white/10 text-blue-100">
-            Submódulo 0{item.id} completado satisfactoriamente
+            {modLabel} 0{item.id} completado satisfactoriamente
           </Pill>
           <h1 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] md:text-4xl">
             ¡Escalón superado!
@@ -2106,7 +2532,7 @@ function CompleteView({
                   Registro de actividad
                 </p>
                 <p className="mt-2 font-extrabold text-[#10264F]">
-                  {savedCount} de 5 pasos completados (4 contenidos y 1 ejercicio práctico)
+                  {savedCount} de 5 niveles completados satisfactoriamente
                 </p>
               </div>
               <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#E7F8F1] text-[#10856B]">
@@ -2115,7 +2541,10 @@ function CompleteView({
             </div>
             <div className="mt-5 grid grid-cols-5 gap-2">
               {[1, 2, 3, 4, 5].map((number) => {
-                const done = isAnswerValid(number, answers[`${item.id}-${number}`]);
+                const done = isAnswerValid(
+                  number,
+                  answers[getAnswerKey(discipline, item.id, number)],
+                );
                 return (
                   <div
                     key={number}
@@ -2124,7 +2553,7 @@ function CompleteView({
                       done ? "bg-[#DFF5ED] text-[#0E785F]" : "bg-[#E8ECF2] text-[#79869A]",
                     )}
                   >
-                    {number === 5 ? "Ejercicio" : `C${number}`} {done && "✓"}
+                    N{number} {done && "✓"}
                   </div>
                 );
               })}
@@ -2139,10 +2568,10 @@ function CompleteView({
                 </span>
                 <div>
                   <p className="text-xs font-extrabold uppercase tracking-wider text-[#0E785F]">
-                    Nuevo Submódulo Desbloqueado en tu Ruta Escalonada:
+                    Nuevo {modLabel} Desbloqueado en tu Ruta:
                   </p>
                   <p className="text-sm font-extrabold text-[#10264F]">
-                    Submódulo 0{nextModule.id}: {nextModule.name}
+                    {modLabel} 0{nextModule.id}: {nextModule.name}
                   </p>
                 </div>
               </div>
@@ -2155,7 +2584,7 @@ function CompleteView({
               className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#2D6BFF] bg-[#EAF0FF] p-4 text-sm font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF]"
             >
               <Bot className="h-5 w-5 text-[#2D6BFF]" />
-              Pedir a LideraBot retroalimentación de mi ejercicio práctico en este submódulo
+              Pedir a LideraBot retroalimentación de mis respuestas en este {modLabel.toLowerCase()}
             </button>
           </div>
 
@@ -2177,8 +2606,8 @@ function CompleteView({
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F3B8F] px-4 py-3 text-sm font-extrabold text-white"
             >
               {nextModule
-                ? `Ir al Submódulo 0${nextModule.id} Desbloqueado`
-                : "Ver todos los submódulos"}{" "}
+                ? `Ir al ${modLabel} 0${nextModule.id} Desbloqueado`
+                : "Ver todos los módulos"}{" "}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -2260,24 +2689,51 @@ function FoundationsView({
 }
 
 function ResponsesView({
-  modules,
+  currentDiscipline,
+  onSelectDiscipline,
+  disciplines: discList,
   answers,
+  onAskAiFeedback: _onAskAiFeedback,
   onOpenModuleLevel,
   onBack,
 }: {
-  modules: ModuleWithProgress[];
+  currentDiscipline: DisciplineKey;
+  onSelectDiscipline: (disc: DisciplineKey) => void;
+  disciplines: DisciplineInfo[];
   answers: Record<string, string>;
   onAskAiFeedback: (prompt: string) => void;
-  onOpenModuleLevel: (mod: ModuleWithProgress, level: number) => void;
+  onOpenModuleLevel: (disc: DisciplineKey, mod: ModuleWithProgress, level: number) => void;
   onBack: () => void;
 }) {
   const [expandedModuleId, setExpandedModuleId] = useState<number | null>(null);
 
-  const totalStepsDone = modules.reduce((acc, m) => acc + m.completedLevels, 0);
+  const activeModules = useMemo(() => {
+    switch (currentDiscipline) {
+      case "communication":
+        return communicationModules;
+      case "decision":
+        return decisionModules;
+      case "leadership":
+      default:
+        return leadershipModules;
+    }
+  }, [currentDiscipline]);
+
+  const totalStepsDone = activeModules.reduce((acc, m) => {
+    return (
+      acc +
+      [1, 2, 3, 4, 5].filter((lvl) =>
+        isAnswerValid(lvl, answers[getAnswerKey(currentDiscipline, m.id, lvl)]),
+      ).length
+    );
+  }, 0);
   const overallProgress = Math.round((totalStepsDone / 25) * 100);
 
+  const activeDiscipline =
+    discList.find((d) => d.key === currentDiscipline) ?? discList[0];
+
   return (
-    <main className="mx-auto max-w-[860px] px-5 py-8 lg:px-8">
+    <main className="mx-auto max-w-[880px] px-5 py-8 lg:px-8">
       {/* Botón Volver */}
       <div className="mb-6 flex items-center justify-between">
         <button
@@ -2288,10 +2744,44 @@ function ResponsesView({
         </button>
       </div>
 
-      {/* Progreso General */}
+      {/* Tabs Selector de Disciplinas */}
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
+        {discList.map((d) => {
+          const Icon = d.icon;
+          const isActive = currentDiscipline === d.key;
+          return (
+            <button
+              key={d.key}
+              onClick={() => {
+                setExpandedModuleId(null);
+                onSelectDiscipline(d.key);
+              }}
+              className={cn(
+                "flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-xs sm:text-sm font-extrabold transition-all",
+                isActive
+                  ? "bg-white text-[#0F3B8F] shadow-sm border border-[#DCE3EF]"
+                  : "text-[#5A6A85] hover:text-[#0F3B8F] hover:bg-white/60",
+              )}
+            >
+              <Icon
+                className="h-4 w-4 shrink-0"
+                style={{ color: isActive ? d.color : undefined }}
+              />
+              <span className="truncate">{d.shortTitle}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Progreso General de la Disciplina */}
       <section className="mb-6 rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-bold text-[#10264F]">Progreso General</h1>
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#64728A]">
+              Progreso en {activeDiscipline.shortTitle}
+            </span>
+            <h1 className="text-xl font-bold text-[#10264F]">{activeDiscipline.title}</h1>
+          </div>
           <span className="text-2xl font-black text-[#2D6BFF]">{overallProgress}%</span>
         </div>
         <div className="h-3 w-full overflow-hidden rounded-full bg-[#EDF2F7]">
@@ -2300,34 +2790,35 @@ function ResponsesView({
             style={{ width: `${overallProgress}%` }}
           />
         </div>
+        <p className="mt-2 text-xs text-[#718096]">
+          {totalStepsDone} de 25 niveles completados
+        </p>
       </section>
 
-      {/* Lista de submódulos */}
+      {/* Lista de submódulos de la disciplina */}
       <div className="space-y-3.5">
-        {modules.map((mod) => {
-          const rawExerciseAnswer = answers[`${mod.id}-5`] ?? "";
-          const isExerciseAnswered = isAnswerValid(5, rawExerciseAnswer);
-          const [part1 = "", part2 = ""] = rawExerciseAnswer.split("|||");
+        {activeModules.map((mod) => {
+          const completedLevels = [1, 2, 3, 4, 5].filter((lvl) =>
+            isAnswerValid(lvl, answers[getAnswerKey(currentDiscipline, mod.id, lvl)]),
+          ).length;
+          const progress = Math.round((completedLevels / 5) * 100);
           const isExpanded = expandedModuleId === mod.id;
 
           return (
             <div
               key={mod.id}
-              className={cn(
-                "rounded-xl border bg-white p-5 transition-all shadow-sm",
-                mod.isUnlocked ? "border-[#E2E8F0]" : "border-[#E9EDF4] bg-[#F8FAFC] opacity-70",
-              )}
+              className="rounded-xl border border-[#E2E8F0] bg-white p-5 transition-all shadow-sm"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
                       "flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold",
-                      mod.status === "Completado"
+                      completedLevels === 5
                         ? "bg-[#DFF5ED] text-[#0E785F]"
-                        : mod.status === "En progreso"
-                        ? "bg-[#EAF0FF] text-[#2457D5]"
-                        : "bg-[#F1F3F7] text-[#65728A]",
+                        : completedLevels > 0
+                          ? "bg-[#EAF0FF] text-[#2457D5]"
+                          : "bg-[#F1F3F7] text-[#65728A]",
                     )}
                   >
                     0{mod.id}
@@ -2335,34 +2826,43 @@ function ResponsesView({
                   <div>
                     <h2 className="text-base font-bold text-[#10264F]">{mod.name}</h2>
                     <span className="text-xs font-semibold text-[#64728A]">
-                      {mod.status === "Completado"
-                        ? "Completado"
-                        : mod.status === "En progreso"
-                        ? "En progreso"
-                        : "No iniciado"}
+                      {completedLevels === 5
+                        ? "Completado (5/5 niveles)"
+                        : completedLevels > 0
+                          ? `En progreso (${completedLevels}/5 niveles)`
+                          : "No iniciado"}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-black text-[#10264F]">{mod.progress}%</span>
-                  {mod.isUnlocked && (
-                    <button
-                      onClick={() =>
-                        onOpenModuleLevel(
-                          mod,
-                          isExerciseAnswered
-                            ? 5
-                            : mod.completedLevels + 1 <= 5
-                            ? mod.completedLevels + 1
-                            : 5,
-                        )
-                      }
-                      className="rounded-lg bg-[#F1F4F9] px-3 py-1.5 text-xs font-bold text-[#0F3B8F] hover:bg-[#E2E8F0] transition-colors"
-                    >
-                      Ir al submódulo
-                    </button>
-                  )}
+                  <span className="text-sm font-black text-[#10264F]">{progress}%</span>
+                  <button
+                    onClick={() => {
+                      const modWithProg: ModuleWithProgress = {
+                        ...mod,
+                        completedLevels,
+                        progress,
+                        status:
+                          completedLevels === 5
+                            ? "Completado"
+                            : completedLevels > 0
+                              ? "En progreso"
+                              : "No iniciado",
+                        isUnlocked: true,
+                        stepOrderIndex: mod.id - 1,
+                        unlockRequirementText: "",
+                      };
+                      onOpenModuleLevel(
+                        currentDiscipline,
+                        modWithProg,
+                        completedLevels < 5 ? completedLevels + 1 : 1,
+                      );
+                    }}
+                    className="rounded-lg bg-[#F1F4F9] px-3 py-1.5 text-xs font-bold text-[#0F3B8F] hover:bg-[#E2E8F0] transition-colors"
+                  >
+                    Ir al módulo
+                  </button>
                 </div>
               </div>
 
@@ -2371,14 +2871,14 @@ function ResponsesView({
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-300",
-                    mod.status === "Completado" ? "bg-[#10B981]" : "bg-[#2D6BFF]",
+                    completedLevels === 5 ? "bg-[#10B981]" : "bg-[#2D6BFF]",
                   )}
-                  style={{ width: `${mod.progress}%` }}
+                  style={{ width: `${progress}%` }}
                 />
               </div>
 
-              {/* Ver respuesta del ejercicio práctico si fue respondido */}
-              {isExerciseAnswered && (
+              {/* Toggle para ver respuestas registradas */}
+              {completedLevels > 0 && (
                 <div className="mt-3 pt-3 border-t border-[#F1F4F9]">
                   <button
                     onClick={() => setExpandedModuleId(isExpanded ? null : mod.id)}
@@ -2387,21 +2887,48 @@ function ResponsesView({
                     <ChevronDown
                       className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-180")}
                     />
-                    {isExpanded ? "Ocultar respuesta" : "Ver respuesta del ejercicio"}
+                    {isExpanded ? "Ocultar respuestas" : "Ver respuestas registradas"}
                   </button>
 
                   {isExpanded && (
-                    <div className="mt-3 rounded-lg border border-[#E9EDF4] bg-[#F8FAFC] p-3 text-xs text-[#31415E] space-y-2">
-                      <div>
-                        <span className="font-bold text-[#0F3B8F]">Respuesta:</span>
-                        <p className="mt-1 whitespace-pre-line text-[#4A5568]">{part1}</p>
-                      </div>
-                      {part2 && (
-                        <div className="pt-2 border-t border-[#E9EDF4]">
-                          <span className="font-bold text-[#0F3B8F]">Sustentación:</span>
-                          <p className="mt-1 whitespace-pre-line text-[#4A5568]">{part2}</p>
-                        </div>
-                      )}
+                    <div className="mt-3 space-y-2.5">
+                      {mod.topics.map((top) => {
+                        const ans = answers[getAnswerKey(currentDiscipline, mod.id, top.level)];
+                        if (!isAnswerValid(top.level, ans)) return null;
+
+                        return (
+                          <div
+                            key={top.level}
+                            className="rounded-lg border border-[#E9EDF4] bg-[#F8FAFC] p-3 text-xs text-[#31415E] space-y-1"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-extrabold text-[#0F3B8F]">
+                                Nivel {top.level}: {top.difficultyLabel || top.topicTitle}
+                              </span>
+                              <span className="text-[10px] text-[#718096]">✓ Completado</span>
+                            </div>
+                            <p className="text-[11px] text-[#4A5568] italic font-medium">
+                              {top.questionPrompt}
+                            </p>
+                            <div className="mt-1 pt-1 border-t border-[#E2E8F0]">
+                              {ans.includes("|||") ? (
+                                <div className="space-y-1">
+                                  {ans.split("|||").map((part, i) => (
+                                    <p key={i} className="text-[#1A202C] whitespace-pre-line">
+                                      <strong>{i === 0 ? "Decisión:" : "Sustentación:"}</strong>{" "}
+                                      {part}
+                                    </p>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-[#1A202C] whitespace-pre-line font-medium">
+                                  {ans === "CONTENIDO_ESTUDIADO" ? "Lectura completada" : ans}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

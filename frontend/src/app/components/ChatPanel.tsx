@@ -16,6 +16,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { leadershipModules } from '../leadershipData';
+import { communicationModules } from '../communicationData';
+import { decisionModules } from '../decisionData';
 import { DiagnosticEvaluationResult } from '../diagnosticData';
 
 interface ChatPanelProps {
@@ -153,6 +155,8 @@ export function ChatPanel({
 
   const buildModuleProgressSummary = () => {
     const lines: string[] = [];
+    // Módulo 1: Formación en Liderazgo
+    lines.push('=== MÓDULO 1: FORMACIÓN EN LIDERAZGO ===');
     for (const mod of leadershipModules) {
       const isUnlocked = unlockedSubmoduleIds.includes(mod.id);
       const topicDetails: string[] = [];
@@ -178,6 +182,35 @@ export function ChatPanel({
         `Submódulo ${mod.id}: ${mod.name} (${mod.authorsSummary}) [${isUnlocked ? 'DESBLOQUEADO' : 'BLOQUEADO HASTA COMPLETAR EL ANTERIOR'}]\n${topicDetails.join('\n')}`,
       );
     }
+
+    // Módulo 2: Competencias en Comunicación Educativa
+    lines.push('=== MÓDULO 2: COMUNICACIÓN EDUCATIVA ===');
+    for (const mod of communicationModules) {
+      const topicDetails: string[] = [];
+      for (const topic of mod.topics) {
+        const key = `comm-${mod.id}-${topic.level}`;
+        const rawAns = moduleAnswers[key];
+        topicDetails.push(
+          `  - Nivel ${topic.level} (${topic.difficultyLabel} - ${topic.topicTitle}): ${rawAns && rawAns.trim() ? `Respuesta del estudiante: "${rawAns}"` : 'Pendiente por responder'}`,
+        );
+      }
+      lines.push(`Eje ${mod.id}: ${mod.name} (${mod.authorsSummary})\n${topicDetails.join('\n')}`);
+    }
+
+    // Módulo 3: Toma de Decisiones y Resolución de Problemas
+    lines.push('=== MÓDULO 3: TOMA DE DECISIONES Y RESOLUCIÓN DE PROBLEMAS ===');
+    for (const mod of decisionModules) {
+      const topicDetails: string[] = [];
+      for (const topic of mod.topics) {
+        const key = `dec-${mod.id}-${topic.level}`;
+        const rawAns = moduleAnswers[key];
+        topicDetails.push(
+          `  - Nivel ${topic.level} (${topic.difficultyLabel} - ${topic.topicTitle}): ${rawAns && rawAns.trim() ? `Respuesta del estudiante: "${rawAns}"` : 'Pendiente por responder'}`,
+        );
+      }
+      lines.push(`Eje ${mod.id}: ${mod.name} (${mod.authorsSummary})\n${topicDetails.join('\n')}`);
+    }
+
     return lines.join('\n\n');
   };
 
