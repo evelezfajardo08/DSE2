@@ -180,26 +180,47 @@ export class ChatService {
     }
 
     const storeName = this.configService.get<string>('GEMINI_FILE_SEARCH_STORE_NAME');
-    if (!storeName) {
-      throw new ServiceUnavailableException(
-        'La base de conocimiento de LideraBot no está configurada.',
-      );
+    const client = new GoogleGenAI({ apiKey });
+    const rawModel = this.configService.get<string>('GEMINI_MODEL') || 'gemini-2.0-flash';
+    const model = rawModel.includes('3.5') ? 'gemini-2.0-flash' : rawModel;
+
+    const baseInstruction = `${systemInstruction}\n\nFundamenta las respuestas en el marco teórico de los módulos de liderazgo, comunicación, toma de decisiones y trabajo en equipo. Redacta de forma natural y fluida como un mentor personal. PROHIBIDO usar sintaxis LaTeX o fórmulas matemáticas (no uses $$, $, \\text{}, \\rightarrow ni bloques matemáticos); usa texto normal con flechas Unicode simples (→) y formato Markdown estándar.`;
+
+    let response: any;
+
+    if (storeName) {
+      try {
+        response = await client.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            systemInstruction: baseInstruction,
+            tools: [
+              {
+                fileSearch: {
+                  fileSearchStoreNames: [storeName],
+                },
+              },
+            ],
+          },
+        });
+      } catch (err: any) {
+        console.warn(
+          '[Chat] FileSearch no disponible o falló, reintentando consulta directa:',
+          err?.message,
+        );
+      }
     }
 
-    const client = new GoogleGenAI({ apiKey });
-    const model = this.configService.get<string>('GEMINI_MODEL') || 'gemini-2.5-flash';
-    const response = await client.models.generateContent({
-      model,
-      contents: prompt,
-      config: {
-        systemInstruction: `${systemInstruction}\n\nFundamenta las respuestas en la información de File Search y en el marco teórico de los módulos. Redacta de forma natural y fluida como un mentor personal. PROHIBIDO usar sintaxis LaTeX o fórmulas matemáticas (no uses $$, $, \\text{}, \\rightarrow ni bloques matemáticos); usa texto normal con flechas Unicode simples (→) y formato Markdown estándar.`,
-        tools: [{
-          fileSearch: {
-            fileSearchStoreNames: [storeName],
-          },
-        }],
-      },
-    });
+    if (!response) {
+      response = await client.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          systemInstruction: baseInstruction,
+        },
+      });
+    }
 
     const sources = new Set<string>();
     const candidate = response.candidates?.[0] as any;
