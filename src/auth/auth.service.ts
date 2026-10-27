@@ -18,50 +18,88 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
+  private getMailTransporter() {
+    const smtpPort = Number(process.env.SMTP_PORT ?? 465);
+    const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (!smtpUser || !smtpPass) {
+      throw new Error('Gmail SMTP no está configurado (faltan credenciales).');
+    }
+
+    if (smtpHost === 'smtp.gmail.com') {
+      return nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+    }
+
+    return nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+  }
+
   private async sendPasswordResetEmail(email: string, code: string) {
-    const smtpPort = Number(process.env.SMTP_PORT ?? 587);
-    const smtpHost = process.env.SMTP_HOST;
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
     const smtpFrom = process.env.SMTP_FROM || smtpUser || 'noreply@liderabot.local';
+    const senderFrom = `"LideraBot" <${smtpFrom}>`;
 
-    if (!smtpHost || !smtpUser || !smtpPass) {
+    if (!smtpUser || !smtpPass) {
       console.warn(
         `[Auth] Gmail SMTP no configurado. Código de recuperación para ${email}: ${code}`
       );
       return;
     }
 
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
-
+    const transporter = this.getMailTransporter();
     const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(code)}`;
 
     await transporter.sendMail({
-      from: smtpFrom,
+      from: senderFrom,
       to: email,
-      subject: 'Recupera tu contraseña - LideraBot',
+      subject: 'Restablecimiento de contraseña - LideraBot',
+      text: `Hola,\n\nHemos recibido una solicitud para restablecer la contraseña de tu cuenta en la plataforma educativa LideraBot.\n\nTu código de recuperación es: ${code}\n\nEste código es confidencial y vence en 15 minutos.\n\nTambién puedes restablecer tu contraseña desde el siguiente enlace directo:\n${resetLink}\n\nSi no realizaste esta solicitud, puedes ignorar este mensaje de forma segura.\n\nAtentamente,\nEquipo de Formación y Soporte LideraBot\nContacto institucional: liderabot.app@gmail.com`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f8fafc;">
-          <h2 style="color: #1e3a8a; margin-bottom: 12px;">Recupera tu contraseña</h2>
-          <p style="color: #374151; line-height: 1.6;">
-            Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en LideraBot.
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 28px 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
+          <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; margin-bottom: 24px;">
+            <div style="display: inline-block; background-color: #0F3B8F; color: #ffffff; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 18px; letter-spacing: 0.5px;">
+              LIDERA<span style="color: #FACC15;">BOT</span>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 13px; color: #64748b; font-weight: 500;">Plataforma Educativa y Formación en Liderazgo</p>
+          </div>
+
+          <h2 style="color: #0F3B8F; font-size: 20px; font-weight: 700; margin: 0 0 12px 0;">Restablece tu contraseña</h2>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            Hemos recibido una solicitud para restablecer la contraseña asociada a tu cuenta en LideraBot.
           </p>
-          <p style="color: #374151; line-height: 1.6;">
-            Tu código de verificación es: <strong>${code}</strong>
+
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
+            <p style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Tu código de seguridad es:</p>
+            <div style="font-size: 32px; letter-spacing: 8px; font-weight: 800; color: #0F3B8F; font-family: monospace; padding: 8px 0;">
+              ${code}
+            </div>
+            <p style="color: #dc2626; font-size: 12px; font-weight: 500; margin: 8px 0 0 0;">
+              ⏱ Este código es confidencial y expira en 15 minutos.
+            </p>
+          </div>
+
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+            También puedes ingresar directamente para cambiarla haciendo clic en el siguiente enlace:
           </p>
-          <p style="color: #374151; line-height: 1.6;">
-            También puedes usar este enlace: <a href="${resetLink}" style="color: #1e3a8a;">Restablecer contraseña</a>
-          </p>
-          <p style="color: #6b7280; font-size: 12px; margin-top: 20px;">
-            Este código expira en 15 minutos.
+          <div style="text-align: center; margin: 20px 0 28px 0;">
+            <a href="${resetLink}" style="background-color: #0F3B8F; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;">
+              Restablecer mi Contraseña
+            </a>
+          </div>
+
+          <p style="color: #64748b; font-size: 12px; line-height: 1.5; border-top: 1px solid #f1f5f9; padding-top: 20px; margin: 0;">
+            Si tú no solicitaste este cambio, no te preocupes: tu cuenta permanece segura y puedes desestimar este mensaje.<br /><br />
+            Para dudas o inquietudes, puedes comunicarte con nosotros a: <a href="mailto:liderabot.app@gmail.com" style="color: #0F3B8F; text-decoration: underline;">liderabot.app@gmail.com</a>
           </p>
         </div>
       `,
@@ -69,64 +107,109 @@ export class AuthService {
   }
 
   private async sendEmailVerificationEmail(email: string, code: string) {
-    const smtpPort = Number(process.env.SMTP_PORT ?? 587);
-    const smtpHost = process.env.SMTP_HOST;
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
     const smtpFrom = process.env.SMTP_FROM || smtpUser || 'noreply@liderabot.local';
+    const senderFrom = `"LideraBot" <${smtpFrom}>`;
 
-    if (!smtpHost || !smtpUser || !smtpPass) {
-      throw new Error('Gmail SMTP no está configurado.');
+    if (!smtpUser || !smtpPass) {
+      throw new Error('Gmail SMTP no está configurado (faltan credenciales).');
     }
 
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass },
-    });
+    const transporter = this.getMailTransporter();
 
     await transporter.sendMail({
-      from: smtpFrom,
+      from: senderFrom,
       to: email,
-      subject: 'Verifica tu correo - LideraBot',
+      subject: 'Código de verificación de tu cuenta - LideraBot',
+      text: `¡Bienvenido/a a LideraBot!\n\nGracias por unirte a nuestra plataforma educativa de liderazgo. Para completar la activación de tu cuenta de forma segura, ingresa el siguiente código de verificación:\n\n${code}\n\nEste código vence en 15 minutos.\n\nSi no te has registrado en LideraBot, ignora este correo.\n\nAtentamente,\nEquipo de Formación y Soporte LideraBot\nContacto institucional: liderabot.app@gmail.com`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f8fafc;">
-          <h2 style="color: #1e3a8a;">Verifica tu correo electrónico</h2>
-          <p style="color: #374151; line-height: 1.6;">Usa este código para activar tu cuenta de LideraBot:</p>
-          <p style="font-size: 28px; letter-spacing: 6px; font-weight: bold; color: #1e3a8a;">${code}</p>
-          <p style="color: #6b7280; font-size: 12px;">Este código expira en 15 minutos.</p>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 28px 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
+          <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; margin-bottom: 24px;">
+            <div style="display: inline-block; background-color: #0F3B8F; color: #ffffff; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 18px; letter-spacing: 0.5px;">
+              LIDERA<span style="color: #FACC15;">BOT</span>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 13px; color: #64748b; font-weight: 500;">Plataforma Educativa y Formación en Liderazgo</p>
+          </div>
+
+          <h2 style="color: #0F3B8F; font-size: 20px; font-weight: 700; margin: 0 0 12px 0;">¡Bienvenido/a a LideraBot!</h2>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            Gracias por comenzar tu proceso formativo en liderazgo con nosotros. Para validar tu dirección de correo electrónico y proteger tu acceso, utiliza el siguiente código de confirmación:
+          </p>
+
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; text-align: center; margin: 24px 0;">
+            <p style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Código de verificación</p>
+            <div style="font-size: 34px; letter-spacing: 8px; font-weight: 800; color: #0F3B8F; font-family: monospace; padding: 6px 0;">
+              ${code}
+            </div>
+            <p style="color: #dc2626; font-size: 12px; font-weight: 500; margin: 8px 0 0 0;">
+              ⏱ Este código es de uso personal y expira en 15 minutos.
+            </p>
+          </div>
+
+          <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 14px 18px; margin: 20px 0;">
+            <p style="margin: 0; font-size: 13px; color: #166534; line-height: 1.5;">
+              <strong>Paso siguiente:</strong> Copia o digita los 6 dígitos en la ventana de registro de LideraBot para ingresar de inmediato al módulo inicial y a la prueba diagnóstica.
+            </p>
+          </div>
+
+          <p style="color: #64748b; font-size: 12px; line-height: 1.5; border-top: 1px solid #f1f5f9; padding-top: 20px; margin: 24px 0 0 0;">
+            Si tú no solicitaste el registro en LideraBot, puedes desestimar este mensaje de forma segura.<br /><br />
+            Para más información, solicitudes o PQRS, escríbenos a: <a href="mailto:liderabot.app@gmail.com" style="color: #0F3B8F; text-decoration: underline;">liderabot.app@gmail.com</a>
+          </p>
         </div>
       `,
     });
   }
 
   private async sendTeacherApprovalEmail(email: string) {
-    const smtpPort = Number(process.env.SMTP_PORT ?? 587);
-    const smtpHost = process.env.SMTP_HOST;
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
     const smtpFrom = process.env.SMTP_FROM || smtpUser || 'noreply@liderabot.local';
+    const senderFrom = `"LideraBot" <${smtpFrom}>`;
 
-    if (!smtpHost || !smtpUser || !smtpPass) {
-      throw new Error('Gmail SMTP no está configurado.');
+    if (!smtpUser || !smtpPass) {
+      throw new Error('Gmail SMTP no está configurado (faltan credenciales).');
     }
 
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass },
-    });
+    const transporter = this.getMailTransporter();
 
     await transporter.sendMail({
-      from: smtpFrom,
+      from: senderFrom,
       to: email,
       subject: 'Tu cuenta docente fue aprobada - LideraBot',
+      text: `¡Felicidades!\n\nUn docente administrador de LideraBot ha aprobado tu cuenta con rol docente.\n\nYa puedes acceder a la plataforma para gestionar tus cursos, monitorear el progreso por habilidades de los estudiantes y revisar el buzón de sugerencias.\n\nInicia sesión en: ${process.env.FRONTEND_URL || 'http://localhost:5173'}\n\nAtentamente,\nEquipo de LideraBot`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f8fafc;">
-          <h2 style="color: #1e3a8a;">¡Tu solicitud fue aprobada!</h2>
-          <p style="color: #374151; line-height: 1.6;">Un docente de LideraBot aprobó tu solicitud. Ya puedes iniciar sesión como docente en la aplicación.</p>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 28px 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
+          <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; margin-bottom: 24px;">
+            <div style="display: inline-block; background-color: #0F3B8F; color: #ffffff; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 18px; letter-spacing: 0.5px;">
+              LIDERA<span style="color: #FACC15;">BOT</span>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 13px; color: #64748b; font-weight: 500;">Plataforma Educativa y Formación en Liderazgo</p>
+          </div>
+
+          <h2 style="color: #166534; font-size: 20px; font-weight: 700; margin: 0 0 12px 0;">¡Tu solicitud docente ha sido aprobada!</h2>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            El equipo administrador de LideraBot ha revisado y habilitado tu perfil con rol de <strong>Docente</strong>. A partir de este momento puedes acceder al panel de gestión académica.
+          </p>
+
+          <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; margin: 20px 0;">
+            <p style="margin: 0; font-size: 13px; color: #166534; line-height: 1.5;">
+              ✓ Acceso a monitoreo de progreso grupal en tiempo real<br />
+              ✓ Gestión de estudiantes y revisión de actividades<br />
+              ✓ Buzón de mensajes, sugerencias y PQRS
+            </p>
+          </div>
+
+          <div style="text-align: center; margin: 28px 0 20px 0;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="background-color: #0F3B8F; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;">
+              Ingresar al Panel Docente
+            </a>
+          </div>
+
+          <p style="color: #64748b; font-size: 12px; line-height: 1.5; border-top: 1px solid #f1f5f9; padding-top: 20px; margin: 24px 0 0 0;">
+            Si necesitas asistencia institucional, puedes contactarnos en: <a href="mailto:liderabot.app@gmail.com" style="color: #0F3B8F; text-decoration: underline;">liderabot.app@gmail.com</a>
+          </p>
         </div>
       `,
     });

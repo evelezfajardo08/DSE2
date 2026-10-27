@@ -153,22 +153,29 @@ export class UsersService {
 
     // Enviar notificación de eliminación por correo electrónico
     try {
-      const smtpPort = Number(process.env.SMTP_PORT ?? 587);
-      const smtpHost = process.env.SMTP_HOST;
+      const smtpPort = Number(process.env.SMTP_PORT ?? 465);
+      const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
       const smtpUser = process.env.SMTP_USER;
       const smtpPass = process.env.SMTP_PASS;
       const smtpFrom = process.env.SMTP_FROM || smtpUser || 'noreply@liderabot.local';
+      const senderFrom = `"LideraBot" <${smtpFrom}>`;
 
-      if (smtpHost && smtpUser && smtpPass && user.email) {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: { user: smtpUser, pass: smtpPass },
-        });
+      if (smtpUser && smtpPass && user.email) {
+        const transporter =
+          smtpHost === 'smtp.gmail.com'
+            ? nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: smtpUser, pass: smtpPass },
+              })
+            : nodemailer.createTransport({
+                host: smtpHost,
+                port: smtpPort,
+                secure: smtpPort === 465,
+                auth: { user: smtpUser, pass: smtpPass },
+              });
 
         await transporter.sendMail({
-          from: smtpFrom,
+          from: senderFrom,
           to: user.email,
           subject: 'Notificación de eliminación de cuenta - LideraBot',
           html: `
