@@ -1,6 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { setServers } from 'node:dns';
+import { setServers, setDefaultResultOrder } from 'node:dns';
+
+// Forzar resolución IPv4 primero para evitar ENETUNREACH en plataformas sin IPv6 (como Render)
+if (typeof setDefaultResultOrder === 'function') {
+  try {
+    setDefaultResultOrder('ipv4first');
+  } catch (err) {
+    console.warn('[DNS] No se pudo configurar ipv4first:', err);
+  }
+}
 import { AppModule } from './app.module';
 import * as express from 'express';
 import { join } from 'node:path';

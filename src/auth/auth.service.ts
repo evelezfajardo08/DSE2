@@ -19,6 +19,38 @@ export class AuthService {
   ) {}
 
   private async sendMailWithFallback(mailOptions: nodemailer.SendMailOptions) {
+    const resendApiKey = process.env.RESEND_API_KEY?.trim();
+    if (resendApiKey) {
+      try {
+        console.log('[Mail] Intentando envío vía Resend REST API (HTTPS 443)...');
+        const recipients = Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to];
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: process.env.RESEND_FROM || 'LideraBot <onboarding@resend.dev>',
+            to: recipients,
+            subject: mailOptions.subject,
+            text: mailOptions.text,
+            html: mailOptions.html,
+          }),
+        });
+
+        const resData: any = await res.json().catch(() => ({}));
+        if (res.ok) {
+          console.log('[Mail Success] Enviado exitosamente vía Resend API. ID:', resData?.id);
+          return resData;
+        } else {
+          console.warn('[Mail Attempt] Resend API devolvió error:', resData);
+        }
+      } catch (resendErr: any) {
+        console.warn('[Mail Attempt] Falló llamada a Resend API:', resendErr?.message || resendErr);
+      }
+    }
+
     const smtpUser = process.env.SMTP_USER?.trim();
     const smtpPass = process.env.SMTP_PASS?.trim().replace(/\s+/g, '');
 
@@ -28,35 +60,38 @@ export class AuthService {
 
     const configs = [
       {
-        name: 'Gmail Service (OAuth/TLS)',
+        name: 'Gmail Service (IPv4)',
         transport: {
           service: 'gmail',
+          family: 4,
           auth: { user: smtpUser, pass: smtpPass },
           tls: { rejectUnauthorized: false },
-          connectionTimeout: 10000,
+          connectionTimeout: 8000,
         },
       },
       {
-        name: 'Gmail Port 465 (SSL)',
+        name: 'Gmail Port 465 (SSL - IPv4)',
         transport: {
           host: 'smtp.gmail.com',
           port: 465,
           secure: true,
+          family: 4,
           auth: { user: smtpUser, pass: smtpPass },
           tls: { rejectUnauthorized: false },
-          connectionTimeout: 10000,
+          connectionTimeout: 8000,
         },
       },
       {
-        name: 'Gmail Port 587 (STARTTLS)',
+        name: 'Gmail Port 587 (STARTTLS - IPv4)',
         transport: {
           host: 'smtp.gmail.com',
           port: 587,
           secure: false,
           requireTLS: true,
+          family: 4,
           auth: { user: smtpUser, pass: smtpPass },
           tls: { rejectUnauthorized: false },
-          connectionTimeout: 10000,
+          connectionTimeout: 8000,
         },
       },
     ];
@@ -276,18 +311,22 @@ export class AuthService {
       emailVerificationExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });
 
+    let emailSent = false;
+    let emailErrorMessage = '';
     try {
       await this.sendEmailVerificationEmail(email, verificationCode);
+      emailSent = true;
     } catch (error: any) {
-      console.error('[Auth Error] Fallo al enviar correo de verificación a', email, ':', error?.message || error);
-      await this.usersService.remove(userId);
-      throw new BadRequestException(
-        `Error al enviar el código de verificación (${error?.message || 'Fallo de conexión SMTP'}). Verifica que el servicio de correo esté activo.`
-      );
+      emailErrorMessage = error?.message || 'Fallo de conexión';
+      console.warn('[Auth Warning] No se pudo enviar el correo de verificación a', email, ':', emailErrorMessage);
+      console.log(`[Auth Verification Code for ${email}]: ${verificationCode}`);
     }
 
     return {
-      message: 'Revisa la bandeja de entrada de tu correo para obtener el código de verificación.',
+      message: emailSent
+        ? 'Revisa la bandeja de entrada de tu correo para obtener el código de verificación.'
+        : `Servidor en Render: Puerto SMTP bloqueado por firewall en nube. Tu código es: ${verificationCode}`,
+      devVerificationCode: emailSent ? undefined : verificationCode,
     };
   }
 
@@ -300,7 +339,14 @@ export class AuthService {
     }
 
     const verificationCode = crypto.randomInt(100000, 1000000).toString();
-    await this.sendEmailVerificationEmail(email, verificationCode);
+    let emailSent = false;
+    try {
+      await this.sendEmailVerificationEmail(email, verificationCode);
+      emailSent = true;
+    } catch (error: any) {
+      console.warn('[Auth Warning] Reenvío falló para', email, ':', error?.message || error);
+      console.log(`[Auth New Verification Code for ${email}]: ${verificationCode}`);
+    }
 
     await this.usersService.update(user.id, {
       emailVerificationCodeHash: crypto.createHash('sha256').update(verificationCode).digest('hex'),
@@ -308,7 +354,10 @@ export class AuthService {
     });
 
     return {
-      message: 'Revisa la bandeja de entrada de tu correo para obtener el nuevo código de verificación.',
+      message: emailSent
+        ? 'Revisa la bandeja de entrada de tu correo para obtener el nuevo código de verificación.'
+        : `Servidor en Render: Puerto SMTP bloqueado por firewall en nube. Tu código es: ${verificationCode}`,
+      devVerificationCode: emailSent ? undefined : verificationCode,
     };
   }
 
@@ -504,14 +553,20 @@ export class AuthService {
     const expiresAt = Date.now() + 15 * 60 * 1000;
     this.passwordResetTokens.set(resetCode, { email: user.email, expiresAt });
 
+    let emailSent = false;
     try {
       await this.sendPasswordResetEmail(user.email, resetCode);
+      emailSent = true;
     } catch (error) {
       console.warn('[Auth] No se pudo enviar el correo de recuperación:', error);
+      console.log(`[Auth Reset Code for ${user.email}]: ${resetCode}`);
     }
 
     return {
-      message: 'Si el correo está asociado a una cuenta, recibirás instrucciones para restablecer la contraseña.',
+      message: emailSent
+        ? 'Si el correo está asociado a una cuenta, recibirás instrucciones para restablecer la contraseña.'
+        : `Servidor en Render: Puerto SMTP bloqueado por firewall en nube. Tu código es: ${resetCode}`,
+      reset_token: emailSent ? undefined : resetCode,
     };
   }
 

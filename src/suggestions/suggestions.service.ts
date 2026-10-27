@@ -62,14 +62,16 @@ export class SuggestionsService {
           smtpHost === 'smtp.gmail.com'
             ? nodemailer.createTransport({
                 service: 'gmail',
+                family: 4,
                 auth: { user: smtpUser, pass: smtpPass },
-              })
+              } as any)
             : nodemailer.createTransport({
                 host: smtpHost,
                 port: smtpPort,
                 secure: smtpPort === 465,
+                family: 4,
                 auth: { user: smtpUser, pass: smtpPass },
-              });
+              } as any);
 
         await transporter.sendMail({
           from: senderFrom,
