@@ -181,8 +181,7 @@ export class ChatService {
 
     const storeName = this.configService.get<string>('GEMINI_FILE_SEARCH_STORE_NAME');
     const client = new GoogleGenAI({ apiKey });
-    const rawModel = this.configService.get<string>('GEMINI_MODEL') || 'gemini-2.0-flash';
-    const model = rawModel.includes('3.5') ? 'gemini-2.0-flash' : rawModel;
+    const model = this.configService.get<string>('GEMINI_MODEL') || 'gemini-3.5-flash-lite';
 
     const baseInstruction = `${systemInstruction}\n\nFundamenta las respuestas en el marco teórico de los módulos de liderazgo, comunicación, toma de decisiones y trabajo en equipo. Redacta de forma natural y fluida como un mentor personal. PROHIBIDO usar sintaxis LaTeX o fórmulas matemáticas (no uses $$, $, \\text{}, \\rightarrow ni bloques matemáticos); usa texto normal con flechas Unicode simples (→) y formato Markdown estándar.`;
 
