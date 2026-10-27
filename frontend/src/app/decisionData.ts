@@ -1,5 +1,5 @@
 import { Target, Layers, BrainCircuit, ShieldAlert, BarChart3 } from "lucide-react";
-import { LeadershipModule } from "./leadershipData";
+import { AcademicReference, LeadershipModule } from "./leadershipData";
 
 export interface DecisionTopicLevel {
   level: number;
@@ -519,4 +519,97 @@ export const decisionModules: DecisionModule[] = [
       }
     ]
   }
+];
+
+export const decisionTheoreticalFoundations: AcademicReference[] = [
+  {
+    authors: "Herbert A. Simon",
+    year: "1947 / 1957 / 1960",
+    contribution:
+      "Premio Nobel de Economía 1978. Formuló la Teoría de la Racionalidad Limitada (Bounded Rationality), el concepto de Satisficing (búsqueda de opciones satisfactorias vs. óptimas inalcanzables) y el modelo de tres fases del proceso decisional: Inteligencia (diagnóstico), Diseño (generación de alternativas) y Elección.",
+    justification:
+      "Base epistemológica primaria del Eje 1 (Identificación y Diagnóstico del Problema), demostrando que las decisiones bajo presión y con información incompleta exigen estructuración analítica rigurosa.",
+    links: [
+      {
+        label: "Nobel Prize: Herbert A. Simon - Facts & Economic Contribution",
+        url: "https://www.nobelprize.org/prizes/economic-sciences/1978/simon/facts/",
+      },
+      {
+        label: "Redalyc: La Teoría de la Racionalidad Limitada en la Toma de Decisiones (PDF)",
+        url: "https://www.redalyc.org/pdf/206/20604707.pdf",
+      },
+    ],
+  },
+  {
+    authors: "Thomas L. Saaty, Charles Kepner y Benjamin Tregoe",
+    year: "1965 / 1980 / 1981",
+    contribution:
+      "Desarrollo del Proceso Jerárquico Analítico (AHP) y la Matriz de Análisis de Decisiones Racionales Kepner-Tregoe. Saaty diseñó el método de comparación matricial por pares y verificación de consistencia matemática; Kepner y Tregoe formalizaron la separación entre objetivos 'Obligatorios (Must)' y 'Deseables (Want)' con evaluación ponderada de riesgos.",
+    justification:
+      "Pilar técnico del Eje 2 (Generación y Evaluación de Alternativas), proveyendo las matrices multicriterio utilizadas en los desafíos técnicos y en la resolución de casos de asignación de recursos.",
+    links: [
+      {
+        label: "ScienceDirect: How to Make a Decision - The Analytic Hierarchy Process (Saaty)",
+        url: "https://www.sciencedirect.com/science/article/pii/037722179090057I",
+      },
+      {
+        label: "Kepner-Tregoe: Systematic Decision Analysis and Problem Solving",
+        url: "https://www.kepner-tregoe.com/expertise/problem-solving-and-decision-making/",
+      },
+    ],
+  },
+  {
+    authors: "Daniel Kahneman y Amos Tversky",
+    year: "1974 / 1979 / 2011",
+    contribution:
+      "Premio Nobel de Economía 2002. Creadores de la Teoría de las Perspectivas (Prospect Theory) y de la investigación científica de heurísticas y sesgos cognitivos. Describieron la heurística de anclaje, representatividad, disponibilidad, aversión a la pérdida y el funcionamiento de la mente entre Sistema 1 (rápido e intuitivo) y Sistema 2 (lento, analítico y deliberativo).",
+    justification:
+      "Sustenta transversalmente el Eje 1, Eje 3 (Decisión en Crisis y Manejo de Sesgos) y las claves de las preguntas Saber Pro, dotando al estudiante de capacidad de autocrítica frente a ilusiones de certeza.",
+    links: [
+      {
+        label: "Nobel Prize: Daniel Kahneman - Foundations of Behavioral Economics",
+        url: "https://www.nobelprize.org/prizes/economic-sciences/2002/kahneman/facts/",
+      },
+      {
+        label: "Econometrica: Prospect Theory - An Analysis of Decision under Risk (PDF)",
+        url: "https://www.princeton.edu/~kahneman/docs/Publications/prospect_theory.pdf",
+      },
+    ],
+  },
+  {
+    authors: "Gary Klein, David J. Snowden y Karl E. Weick",
+    year: "1995 / 1998 / 2007",
+    contribution:
+      "Toma de Decisiones Naturalistas (NDM), Modelo de Decisión por Reconocimiento de Patrones (RPD), Marco Cynefin y Sentido en Crisis (Sensemaking). Snowden y Boone delimitaron la toma de decisiones en 5 contextos (Simple, Complicado, Complejo, Caótico y Desorden); Klein demostró cómo los líderes expertos simulan cursos de acción mentalmente sin comparar largas listas en emergencias.",
+    justification:
+      "Fundamenta el Eje 4 (Decisiones en Crisis, Incertidumbre y Casos Organizacionales), enseñando a distinguir cuándo planificar analíticamente y cuándo actuar de inmediato para contener un colapso.",
+    links: [
+      {
+        label: "Harvard Business Review: A Leader's Framework for Decision Making (Cynefin)",
+        url: "https://hbr.org/2007/11/a-leaders-framework-for-decision-making",
+      },
+      {
+        label: "Cognitive Edge: The Cynefin Framework Official Repository",
+        url: "https://thecynefin.co/about-us/about-cynefin-framework/",
+      },
+    ],
+  },
+  {
+    authors: "Max H. Bazerman, Ann E. Tenbrunsel, James R. Rest y Donald Schön",
+    year: "1978 / 1986 / 2011",
+    contribution:
+      "Ética del Comportamiento (Blind Spots), Desarrollo Moral Cuatrifásico y Evaluación Reflexiva de Doble Bucle. Bazerman y Tenbrunsel explicaron los puntos ciegos éticos motivados por metas distorsionadas; Rest modeló la sensibilidad y juicio moral; y Argyris & Schön formalizaron el aprendizaje de ciclo doble para corregir los supuestos profundos detrás de un error de decisión.",
+    justification:
+      "Constituye la base del Eje 5 (Implementación, Monitoreo y Evaluación de Resultados), asegurando que las decisiones gerenciales y directivas sean no solo técnicamente viables sino éticamente íntegras y orientadas a la mejora continua.",
+    links: [
+      {
+        label: "Harvard Business Review: Ethical Breakdowns - Bazerman & Tenbrunsel",
+        url: "https://hbr.org/2011/04/ethical-breakdowns",
+      },
+      {
+        label: "Princeton University Press: Blind Spots - Why We Fail to Do What's Right",
+        url: "https://press.princeton.edu/books/hardcover/9780691147598/blind-spots",
+      },
+    ],
+  },
 ];

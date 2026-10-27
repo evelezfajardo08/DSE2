@@ -1,5 +1,5 @@
 import { MessageSquare, Users, BookOpen, UserCheck, Share2 } from "lucide-react";
-import { LeadershipModule, TopicLevel } from "./leadershipData";
+import { AcademicReference, LeadershipModule, TopicLevel } from "./leadershipData";
 
 export const communicationModules: LeadershipModule[] = [
   {
@@ -479,4 +479,107 @@ export const communicationModules: LeadershipModule[] = [
       }
     ]
   }
+];
+
+export const communicationTheoreticalFoundations: AcademicReference[] = [
+  {
+    authors: "Lev S. Vygotsky y Jerome Bruner",
+    year: "1934 / 1966 / 1978",
+    contribution:
+      "Formulación de la Teoría Histórico-Cultural y el Andamiaje Pedagógico. Demostraron que el lenguaje opera inicialmente como herramienta social de mediación interpersonal y posteriormente como instrumento intrapersonal de autorregulación del pensamiento en la Zona de Desarrollo Próximo (ZDP).",
+    justification:
+      "Fundamenta el Eje 1 (Fundamentos Teóricos de la Comunicación Educativa), orientando al docente como mediador dialógico que propicia la internalización activa de conceptos y la autonomía cognoscitiva.",
+    links: [
+      {
+        label: "Scielo / Redalyc: El Enfoque Histórico-Cultural en la Educación (PDF)",
+        url: "https://www.scielo.org.mx/scielo.php?script=sci_arttext&pid=S1607-40412011000100006",
+      },
+      {
+        label: "Psicopedia: Pensamiento y Lenguaje - Lev Vygotsky (PDF)",
+        url: "https://psicopedia.org/wp-content/uploads/2014/04/Pensamiento-y-Lenguaje-Vygotsky.pdf",
+      },
+    ],
+  },
+  {
+    authors: "Francisco Gutiérrez y Daniel Prieto Castillo",
+    year: "1999",
+    contribution:
+      "Teoría y Metodología de la Mediación Pedagógica. Definen la mediación como el tratamiento del contenido, de la forma y del aprendizaje para hacer posible el acto educativo dialógico y no coactivo, transformando la información en experiencia significativa.",
+    justification:
+      "Constituye el pilar esencial del Eje 1 y Eje 2, enseñando a diseñar interlocuciones empáticas y estructurar mensajes claros adaptados al contexto del estudiante.",
+    links: [
+      {
+        label: "Redalyc: La Mediación Pedagógica en la Educación Superior (PDF)",
+        url: "https://www.redalyc.org/pdf/356/35601309.pdf",
+      },
+    ],
+  },
+  {
+    authors: "Paulo Freire",
+    year: "1970 / 1993",
+    contribution:
+      "Pedagogía del Oprimido y Pedagogía de la Esperanza. Crítica radical a la educación 'bancaria' (transmisión autoritaria y unidireccional) y propuesta de una educación dialógica y problematizadora donde educador y educando aprenden en comunión mediatizados por el mundo.",
+    justification:
+      "Sustenta el enfoque de comunicación horizontal y democratización del aula en todos los ejes del módulo, erradicando barreras autoritarias en la relación pedagógica.",
+    links: [
+      {
+        label: "UNESCO: Perfil de Educadores - Paulo Freire (PDF)",
+        url: "https://unesdoc.unesco.org/ark:/48223/pf0000114002_spa",
+      },
+      {
+        label: "Scielo: La Educación como Práctica de la Libertad (Artículo)",
+        url: "https://www.scielo.org.mx/scielo.php?script=sci_arttext&pid=S0185-26982008000400010",
+      },
+    ],
+  },
+  {
+    authors: "Carl Rogers, Thomas Gordon y Marshall B. Rosenberg",
+    year: "1957 / 1974 / 1999",
+    contribution:
+      "Desarrollo de la Escucha Activa, el Entrenamiento en Eficacia Docente (TET) y la Comunicación No Violenta (CNV). Rogers identificó las actitudes facilitadoras (empatía, congruencia y aceptación); Gordon aportó los 'mensajes-yo' y la resolución sin perdedores; y Rosenberg sistematizó el modelo de 4 pasos (Observación, Sentimiento, Necesidad, Petición).",
+    justification:
+      "Base operativa del Eje 2 (Escucha Activa, Empatía y CNV) y Eje 4 (Asertividad y Barreras), capacitando para resolver fricciones interpersonales sin defensividad ni juicios moralistas.",
+    links: [
+      {
+        label: "Center for Nonviolent Communication: The Four-Step NVC Model",
+        url: "https://www.cnvc.org/",
+      },
+      {
+        label: "Gordon Training International: Teacher Effectiveness Training (TET)",
+        url: "https://www.gordontraining.com/school-programs/teacher-effectiveness-training-t-e-t/",
+      },
+    ],
+  },
+  {
+    authors: "Paul Watzlawick, Janet Beavin y Don Jackson",
+    year: "1967",
+    contribution:
+      "Teoría de la Comunicación Humana y Escuela de Palo Alto. Postulación de los axiomas comunicativos universales: es imposible no comunicar; toda comunicación tiene un nivel de contenido y otro de relación; la naturaleza de la relación depende de la puntuación de secuencias; y la comunicación es tanto digital como analógica.",
+    justification:
+      "Fundamenta el Eje 3 (Comunicación Interpersonal y No Verbal) y Eje 5 (Manejo Dialógico de Conflictos), permitiendo interpretar el metacomunicado relacional y la circularidad de los malentendidos en el aula.",
+    links: [
+      {
+        label: "Redalyc: Los Axiomas de Watzlawick y la Pragmática Humana (PDF)",
+        url: "https://www.redalyc.org/pdf/846/84611598007.pdf",
+      },
+    ],
+  },
+  {
+    authors: "Mario Kaplún y David Buckingham",
+    year: "1998 / 2003 / 2013",
+    contribution:
+      "Teoría de la Educomunicación y Alfabetización Mediática en la Era Digital. Kaplún sistematizó los modelos de comunicación orientados a los procesos frente a la fascinación tecnológica; Buckingham estructuró el análisis crítico de medios digitales para transformar a los estudiantes de consumidores pasivos a productores éticos de saberes.",
+    justification:
+      "Sustenta directamente el Eje 5 (Comunicación Digital, Educomunicación y Alfabetización Mediática), guiando la adopción pedagógica de redes y plataformas interactivas sin tecnocentrismo acrítico.",
+    links: [
+      {
+        label: "Dialnet: Una Pedagogía de la Comunicación - Mario Kaplún (PDF)",
+        url: "https://dialnet.unirioja.es/descarga/articulo/4805728.pdf",
+      },
+      {
+        label: "UNESCO: Alfabetización Mediática e Informacional (Currículo)",
+        url: "https://unesdoc.unesco.org/ark:/48223/pf0000377068",
+      },
+    ],
+  },
 ];

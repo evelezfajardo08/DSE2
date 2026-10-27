@@ -55,8 +55,15 @@ import {
   leadershipModules,
   theoreticalFoundations,
 } from "./leadershipData";
-import { communicationModules } from "./communicationData";
-import { decisionModules, DecisionTopicLevel } from "./decisionData";
+import {
+  communicationModules,
+  communicationTheoreticalFoundations,
+} from "./communicationData";
+import {
+  decisionModules,
+  decisionTheoreticalFoundations,
+  DecisionTopicLevel,
+} from "./decisionData";
 import { DiagnosticEvaluationResult } from "./diagnosticData";
 
 export type DisciplineKey = "leadership" | "communication" | "decision";
@@ -371,8 +378,10 @@ export default function App() {
 
   // Compute which submodules are currently unlocked (Stepped Unlocking)
   const unlockedSubmoduleIds = useMemo(() => {
+    // Si aún no se ha presentado la prueba diagnóstica, todos los módulos de todas las disciplinas están bloqueados
+    if (!diagnosticResult) return [];
+
     if (currentDiscipline === "leadership") {
-      if (!diagnosticResult) return [];
       const unlocked: number[] = [];
       for (let i = 0; i < recommendedSubmoduleOrder.length; i++) {
         const modId = recommendedSubmoduleOrder[i];
@@ -394,7 +403,7 @@ export default function App() {
       return unlocked;
     }
 
-    // Para Comunicación y Toma de Decisiones: el Eje 1 inicia desbloqueado y los siguientes se desbloquean secuencialmente al completar 5/5
+    // Para Comunicación y Toma de Decisiones: Una vez realizada la prueba diagnóstica, el Eje 1 inicia desbloqueado y los siguientes (2, 3, 4, 5) se desbloquean secuencialmente al completar 5/5 del anterior
     const unlocked: number[] = [1];
     for (let modId = 2; modId <= 5; modId++) {
       const prevModId = modId - 1;
@@ -429,17 +438,15 @@ export default function App() {
       const stepOrderIndex = mod.id - 1;
 
       let unlockRequirementText = "";
-      if (currentDiscipline === "leadership") {
-        if (!hasInteractedWithBot) {
-          unlockRequirementText = "Bloqueado · Habla primero con LideraBot";
-        } else if (!diagnosticResult) {
-          unlockRequirementText = "Bloqueado · Realiza la Prueba Diagnóstica";
-        } else if (!isUnlocked && stepOrderIndex > 0) {
+      if (!hasInteractedWithBot) {
+        unlockRequirementText = "Bloqueado · Habla primero con LideraBot";
+      } else if (!diagnosticResult) {
+        unlockRequirementText = "Bloqueado · Realiza primero la Prueba Diagnóstica";
+      } else if (!isUnlocked) {
+        if (currentDiscipline === "leadership") {
           const prevModId = recommendedSubmoduleOrder[stepOrderIndex - 1];
           unlockRequirementText = `Bloqueado · Completa antes el Submódulo 0${prevModId}`;
-        }
-      } else {
-        if (!isUnlocked) {
+        } else {
           unlockRequirementText = `Bloqueado · Completa los 5 niveles del Eje 0${mod.id - 1} para desbloquear`;
         }
       }
@@ -1395,6 +1402,8 @@ export default function App() {
       )}
       {view === "foundations" && (
         <FoundationsView
+          currentDiscipline={currentDiscipline}
+          disciplines={disciplines}
           modules={computedModules}
           onChoose={chooseModule}
           onBack={goHome}
@@ -2618,68 +2627,172 @@ function CompleteView({
 }
 
 function FoundationsView({
+  currentDiscipline: initialDiscipline = "leadership",
+  disciplines: discList,
   modules: _modules,
   onChoose: _onChoose,
   onBack,
 }: {
+  currentDiscipline?: DisciplineKey;
+  disciplines?: DisciplineInfo[];
   modules: ModuleWithProgress[];
   onChoose: (item: ModuleWithProgress) => void;
   onBack: () => void;
 }) {
+  const [activeTab, setActiveTab] = useState<DisciplineKey>(initialDiscipline);
+
+  const activeDisciplineInfo =
+    discList?.find((d) => d.key === activeTab) ?? {
+      key: "leadership" as DisciplineKey,
+      number: 1,
+      title: "Módulo 1: Formación en Liderazgo",
+      shortTitle: "Liderazgo",
+      tagline:
+        "Este módulo integra los enfoques clásicos, transformacionales, situacionales y emocionales de liderazgo.",
+      color: "#0F3B8F",
+      icon: Sparkles,
+    };
+
+  const currentReferences = useMemo(() => {
+    switch (activeTab) {
+      case "communication":
+        return communicationTheoreticalFoundations;
+      case "decision":
+        return decisionTheoreticalFoundations;
+      case "leadership":
+      default:
+        return theoreticalFoundations;
+    }
+  }, [activeTab]);
+
   return (
     <main className="mx-auto max-w-[1040px] px-5 py-8 lg:px-8 lg:py-10">
       <button
         onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F]"
+        className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Volver al inicio
       </button>
 
-      <section className="rounded-[28px] bg-[#0F3B8F] px-6 py-8 text-white md:px-10">
-        <Pill className="mb-3 bg-white/10 text-blue-100">
-          Introducción y Referencias del Módulo
+      {/* Tabs Selector de Módulos para las Referencias */}
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
+        {(discList || disciplines).map((d) => {
+          const Icon = d.icon;
+          const isActive = activeTab === d.key;
+          return (
+            <button
+              key={d.key}
+              onClick={() => setActiveTab(d.key)}
+              className={cn(
+                "flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-xs sm:text-sm font-extrabold transition-all",
+                isActive
+                  ? "bg-white text-[#0F3B8F] shadow-sm border border-[#DCE3EF]"
+                  : "text-[#5A6A85] hover:text-[#0F3B8F] hover:bg-white/60",
+              )}
+            >
+              <Icon
+                className="h-4 w-4 shrink-0"
+                style={{ color: isActive ? d.color : undefined }}
+              />
+              <span className="truncate">{d.shortTitle}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Banner Principal del Módulo Seleccionado */}
+      <section
+        className="rounded-[28px] p-6 text-white md:p-8 transition-colors shadow-sm"
+        style={{ backgroundColor: activeDisciplineInfo.color }}
+      >
+        <Pill className="mb-3 bg-white/15 text-white">
+          {activeDisciplineInfo.title}
         </Pill>
-        <h1 className="text-2xl font-extrabold tracking-tight md:text-4xl">
-          Módulo de Formación en Liderazgo
+        <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+          Referencias Académicas y Fundamentación Teórica
         </h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-blue-100 md:text-base">
-          Este módulo integra cinco enfoques esenciales de liderazgo para fortalecer la toma de
-          decisiones, la empatía y la dirección de equipos en entornos reales y educativos.
+          {activeTab === "leadership" &&
+            "Este módulo integra enfoques esenciales de liderazgo (transformacional, participativo, coaching, delegativo y situacional) para guiar equipos de alto rendimiento."}
+          {activeTab === "communication" &&
+            "Fundamentación epistemológica de la comunicación educativa: mediación dialógica, escucha empática, teoría de sistemas comunicacionales y alfabetización mediática crítica."}
+          {activeTab === "decision" &&
+            "Corpus teórico de la ciencia de la decisión: racionalidad limitada, matrices multicriterio (AHP / Kepner-Tregoe), heurísticas cognitivas, modelos de crisis (Cynefin) y ética reflexiva."}
         </p>
       </section>
 
+      {/* Grid de Referencias */}
       <section className="mt-6 rounded-[24px] border border-[#DCE3EF] bg-white p-6 md:p-8 shadow-sm">
-        <h2 className="text-xl font-extrabold text-[#10264F]">
-          Referencias Académicas del Módulo
-        </h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          {theoreticalFoundations.map((foundation) => (
+        <div className="flex items-center justify-between gap-4 border-b border-[#E3E8F0] pb-4 mb-6">
+          <div>
+            <h2 className="text-xl font-extrabold text-[#10264F]">
+              Corpus Teórico · {activeDisciplineInfo.shortTitle}
+            </h2>
+            <p className="text-xs text-[#64728A] mt-1">
+              {currentReferences.length} investigaciones seminales y marcos de referencia
+            </p>
+          </div>
+          <span className="rounded-xl bg-[#F0F4FA] px-3 py-1.5 text-xs font-bold text-[#0F3B8F]">
+            {activeDisciplineInfo.shortTitle}
+          </span>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          {currentReferences.map((foundation) => (
             <article
               key={foundation.authors}
-              className="rounded-2xl border border-[#DCE3EF] bg-[#F8FAFD] p-5 flex flex-col justify-between"
+              className="rounded-2xl border border-[#DCE3EF] bg-[#F8FAFD] p-5 flex flex-col justify-between hover:border-[#B5C8E8] transition-colors"
             >
               <div>
-                <h3 className="text-base font-extrabold text-[#10264F]">
-                  {foundation.authors} ({foundation.year})
-                </h3>
-                <p className="mt-1.5 text-xs leading-5 text-[#4A5870]">
-                  {foundation.contribution}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-base font-extrabold text-[#10264F] leading-tight">
+                    {foundation.authors}
+                  </h3>
+                  <span className="shrink-0 rounded-lg bg-white border border-[#DCE3EF] px-2 py-0.5 text-[11px] font-bold text-[#2D6BFF]">
+                    {foundation.year}
+                  </span>
+                </div>
+
+                <div className="mt-3">
+                  <p className="text-xs font-bold text-[#0F3B8F] uppercase tracking-wider text-[10px]">
+                    Aporte Conceptual:
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[#334155]">
+                    {foundation.contribution}
+                  </p>
+                </div>
+
+                {foundation.justification && (
+                  <div className="mt-3 rounded-xl bg-white/80 border border-[#E2E8F0] p-3">
+                    <p className="text-[10px] font-bold text-[#64728A] uppercase tracking-wider">
+                      Relevancia en el Módulo:
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[#475569]">
+                      {foundation.justification}
+                    </p>
+                  </div>
+                )}
               </div>
-              <div className="mt-4 border-t border-[#E4EAF3] pt-3 space-y-1.5">
-                {foundation.links.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 text-xs font-bold text-[#2D6BFF] hover:underline"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                    <span>{link.label}</span>
-                  </a>
-                ))}
-              </div>
+
+              {foundation.links && foundation.links.length > 0 && (
+                <div className="mt-4 border-t border-[#E4EAF3] pt-3 space-y-1.5">
+                  <p className="text-[10px] font-extrabold text-[#64728A] uppercase tracking-wider mb-1">
+                    Lecturas y Recursos Académicos:
+                  </p>
+                  {foundation.links.map((link) => (
+                    <a
+                      key={link.label}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 text-xs font-bold text-[#2D6BFF] hover:underline"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{link.label}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
             </article>
           ))}
         </div>
