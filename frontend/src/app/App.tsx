@@ -770,9 +770,9 @@ export default function App() {
               </p>
             </div>
             <div className="rounded-lg bg-muted/40 p-4">
-              <p className="text-sm text-muted-foreground">Submódulos Desbloqueados</p>
+              <p className="text-sm text-muted-foreground">Módulos Habilitados</p>
               <p className="font-semibold text-[#0F3B8F] mt-1">
-                {unlockedSubmoduleIds.length} de 5 ({overallProgress}% global)
+                3 de 3 módulos ({overallProgress}% global)
               </p>
             </div>
           </div>
@@ -1078,7 +1078,7 @@ export default function App() {
               )}
             >
               {!diagnosticResult && <LockKeyhole className="h-3.5 w-3.5 text-blue-300" />}
-              Módulos ({unlockedSubmoduleIds.length}/5)
+              Módulos (3 de 3)
             </button>
 
             <button
@@ -1184,7 +1184,7 @@ export default function App() {
               onClick={goHome}
               className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-blue-100"
             >
-              <span>Módulos ({unlockedSubmoduleIds.length}/5 desbloqueados)</span>
+              <span>Módulos (3 de 3)</span>
               {!diagnosticResult && <LockKeyhole className="h-4 w-4" />}
             </button>
             <button
@@ -1571,7 +1571,7 @@ function HomeView({
             <p className="text-[11px] font-bold uppercase tracking-wider text-blue-200">Progreso</p>
             <p className="mt-1 text-2xl font-extrabold text-[#FACC15]">{overallProgress}%</p>
             <p className="text-[11px] text-blue-100">
-              {unlockedSubmoduleIds.length}/5 desbloqueados
+              {unlockedSubmoduleIds.length}/5 {currentDiscipline === "leadership" ? "submódulos" : "ejes"} desbloqueados
             </p>
           </div>
         </div>
