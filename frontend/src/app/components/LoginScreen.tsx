@@ -156,11 +156,21 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       }
 
       if (!isLogin) {
-        setIsVerifyingRegistration(true);
-        setError('');
-        setRegistrationCode('');
-        setSuccessMessage('Te hemos enviado un código de verificación a tu correo. Revisa tu bandeja de entrada o spam.');
-        setVerificationCooldownSeconds(0);
+        if (data.approval_required) {
+          setIsLogin(true);
+          setSuccessMessage(data.message || 'Registro exitoso. Tu cuenta docente requiere aprobación de un administrador.');
+          setError('');
+          setForm({ name: '', email: form.email, password: '', confirmPassword: '' });
+          return;
+        }
+
+        localStorage.setItem('access_token', data.access_token);
+        onLogin(data.user.role as Role, {
+          id: Number(data.user.id),
+          name: data.user.name,
+          email: data.user.email,
+          currentStreak: data.user.currentStreak || 0,
+        });
         return;
       }
 

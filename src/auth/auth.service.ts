@@ -315,7 +315,7 @@ export class AuthService {
 
   async register(data: any) {
     const email = String(data.email || '').trim().toLowerCase();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       throw new BadRequestException(
         'Ingresa una dirección de correo electrónico válida.'
@@ -324,41 +324,38 @@ export class AuthService {
 
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
-      if (existingUser.emailVerified === false) {
-        throw new ConflictException('Este correo ya tiene un registro pendiente. Revisa tu correo e ingresa el código de verificación.');
-      }
-      throw new ConflictException('El correo ya está registrado');
+      throw new ConflictException('El correo ya está registrado en la plataforma.');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const userId = Math.floor(Math.random() * 1000000);
-    const verificationCode = crypto.randomInt(100000, 1000000).toString();
+    const role = data.role || 'student';
+    const isTeacher = String(role).toLowerCase() === 'teacher';
 
     const newUser = await this.usersService.create({
       id: userId,
       name: data.name,
       email,
       password: hashedPassword,
-      role: data.role || 'student',
-      status: 'pending',
-      emailVerified: false,
-      emailVerificationCodeHash: crypto.createHash('sha256').update(verificationCode).digest('hex'),
-      emailVerificationExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      role,
+      status: isTeacher ? 'pending_approval' : 'active',
+      emailVerified: true,
     });
 
-    try {
-      await this.sendEmailVerificationEmail(email, verificationCode);
-    } catch (error: any) {
-      console.error('[Auth Error] Falló al enviar código a', email, ':', error?.message || error);
-      await this.usersService.remove(userId);
-      throw new BadRequestException(
-        `No se pudo enviar el código al correo (${error?.message || 'Error del servidor de correo'}).`
-      );
+    if (isTeacher) {
+      return {
+        approval_required: true,
+        message: 'Registro exitoso. Tu cuenta docente requiere aprobación de un administrador para activarse.',
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+        },
+      };
     }
 
-    return {
-      message: 'Revisa la bandeja de entrada de tu correo para obtener el código de verificación.',
-    };
+    return this.generateToken(newUser);
   }
 
   async resendEmailVerification(data: any) {
@@ -399,7 +396,7 @@ export class AuthService {
     const actualRole = String(user.role || 'student').toLowerCase();
 
     if (user.emailVerified === false) {
-      throw new UnauthorizedException('Debes verificar tu correo antes de iniciar sesión.');
+      await this.usersService.update(user.id, { emailVerified: true });
     }
 
     if (actualRole === 'teacher' && user.status !== 'active') {
