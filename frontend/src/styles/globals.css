@@ -81,47 +81,218 @@
   --sidebar-ring: #fe822f;
 }
 
-.dark .bg-white {
-  background-color: #151515 !important;
+/* === Comprehensive Dark Mode Overrides === */
+
+/* Page & surface backgrounds */
+.dark .bg-\[\#eee2aa\] {
+  background-color: #12150e !important;
+}
+
+.dark .bg-white,
+.dark .bg-\[\#fdfaf0\],
+.dark .bg-\[\#fbf6e2\] {
+  background-color: #1c2117 !important;
 }
 
 .dark .bg-gray-50,
-.dark .bg-gray-100 {
-  background-color: #1f1f1f !important;
+.dark .bg-gray-100,
+.dark .bg-slate-50,
+.dark .bg-slate-100,
+.dark .bg-\[\#f7f0d4\],
+.dark .bg-\[\#f4ebc6\],
+.dark .bg-\[\#efe5b8\],
+.dark .bg-\[\#ebe0b2\] {
+  background-color: #252c1e !important;
 }
 
+.dark .bg-\[\#e2d59a\],
+.dark .bg-\[\#e3d69c\],
+.dark .bg-\[\#e6daa6\],
+.dark .bg-\[\#d9cda0\],
+.dark .bg-\[\#c4b57e\] {
+  background-color: #2c3524 !important;
+}
+
+/* Soft tinted callouts & badges in dark mode */
+.dark .bg-\[\#fff1e5\],
+.dark .bg-\[\#ffe2c7\],
+.dark .bg-\[\#fbf4d4\],
+.dark .bg-\[\#f9e9b8\],
+.dark .bg-amber-50,
+.dark .bg-yellow-50 {
+  background-color: #332418 !important;
+}
+
+.dark .bg-\[\#f4eef3\] {
+  background-color: #2d212c !important;
+}
+
+.dark .bg-\[\#edf3e8\],
+.dark .bg-\[\#e2ecd9\],
+.dark .bg-green-50,
+.dark .bg-emerald-50 {
+  background-color: #1f2e19 !important;
+}
+
+.dark .bg-red-50 {
+  background-color: #351b1b !important;
+}
+
+/* Elevated dark forest buttons in dark mode so they stand out from cards */
+.dark .bg-\[\#28391e\] {
+  background-color: #334926 !important;
+}
+
+.dark .hover\:bg-\[\#1e2c16\]:hover {
+  background-color: #3f5a2f !important;
+}
+
+.dark .hover\:bg-\[\#f7f0d4\]:hover,
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-white\/60:hover {
+  background-color: #2e3725 !important;
+}
+
+/* Primary & heading text in dark mode */
 .dark .text-gray-900,
 .dark .text-gray-800,
-.dark .text-gray-700 {
-  color: #f5f5f5 !important;
+.dark .text-gray-700,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700,
+.dark .text-\[\#1a180f\],
+.dark .text-\[\#2b2719\],
+.dark .text-\[\#3a3525\] {
+  color: #f5ecd0 !important;
 }
 
+/* Accent & brand dark texts converted to high-contrast light tones in dark mode */
+.dark .text-\[\#28391e\],
+.dark .text-\[\#385229\] {
+  color: #b7d69e !important;
+}
+
+.dark .text-\[\#4a3649\] {
+  color: #e2bde0 !important;
+}
+
+.dark .text-\[\#7a3608\],
+.dark .text-\[\#592c0a\],
+.dark .text-\[\#4a3f17\],
+.dark .text-amber-700,
+.dark .text-amber-800,
+.dark .text-amber-900 {
+  color: #ffb57a !important;
+}
+
+.dark .text-green-700,
+.dark .text-green-800,
+.dark .text-emerald-700 {
+  color: #9fd89b !important;
+}
+
+.dark .text-red-600,
+.dark .text-red-700 {
+  color: #f89393 !important;
+}
+
+/* Muted / secondary text in dark mode */
 .dark .text-gray-600,
 .dark .text-gray-500,
-.dark .text-gray-400 {
-  color: #b3b3b3 !important;
+.dark .text-gray-400,
+.dark .text-slate-600,
+.dark .text-slate-500,
+.dark .text-slate-400,
+.dark .text-\[\#59533f\],
+.dark .text-\[\#6e674f\],
+.dark .text-\[\#787058\],
+.dark .text-\[\#857d64\] {
+  color: #c2ba9b !important;
 }
 
+.dark .hover\:text-\[\#28391e\]:hover,
+.dark .hover\:text-\[\#1a180f\]:hover {
+  color: #fe822f !important;
+}
+
+/* Borders in dark mode */
 .dark .border-gray-200,
-.dark .border-gray-100 {
-  border-color: #3f3f46 !important;
+.dark .border-gray-100,
+.dark .border-slate-200,
+.dark .border-slate-100,
+.dark .border-\[\#d9cda0\],
+.dark .border-\[\#dfd3a6\],
+.dark .border-\[\#e2d59a\],
+.dark .border-\[\#e6daa6\],
+.dark .border-\[\#efe5b8\],
+.dark .border-\[\#cfc18e\],
+.dark .border-\[\#d2c593\],
+.dark .border-\[\#c4b57e\] {
+  border-color: #35402b !important;
 }
 
+.dark .border-\[\#bfd1b0\],
+.dark .border-\[\#28391e\] {
+  border-color: #4b613c !important;
+}
+
+.dark .border-\[\#f2c68c\],
+.dark .border-\[\#f3b689\],
+.dark .border-\[\#ffb074\],
+.dark .border-amber-200 {
+  border-color: #6e4522 !important;
+}
+
+.dark .border-red-200 {
+  border-color: #6b2b2b !important;
+}
+
+/* Form controls in dark mode */
 .dark input,
 .dark textarea,
 .dark select {
-  background-color: #1f1f1f;
-  border-color: #3f3f46;
-  color: #f5f5f5;
+  background-color: #232a1d !important;
+  border-color: #3e4b33 !important;
+  color: #f5ecd0 !important;
 }
 
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: #8f8f8f;
+  color: #9a9276 !important;
 }
 
+/* Header & top bars in dark mode */
 .dark header {
-  background-color: #0f0f0f !important;
+  background-color: #192213 !important;
+  border-bottom: 1px solid #2f3d25;
+}
+
+/* Preserve white text on dark green / plum banners & buttons */
+.dark .bg-\[\#28391e\].text-white,
+.dark .bg-\[\#4a3649\].text-white {
+  color: #fdfaf0 !important;
+}
+
+/* Preserve dark high-contrast text on vibrant orange (#fe822f) surfaces in dark mode */
+.dark .bg-\[\#fe822f\],
+.dark .bg-\[\#fe822f\] *,
+.dark [style*="background-color: rgb(254, 130, 47)"],
+.dark [style*="background-color: rgb(254, 130, 47)"] *,
+.dark [style*="background-color: #fe822f"],
+.dark [style*="background-color: #fe822f"] * {
+  color: #1a180f !important;
+}
+
+/* Recharts dark mode legibility */
+.dark .recharts-cartesian-axis-tick-value tspan {
+  fill: #c2ba9b !important;
+}
+
+.dark .recharts-default-tooltip {
+  background-color: #1c2117 !important;
+  border-color: #35402b !important;
+  color: #f5ecd0 !important;
 }
 
 @theme inline {
