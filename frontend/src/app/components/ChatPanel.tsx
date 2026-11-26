@@ -18,6 +18,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { leadershipModules } from '../leadershipData';
 import { communicationModules } from '../communicationData';
 import { decisionModules } from '../decisionData';
+import { teamworkModules } from '../teamworkData';
 import { DiagnosticEvaluationResult } from '../diagnosticData';
 
 interface ChatPanelProps {
@@ -232,6 +233,20 @@ export function ChatPanel({
         );
       }
       lines.push(`Eje ${mod.id}: ${mod.name} (${mod.authorsSummary})\n${topicDetails.join('\n')}`);
+    }
+
+    // Módulo 4: Trabajo en Equipo (Comunicación, cooperación y metas compartidas)
+    lines.push('=== MÓDULO 4: TRABAJO EN EQUIPO ===');
+    for (const mod of teamworkModules) {
+      const topicDetails: string[] = [];
+      for (const topic of mod.topics) {
+        const key = `teamwork-${mod.id}-${topic.level}`;
+        const rawAns = moduleAnswers[key];
+        topicDetails.push(
+          `  - Nivel ${topic.level} (${topic.difficultyLabel} - ${topic.topicTitle}): ${rawAns && rawAns.trim() ? `Respuesta del estudiante: "${rawAns}"` : 'Pendiente por responder'}`,
+        );
+      }
+      lines.push(`Dimensión ${mod.id}: ${mod.name} (${mod.authorsSummary})\n${topicDetails.join('\n')}`);
     }
 
     return lines.join('\n\n');

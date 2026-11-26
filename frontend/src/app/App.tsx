@@ -34,6 +34,7 @@ import {
   Unlock,
   User,
   UserRound,
+  Users,
   X,
 } from "lucide-react";
 import { Header } from "./components/Header";
@@ -66,9 +67,13 @@ import {
   decisionTheoreticalFoundations,
   DecisionTopicLevel,
 } from "./decisionData";
+import {
+  teamworkModules,
+  teamworkTheoreticalFoundations,
+} from "./teamworkData";
 import { DiagnosticEvaluationResult } from "./diagnosticData";
 
-export type DisciplineKey = "leadership" | "communication" | "decision";
+export type DisciplineKey = "leadership" | "communication" | "decision" | "teamwork";
 
 export interface DisciplineInfo {
   key: DisciplineKey;
@@ -107,6 +112,15 @@ export const disciplines: DisciplineInfo[] = [
     tagline: "Desarrolla competencias analíticas, mitigación de sesgos cognitivos y criterios éticos para resolver problemas complejos.",
     color: "#7C3AED",
     icon: Target,
+  },
+  {
+    key: "teamwork",
+    number: 4,
+    title: "Módulo 4: Trabajo en Equipo",
+    shortTitle: "Trabajo en Equipo",
+    tagline: "Comunicación, cooperación y construcción de metas compartidas en 5 dimensiones progresivas.",
+    color: "#059669",
+    icon: Users,
   },
 ];
 
@@ -368,6 +382,8 @@ export default function App() {
         return communicationModules;
       case "decision":
         return decisionModules;
+      case "teamwork":
+        return teamworkModules;
       case "leadership":
       default:
         return leadershipModules;
@@ -393,7 +409,7 @@ export default function App() {
   // Disciplines ordered by student weakness (from lowest diagnostic percentage to highest)
   const recommendedDisciplineOrder = useMemo<DisciplineKey[]>(() => {
     if (!diagnosticResult) {
-      return ["leadership", "communication", "decision"];
+      return ["leadership", "communication", "decision", "teamwork"];
     }
     if (
       Array.isArray(diagnosticResult.recommendedDisciplineOrder) &&
@@ -409,6 +425,7 @@ export default function App() {
         Liderazgo: "leadership",
         "Comunicación": "communication",
         "Toma de Decisiones": "decision",
+        "Trabajo en Equipo": "teamwork",
       };
       const sorted = [...diagnosticResult.competencyModules]
         .filter((c) => compMap[c.competency] && c.availableInPlatform)
@@ -416,7 +433,7 @@ export default function App() {
         .map((c) => compMap[c.competency]);
       if (sorted.length > 0) return sorted;
     }
-    return ["leadership", "communication", "decision"];
+    return ["leadership", "communication", "decision", "teamwork"];
   }, [diagnosticResult]);
 
   // Macro-level module unlocking: ONLY the first recommended module is unlocked initially.
@@ -535,6 +552,8 @@ export default function App() {
         if (currentDiscipline === "leadership") {
           const prevModId = recommendedSubmoduleOrder[stepOrderIndex - 1];
           unlockRequirementText = `Bloqueado · Completa antes el Submódulo 0${prevModId}`;
+        } else if (currentDiscipline === "teamwork") {
+          unlockRequirementText = `Bloqueado · Completa los 5 niveles de la Dimensión 0${mod.id - 1} para desbloquear`;
         } else {
           unlockRequirementText = `Bloqueado · Completa los 5 niveles del Eje 0${mod.id - 1} para desbloquear`;
         }
@@ -562,14 +581,16 @@ export default function App() {
 
   const completedAnswerKeys = useMemo(() => {
     const keys: string[] = [];
-    const allDisciplines: DisciplineKey[] = ["leadership", "communication", "decision"];
+    const allDisciplines: DisciplineKey[] = ["leadership", "communication", "decision", "teamwork"];
     for (const disc of allDisciplines) {
       const list =
         disc === "communication"
           ? communicationModules
           : disc === "decision"
             ? decisionModules
-            : leadershipModules;
+            : disc === "teamwork"
+              ? teamworkModules
+              : leadershipModules;
       for (const mod of list) {
         for (const lvl of [1, 2, 3, 4, 5]) {
           const k = getAnswerKey(disc, mod.id, lvl);
@@ -761,6 +782,7 @@ export default function App() {
       { key: "leadership", name: "Liderazgo", list: leadershipModules },
       { key: "communication", name: "Comunicación Educativa", list: communicationModules },
       { key: "decision", name: "Toma de Decisiones", list: decisionModules },
+      { key: "teamwork", name: "Trabajo en Equipo", list: teamworkModules },
     ];
 
     allDisciplines.forEach(({ key, name, list }) => {
@@ -1614,7 +1636,7 @@ function HomeView({
   return (
     <main className="mx-auto max-w-[1140px] px-5 py-8 lg:px-8">
       {/* Selector de Disciplinas / Módulos */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
         {discList.map((d) => {
           const Icon = d.icon;
           const isActive = currentDiscipline === d.key;
@@ -1687,7 +1709,7 @@ function HomeView({
             <p className="mt-1 text-2xl font-extrabold text-[#FACC15]">{overallProgress}%</p>
             <p className="text-[11px] text-blue-100">
               {isCurrentDisciplineUnlocked
-                ? `${unlockedSubmoduleIds.length}/5 ${currentDiscipline === "leadership" ? "submódulos" : "ejes"} desbloqueados`
+                ? `${unlockedSubmoduleIds.length}/5 ${currentDiscipline === "leadership" ? "submódulos" : currentDiscipline === "teamwork" ? "dimensiones" : "ejes"} desbloqueados`
                 : "Módulo bloqueado"}
             </p>
           </div>
@@ -1882,7 +1904,7 @@ function IntroView({
 }) {
   const Icon = item.icon;
   const isLeadership = discipline === "leadership";
-  const modLabel = isLeadership ? "Submódulo" : "Eje Temático";
+  const modLabel = isLeadership ? "Submódulo" : discipline === "teamwork" ? "Dimensión" : "Eje Temático";
 
   return (
     <main className="mx-auto max-w-[820px] px-5 py-8 lg:px-8">
@@ -1979,7 +2001,7 @@ function EvaluationView({
   const isFinal = level === 5;
   const isSaved = isAnswerValid(level, answer);
   const canContinue = isLeadership ? (isFinal ? isSaved : true) : isSaved;
-  const modLabel = isLeadership ? "Submódulo" : "Eje Temático";
+  const modLabel = isLeadership ? "Submódulo" : discipline === "teamwork" ? "Dimensión" : "Eje Temático";
 
   return (
     <main className="mx-auto max-w-[1160px] px-5 py-8 lg:px-8 lg:py-12">
@@ -2641,7 +2663,7 @@ function CompleteView({
   onNext: () => void;
 }) {
   const isLeadership = discipline === "leadership";
-  const modLabel = isLeadership ? "Submódulo" : "Eje";
+  const modLabel = isLeadership ? "Submódulo" : discipline === "teamwork" ? "Dimensión" : "Eje";
 
   const savedCount = [1, 2, 3, 4, 5].filter((lvl) =>
     isAnswerValid(lvl, answers[getAnswerKey(discipline, item.id, lvl)]),
@@ -2796,6 +2818,8 @@ function FoundationsView({
         return communicationTheoreticalFoundations;
       case "decision":
         return decisionTheoreticalFoundations;
+      case "teamwork":
+        return teamworkTheoreticalFoundations;
       case "leadership":
       default:
         return theoreticalFoundations;
@@ -2812,7 +2836,7 @@ function FoundationsView({
       </button>
 
       {/* Tabs Selector de Módulos para las Referencias */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
         {(discList || disciplines).map((d) => {
           const Icon = d.icon;
           const isActive = activeTab === d.key;
@@ -2963,6 +2987,8 @@ function ResponsesView({
         return communicationModules;
       case "decision":
         return decisionModules;
+      case "teamwork":
+        return teamworkModules;
       case "leadership":
       default:
         return leadershipModules;
@@ -2995,7 +3021,7 @@ function ResponsesView({
       </div>
 
       {/* Tabs Selector de Disciplinas */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
         {discList.map((d) => {
           const Icon = d.icon;
           const isActive = currentDiscipline === d.key;

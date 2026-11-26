@@ -398,16 +398,20 @@ export function TeacherPanel() {
     let totalLead = 0;
     let totalComm = 0;
     let totalDec = 0;
+    let totalTeam = 0;
 
     for (const st of students) {
       const subs = st.submodules || [];
       const leadSubs = subs.filter(
         (s) =>
           s.activity_id?.includes('leadership') ||
-          (!s.activity_id?.includes('communication') && !s.activity_id?.includes('decision')),
+          (!s.activity_id?.includes('communication') &&
+            !s.activity_id?.includes('decision') &&
+            !s.activity_id?.includes('teamwork')),
       );
       const commSubs = subs.filter((s) => s.activity_id?.includes('communication'));
       const decSubs = subs.filter((s) => s.activity_id?.includes('decision'));
+      const teamSubs = subs.filter((s) => s.activity_id?.includes('teamwork'));
 
       const calcAvg = (records: ProgressRecord[]) => {
         if (!records.length) return 0;
@@ -418,6 +422,7 @@ export function TeacherPanel() {
       totalLead += calcAvg(leadSubs);
       totalComm += calcAvg(commSubs);
       totalDec += calcAvg(decSubs);
+      totalTeam += calcAvg(teamSubs);
     }
 
     return [
@@ -435,6 +440,11 @@ export function TeacherPanel() {
         skill: 'Toma de Decisiones',
         promedio: Math.round(totalDec / students.length),
         color: '#7C3AED',
+      },
+      {
+        skill: 'Trabajo en Equipo',
+        promedio: Math.round(totalTeam / students.length),
+        color: '#059669',
       },
     ];
   }, [registeredUsers]);

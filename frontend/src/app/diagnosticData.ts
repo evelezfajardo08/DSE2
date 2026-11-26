@@ -525,8 +525,8 @@ export function calculateDiagnosticResult(
       moduleNumber: 4,
       disciplineKey: "teamwork",
       competency: "Trabajo en Equipo",
-      moduleTitle: "Módulo 4: Trabajo en Equipo y Gestión de Conflictos",
-      availableInPlatform: false,
+      moduleTitle: "Módulo 4: Trabajo en Equipo (Comunicación, cooperación y metas compartidas)",
+      availableInPlatform: true,
     },
   ];
 
@@ -791,7 +791,7 @@ export function calculateDiagnosticResult(
   const recommendedStartingSubmoduleId = recommendedSubmoduleOrder[0] ?? 1;
 
   // Macro-level module recommendation based on greatest weaknesses / falencias
-  // Filter active modules in the platform (currently Liderazgo, Comunicación, Toma de Decisiones)
+  // Filter active modules in the platform (Liderazgo, Comunicación, Toma de Decisiones, Trabajo en Equipo)
   const availableModules = competencyModules.filter((m) => m.availableInPlatform);
 
   // Sort ascending by percentage (lowest score = highest weakness first)
