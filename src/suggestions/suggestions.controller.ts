@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   Param,
   Req,
   UseGuards,
@@ -61,5 +62,16 @@ export class SuggestionsController {
       throw new ForbiddenException('Solo los docentes pueden cambiar el estado de los mensajes.');
     }
     return this.suggestionsService.updateStatus(id, body.status || 'reviewed');
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async remove(@Param('id') id: string, @Req() request: any) {
+    const actorEmail = String(request.user?.email || '').toLowerCase();
+    const actor = await this.usersService.findByEmail(actorEmail);
+    if (!actor || actor.role !== 'teacher' || actor.status !== 'active') {
+      throw new ForbiddenException('Solo los docentes pueden eliminar mensajes y sugerencias.');
+    }
+    return this.suggestionsService.remove(id);
   }
 }

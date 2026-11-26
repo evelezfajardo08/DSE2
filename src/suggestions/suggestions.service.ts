@@ -142,12 +142,22 @@ export class SuggestionsService {
   }
 
   async updateStatus(id: string, status: string) {
+    const allowedStatuses = ['pending', 'reviewed', 'archived'];
+    const normalizedStatus = allowedStatuses.includes(status) ? status : 'reviewed';
     const updated = await this.suggestionModel
-      .findOneAndUpdate({ id }, { status }, { new: true })
+      .findOneAndUpdate({ id }, { status: normalizedStatus }, { new: true })
       .exec();
     if (!updated) {
       throw new NotFoundException(`Sugerencia con ID ${id} no encontrada.`);
     }
     return updated;
+  }
+
+  async remove(id: string) {
+    const deleted = await this.suggestionModel.findOneAndDelete({ id }).exec();
+    if (!deleted) {
+      throw new NotFoundException(`Sugerencia con ID ${id} no encontrada.`);
+    }
+    return { deleted: true, id };
   }
 }

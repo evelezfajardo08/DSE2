@@ -16,6 +16,8 @@ import {
   ShieldAlert,
   CheckCircle2,
   Calendar,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -164,6 +166,9 @@ export function TeacherPanel() {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [updatingSuggestionId, setUpdatingSuggestionId] = useState<string | null>(null);
+  const [suggestionsFilter, setSuggestionsFilter] = useState<'active' | 'archived' | 'all'>('active');
+  const [suggestionToDelete, setSuggestionToDelete] = useState<SuggestionItem | null>(null);
+  const [isDeletingSuggestion, setIsDeletingSuggestion] = useState(false);
 
   const loadStudents = async () => {
     try {
@@ -384,6 +389,59 @@ export function TeacherPanel() {
     }
   };
 
+  const handleArchiveSuggestion = async (suggestionId: string, currentStatus: string) => {
+    setUpdatingSuggestionId(suggestionId);
+    try {
+      const newStatus = currentStatus === 'archived' ? 'reviewed' : 'archived';
+      const res = await fetch(`${API_BASE}/suggestions/${suggestionId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token') || ''}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setSuggestions((prev) =>
+          prev.map((s) => (s.id === suggestionId ? { ...s, status: newStatus } : s)),
+        );
+        setActionSuccess(
+          newStatus === 'archived'
+            ? 'El mensaje fue archivado correctamente.'
+            : 'El mensaje fue restaurado al buzón activo.',
+        );
+        setTimeout(() => setActionSuccess(''), 4000);
+      }
+    } catch {
+      // ignore error
+    } finally {
+      setUpdatingSuggestionId(null);
+    }
+  };
+
+  const handleConfirmDeleteSuggestion = async () => {
+    if (!suggestionToDelete) return;
+    setIsDeletingSuggestion(true);
+    try {
+      const res = await fetch(`${API_BASE}/suggestions/${suggestionToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token') || ''}`,
+        },
+      });
+      if (res.ok) {
+        setSuggestions((prev) => prev.filter((s) => s.id !== suggestionToDelete.id));
+        setActionSuccess('El mensaje de sugerencia/PQRS fue eliminado permanentemente.');
+        setTimeout(() => setActionSuccess(''), 4000);
+        setSuggestionToDelete(null);
+      }
+    } catch {
+      // ignore error
+    } finally {
+      setIsDeletingSuggestion(false);
+    }
+  };
+
   // 1. Métricas de Progreso Real por Habilidad
   const realSkillsData = useMemo(() => {
     const students = registeredUsers.filter((u) => u.role === 'student');
@@ -391,7 +449,8 @@ export function TeacherPanel() {
       return [
         { skill: 'Formación en Liderazgo', promedio: 0, color: '#28391e' },
         { skill: 'Comunicación Educativa', promedio: 0, color: '#4a3649' },
-        { skill: 'Toma de Decisiones', promedio: 0, color: '#4a3649' },
+        { skill: 'Toma de Decisiones', promedio: 0, color: '#fe822f' },
+        { skill: 'Trabajo en Equipo', promedio: 0, color: '#4a6739' },
       ];
     }
 
@@ -942,103 +1001,213 @@ export function TeacherPanel() {
       )}
 
       {/* PESTAÑA 2: BUZÓN DE MENSAJES Y SUGERENCIAS DE ESTUDIANTES */}
-      {panelTab === 'suggestions' && (
-        <div className="space-y-6">
-          <Card className="p-6 border border-slate-200 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
-              <div>
-                <h3 className="text-lg font-black text-[#1a180f] tracking-wide">
-                  BUZÓN DE MENSAJES Y SUGERENCIAS DE ESTUDIANTES
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Mensajes enviados por los estudiantes a través de su panel. Se notifican automáticamente a las cuentas de los docentes.
-                </p>
-              </div>
+      {panelTab === 'suggestions' && (() => {
+        const activeSuggestions = suggestions.filter((s) => s.status !== 'archived');
+        const archivedSuggestions = suggestions.filter((s) => s.status === 'archived');
+        const filteredSuggestions =
+          suggestionsFilter === 'active'
+            ? activeSuggestions
+            : suggestionsFilter === 'archived'
+              ? archivedSuggestions
+              : suggestions;
 
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs font-bold text-slate-700">
-                  {suggestions.length} totales
-                </Badge>
-                <Badge variant="default" className="text-xs font-bold bg-[#28391e]">
-                  {pendingSuggestionsCount} pendientes
-                </Badge>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              {suggestionsLoading ? (
-                <p className="text-center py-8 text-xs text-muted-foreground">
-                  Cargando mensajes y sugerencias...
-                </p>
-              ) : suggestions.length === 0 ? (
-                <div className="text-center py-12 px-4 rounded-xl border border-dashed border-slate-200">
-                  <MessageSquare className="mx-auto h-8 w-8 text-slate-300" />
-                  <p className="mt-2 text-xs font-bold text-[#59533f]">
-                    No hay mensajes ni sugerencias registradas
-                  </p>
-                  <p className="mt-1 text-[11px] text-[#857d64]">
-                    Cuando un estudiante envíe un mensaje desde su panel, aparecerá aquí y se notificará por correo.
+        return (
+          <div className="space-y-6">
+            <Card className="p-6 border border-slate-200 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+                <div>
+                  <h3 className="text-lg font-black text-[#1a180f] tracking-wide">
+                    BUZÓN DE MENSAJES Y SUGERENCIAS DE ESTUDIANTES
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Gestiona, revisa, archiva o elimina los mensajes y PQRS enviados por los estudiantes.
                   </p>
                 </div>
-              ) : (
-                suggestions.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 shadow-xs hover:border-[#fe822f]/40 transition-all"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1e5] px-3 py-1 text-xs font-black text-[#28391e]">
-                          {item.category}
-                        </span>
-                        <span className="text-xs font-bold text-slate-800">{item.user_name}</span>
-                        <span className="text-xs text-slate-500">({item.user_email})</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {new Date(item.created_at).toLocaleString('es-CO')}
-                        </span>
-                        <Badge
-                          variant={item.status === 'reviewed' ? 'default' : 'secondary'}
-                          className={`text-[10px] font-bold ${
-                            item.status === 'reviewed' ? 'bg-emerald-600' : 'bg-amber-500 text-white'
-                          }`}
-                        >
-                          {item.status === 'reviewed' ? 'Revisado' : 'Pendiente'}
-                        </Badge>
-                      </div>
-                    </div>
 
-                    <div>
-                      <h4 className="text-sm font-extrabold text-[#1a180f]">{item.subject}</h4>
-                      <p className="mt-1.5 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        {item.message}
-                      </p>
-                    </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="text-xs font-bold text-slate-700">
+                    {activeSuggestions.length} activos
+                  </Badge>
+                  <Badge variant="default" className="text-xs font-bold bg-[#fe822f] text-[#1a180f]">
+                    {pendingSuggestionsCount} pendientes
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs font-bold bg-[#4a3649] text-[#fdfaf0]">
+                    {archivedSuggestions.length} archivados
+                  </Badge>
+                </div>
+              </div>
 
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[11px] text-slate-500">
-                        Atención / PQRS: <strong className="text-[#28391e]">liderabot.app@gmail.com</strong>
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={updatingSuggestionId === item.id}
-                        onClick={() => handleMarkSuggestionReviewed(item.id, item.status)}
-                        className="text-xs font-bold h-8"
-                      >
-                        <Check className="h-3.5 w-3.5 mr-1 text-emerald-600" />
-                        {item.status === 'reviewed' ? 'Marcar como pendiente' : 'Marcar como revisado'}
-                      </Button>
-                    </div>
+              {/* Filtros del buzón (Activos / Archivados / Todos) */}
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSuggestionsFilter('active')}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-black uppercase tracking-wide transition-all border ${
+                    suggestionsFilter === 'active'
+                      ? 'bg-[#28391e] text-[#fdfaf0] border-[#28391e] shadow-xs'
+                      : 'bg-[#f7f0d4] text-[#59533f] border-[#d9cda0] hover:border-[#28391e]/40'
+                  }`}
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Activos ({activeSuggestions.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSuggestionsFilter('archived')}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-black uppercase tracking-wide transition-all border ${
+                    suggestionsFilter === 'archived'
+                      ? 'bg-[#4a3649] text-[#fdfaf0] border-[#4a3649] shadow-xs'
+                      : 'bg-[#f7f0d4] text-[#59533f] border-[#d9cda0] hover:border-[#4a3649]/40'
+                  }`}
+                >
+                  <Archive className="h-3.5 w-3.5" />
+                  Archivados ({archivedSuggestions.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSuggestionsFilter('all')}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-black uppercase tracking-wide transition-all border ${
+                    suggestionsFilter === 'all'
+                      ? 'bg-[#fe822f] text-[#1a180f] border-[#fe822f] shadow-xs'
+                      : 'bg-[#f7f0d4] text-[#59533f] border-[#d9cda0] hover:border-[#fe822f]/60'
+                  }`}
+                >
+                  Todos ({suggestions.length})
+                </button>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                {suggestionsLoading ? (
+                  <p className="text-center py-8 text-xs text-muted-foreground">
+                    Cargando mensajes y sugerencias...
+                  </p>
+                ) : filteredSuggestions.length === 0 ? (
+                  <div className="text-center py-12 px-4 rounded-xl border border-dashed border-slate-200">
+                    {suggestionsFilter === 'archived' ? (
+                      <Archive className="mx-auto h-8 w-8 text-[#857d64]" />
+                    ) : (
+                      <MessageSquare className="mx-auto h-8 w-8 text-[#857d64]" />
+                    )}
+                    <p className="mt-2 text-xs font-bold text-[#59533f]">
+                      {suggestionsFilter === 'archived'
+                        ? 'No hay mensajes archivados'
+                        : 'No hay mensajes ni sugerencias en esta vista'}
+                    </p>
+                    <p className="mt-1 text-[11px] text-[#857d64]">
+                      {suggestionsFilter === 'archived'
+                        ? 'Los mensajes que archives desde el buzón activo aparecerán aquí.'
+                        : 'Cuando un estudiante envíe un mensaje desde su panel, aparecerá aquí.'}
+                    </p>
                   </div>
-                ))
-              )}
-            </div>
-          </Card>
-        </div>
-      )}
+                ) : (
+                  filteredSuggestions.map((item) => {
+                    const isArchived = item.status === 'archived';
+                    return (
+                      <div
+                        key={item.id}
+                        className={`rounded-2xl border p-5 space-y-3 shadow-xs transition-all ${
+                          isArchived
+                            ? 'border-[#d9cda0] bg-[#f7f0d4]/70 opacity-90'
+                            : 'border-slate-200 bg-white hover:border-[#fe822f]/40'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1e5] px-3 py-1 text-xs font-black text-[#28391e]">
+                              {item.category}
+                            </span>
+                            <span className="text-xs font-bold text-slate-800">{item.user_name}</span>
+                            <span className="text-xs text-slate-500">({item.user_email})</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {new Date(item.created_at).toLocaleString('es-CO')}
+                            </span>
+                            <Badge
+                              variant={item.status === 'reviewed' ? 'default' : 'secondary'}
+                              className={`text-[10px] font-bold ${
+                                item.status === 'reviewed'
+                                  ? 'bg-[#4a6739] text-white'
+                                  : isArchived
+                                    ? 'bg-[#4a3649] text-[#fdfaf0]'
+                                    : 'bg-[#fe822f] text-[#1a180f]'
+                              }`}
+                            >
+                              {item.status === 'reviewed'
+                                ? 'Revisado'
+                                : isArchived
+                                  ? 'Archivado'
+                                  : 'Pendiente'}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-extrabold text-[#1a180f]">{item.subject}</h4>
+                          <p className="mt-1.5 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            {item.message}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                          <span className="text-[11px] text-slate-500">
+                            Atención / PQRS: <strong className="text-[#28391e]">liderabot.app@gmail.com</strong>
+                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {!isArchived && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={updatingSuggestionId === item.id}
+                                onClick={() => handleMarkSuggestionReviewed(item.id, item.status)}
+                                className="text-xs font-bold h-8"
+                              >
+                                <Check className="h-3.5 w-3.5 mr-1 text-[#4a6739]" />
+                                {item.status === 'reviewed' ? 'Marcar pendiente' : 'Marcar revisado'}
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={updatingSuggestionId === item.id}
+                              onClick={() => handleArchiveSuggestion(item.id, item.status)}
+                              className="text-xs font-bold h-8 border-[#4a3649]/30 text-[#4a3649] hover:bg-[#4a3649] hover:text-white"
+                            >
+                              {isArchived ? (
+                                <>
+                                  <ArchiveRestore className="h-3.5 w-3.5 mr-1" />
+                                  Desarchivar
+                                </>
+                              ) : (
+                                <>
+                                  <Archive className="h-3.5 w-3.5 mr-1" />
+                                  Archivar
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={updatingSuggestionId === item.id}
+                              onClick={() => setSuggestionToDelete(item)}
+                              className="text-xs font-bold h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title="Eliminar mensaje permanentemente"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1" />
+                              Eliminar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
+          </div>
+        );
+      })()}
 
       {/* PESTAÑA 3: SOLICITUDES DE DOCENTES */}
       {panelTab === 'requests' && (
@@ -1430,6 +1599,70 @@ export function TeacherPanel() {
             <div className="flex justify-end border-t p-4 bg-slate-50">
               <Button variant="outline" size="sm" onClick={() => setIsFilterOpen(false)}>
                 Cerrar
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMACIÓN PARA ELIMINAR MENSAJE / SUGERENCIA */}
+      {suggestionToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs"
+          onClick={() => !isDeletingSuggestion && setSuggestionToDelete(null)}
+        >
+          <Card
+            className="w-full max-w-md overflow-hidden shadow-2xl border border-red-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-red-100 bg-red-50 px-5 py-4">
+              <div className="flex items-center gap-2.5 text-red-700">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <h3 className="text-sm font-black uppercase tracking-wide">
+                  ELIMINAR MENSAJE DE SUGERENCIA
+                </h3>
+              </div>
+              <button
+                type="button"
+                disabled={isDeletingSuggestion}
+                onClick={() => setSuggestionToDelete(null)}
+                className="text-red-600 hover:text-red-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3">
+              <p className="text-xs text-[#59533f] leading-relaxed">
+                ¿Estás seguro de que deseas eliminar permanentemente este mensaje? Esta acción no se puede deshacer.
+              </p>
+              <div className="rounded-xl border border-[#d9cda0] bg-[#f7f0d4] p-3 space-y-1">
+                <p className="text-xs font-extrabold text-[#1a180f]">{suggestionToDelete.subject}</p>
+                <p className="text-[11px] text-[#6e674f]">
+                  De: <strong>{suggestionToDelete.user_name}</strong> ({suggestionToDelete.user_email})
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t p-4 bg-slate-50">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isDeletingSuggestion}
+                onClick={() => setSuggestionToDelete(null)}
+                className="text-xs font-bold"
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={isDeletingSuggestion}
+                onClick={handleConfirmDeleteSuggestion}
+                className="text-xs font-bold"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                {isDeletingSuggestion ? 'Eliminando...' : 'Sí, eliminar mensaje'}
               </Button>
             </div>
           </Card>

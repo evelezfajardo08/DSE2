@@ -372,11 +372,17 @@ export function SuggestionsView({
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
                           item.status === 'reviewed'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-800'
+                            ? 'bg-[#e2ecd9] text-[#28391e]'
+                            : item.status === 'archived'
+                              ? 'bg-[#f4eef3] text-[#4a3649]'
+                              : 'bg-[#fff1e5] text-[#7a3608]'
                         }`}
                       >
-                        {item.status === 'reviewed' ? '✓ Revisado por docente' : '⏳ Pendiente de revisión'}
+                        {item.status === 'reviewed'
+                          ? '✓ Revisado por docente'
+                          : item.status === 'archived'
+                            ? '✓ Atendido y archivado'
+                            : '⏳ Pendiente de revisión'}
                       </span>
                     </div>
                   </div>

@@ -27,7 +27,7 @@ export class Suggestion {
   message: string;
 
   @Prop({ default: 'pending' })
-  status: string; // 'pending' | 'reviewed'
+  status: string; // 'pending' | 'reviewed' | 'archived'
 
   @Prop({ default: Date.now })
   created_at: Date;
