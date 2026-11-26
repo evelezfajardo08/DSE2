@@ -126,55 +126,55 @@ export function SuggestionsView({
     <main className="mx-auto max-w-[1040px] px-5 py-8 lg:px-8 lg:py-10">
       <button
         onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F] transition-colors"
+        className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#59533f] hover:text-[#28391e] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Volver al inicio
       </button>
 
       {/* Banner Principal */}
-      <section className="rounded-[28px] bg-[#0F3B8F] p-6 text-white md:p-8 shadow-sm">
+      <section className="rounded-[28px] bg-[#28391e] p-6 text-white md:p-8 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#FACC15] mb-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#fe822f] mb-2">
               <MessageSquare className="h-3.5 w-3.5" /> Buzón de Mensajes y Sugerencias
             </span>
             <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
               Canal Directo con el Equipo Docente
             </h1>
-            <p className="mt-2 text-sm leading-6 text-blue-100">
+            <p className="mt-2 text-sm leading-6 text-[#efe6bf]">
               Tu opinión, dudas pedagógicas y sugerencias nos ayudan a enriquecer la plataforma.
               Los mensajes enviados en este buzón son notificados directamente a los correos de tus docentes registrados.
             </p>
           </div>
 
           <div className="rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-center">
-            <Mail className="mx-auto h-7 w-7 text-[#FACC15]" />
+            <Mail className="mx-auto h-7 w-7 text-[#fe822f]" />
             <p className="mt-1 text-xs font-bold text-white">Canal Oficial</p>
-            <p className="text-[11px] text-blue-100">Notificación al docente</p>
+            <p className="text-[11px] text-[#efe6bf]">Notificación al docente</p>
           </div>
         </div>
       </section>
 
       {/* Banner de Contacto Oficial / PQRS (Requerido) */}
-      <section className="mt-6 rounded-2xl border-2 border-[#2D6BFF]/20 bg-[#F0F5FF] p-5 shadow-xs">
+      <section className="mt-6 rounded-2xl border-2 border-[#fe822f]/20 bg-[#fff1e5] p-5 shadow-xs">
         <div className="flex items-start gap-3.5">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#2D6BFF] text-white">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#fe822f] text-white">
             <Info className="h-5 w-5" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-sm font-black text-[#10264F]">
+            <h2 className="text-sm font-black text-[#1a180f]">
               Información de Atención al Estudiante y PQRS
             </h2>
-            <p className="text-xs leading-relaxed text-[#31415E]">
+            <p className="text-xs leading-relaxed text-[#3a3525]">
               Para requerimientos institucionales formales, dudas de certificación o mayor información,
               puedes radicar una solicitud formal enviando una PQRS al correo electrónico oficial:
             </p>
             <div className="pt-1">
               <a
                 href="mailto:liderabot.app@gmail.com"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-[#2D6BFF]/30 px-3 py-1.5 text-xs font-black text-[#0F3B8F] hover:bg-blue-50 transition-colors shadow-xs"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-[#fe822f]/30 px-3 py-1.5 text-xs font-black text-[#28391e] hover:bg-[#f7f0d4] transition-colors shadow-xs"
               >
-                <Mail className="h-3.5 w-3.5 text-[#2D6BFF]" />
+                <Mail className="h-3.5 w-3.5 text-[#fe822f]" />
                 liderabot.app@gmail.com
               </a>
             </div>
@@ -184,21 +184,21 @@ export function SuggestionsView({
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1.3fr_0.9fr] items-start">
         {/* Formulario de Envío */}
-        <Card className="rounded-[24px] border border-[#DCE3EF] bg-white p-6 md:p-8 shadow-sm">
-          <h2 className="text-lg font-extrabold text-[#10264F]">
+        <Card className="rounded-[24px] border border-[#d9cda0] bg-white p-6 md:p-8 shadow-sm">
+          <h2 className="text-lg font-extrabold text-[#1a180f]">
             Redactar Mensaje o Sugerencia
           </h2>
-          <p className="mt-1 text-xs text-[#66738A]">
+          <p className="mt-1 text-xs text-[#6e674f]">
             Completa los siguientes campos para enviar tu comentario al equipo docente.
           </p>
 
           {submitSuccess && (
-            <div className="mt-5 rounded-2xl border border-[#A7E8D0] bg-[#EFFBF7] p-4 text-[#0E785F]">
+            <div className="mt-5 rounded-2xl border border-[#bfd1b0] bg-[#edf3e8] p-4 text-[#28391e]">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 shrink-0 text-[#0E785F] mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-[#28391e] mt-0.5" />
                 <div className="space-y-1">
                   <p className="text-sm font-extrabold">¡Mensaje enviado con éxito!</p>
-                  <p className="text-xs text-[#136C56] leading-relaxed">
+                  <p className="text-xs text-[#28391e] leading-relaxed">
                     Tu mensaje ha sido registrado y notificado por correo a las cuentas de los docentes.
                     Puedes realizar seguimiento o enviar un nuevo mensaje si lo requieres.
                   </p>
@@ -224,30 +224,30 @@ export function SuggestionsView({
             {/* Remitente Info */}
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-bold text-[#53627A] mb-1.5">
+                <label className="block text-xs font-bold text-[#59533f] mb-1.5">
                   Estudiante Remitente
                 </label>
                 <Input
                   value={userName}
                   disabled
-                  className="rounded-xl border-[#DCE3EF] bg-[#F8FAFC] text-xs font-semibold text-[#10264F]"
+                  className="rounded-xl border-[#d9cda0] bg-[#f7f0d4] text-xs font-semibold text-[#1a180f]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-[#53627A] mb-1.5">
+                <label className="block text-xs font-bold text-[#59533f] mb-1.5">
                   Correo Electrónico
                 </label>
                 <Input
                   value={userEmail}
                   disabled
-                  className="rounded-xl border-[#DCE3EF] bg-[#F8FAFC] text-xs font-semibold text-[#10264F]"
+                  className="rounded-xl border-[#d9cda0] bg-[#f7f0d4] text-xs font-semibold text-[#1a180f]"
                 />
               </div>
             </div>
 
             {/* Categoría */}
             <div>
-              <label className="block text-xs font-bold text-[#53627A] mb-2">
+              <label className="block text-xs font-bold text-[#59533f] mb-2">
                 Tipo o Categoría del Mensaje
               </label>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -261,11 +261,11 @@ export function SuggestionsView({
                       onClick={() => setCategory(cat.value)}
                       className={`flex items-center gap-2.5 rounded-xl border p-3 text-left text-xs font-bold transition-all ${
                         isSelected
-                          ? 'border-[#0F3B8F] bg-[#EAF0FF] text-[#0F3B8F] shadow-xs'
-                          : 'border-[#E2E8F0] bg-white text-[#475569] hover:bg-slate-50'
+                          ? 'border-[#28391e] bg-[#fff1e5] text-[#28391e] shadow-xs'
+                          : 'border-[#d9cda0] bg-white text-[#59533f] hover:bg-slate-50'
                       }`}
                     >
-                      <Icon className={`h-4 w-4 shrink-0 ${isSelected ? 'text-[#0F3B8F]' : 'text-slate-400'}`} />
+                      <Icon className={`h-4 w-4 shrink-0 ${isSelected ? 'text-[#28391e]' : 'text-slate-400'}`} />
                       <span className="truncate">{cat.value}</span>
                     </button>
                   );
@@ -275,7 +275,7 @@ export function SuggestionsView({
 
             {/* Asunto */}
             <div>
-              <label className="block text-xs font-bold text-[#53627A] mb-1.5">
+              <label className="block text-xs font-bold text-[#59533f] mb-1.5">
                 Asunto del Mensaje *
               </label>
               <Input
@@ -284,13 +284,13 @@ export function SuggestionsView({
                 placeholder="Ej: Consulta sobre la retroalimentación del Módulo 2"
                 maxLength={100}
                 required
-                className="rounded-xl border-[#DCE3EF] bg-white text-xs font-medium focus:border-[#0F3B8F]"
+                className="rounded-xl border-[#d9cda0] bg-white text-xs font-medium focus:border-[#28391e]"
               />
             </div>
 
             {/* Mensaje */}
             <div>
-              <label className="block text-xs font-bold text-[#53627A] mb-1.5">
+              <label className="block text-xs font-bold text-[#59533f] mb-1.5">
                 Descripción detallada o mensaje *
               </label>
               <textarea
@@ -299,9 +299,9 @@ export function SuggestionsView({
                 placeholder="Escribe tu mensaje, sugerencia pedagógica, duda o requerimiento con el mayor detalle posible..."
                 rows={5}
                 required
-                className="w-full resize-y rounded-xl border border-[#DCE3EF] bg-white p-3.5 text-xs leading-relaxed outline-none transition focus:border-[#0F3B8F] focus:ring-2 focus:ring-[#0F3B8F]/10"
+                className="w-full resize-y rounded-xl border border-[#d9cda0] bg-white p-3.5 text-xs leading-relaxed outline-none transition focus:border-[#28391e] focus:ring-2 focus:ring-[#28391e]/10"
               />
-              <p className="mt-1 text-right text-[11px] text-[#8C9AA8]">
+              <p className="mt-1 text-right text-[11px] text-[#857d64]">
                 {message.length} caracteres
               </p>
             </div>
@@ -309,9 +309,9 @@ export function SuggestionsView({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-xl bg-[#0F3B8F] py-3 text-xs font-extrabold text-white shadow-md hover:bg-[#174AA6] transition-all"
+              className="w-full rounded-xl bg-[#28391e] py-3 text-xs font-extrabold text-white shadow-md hover:bg-[#1e2c16] transition-all"
             >
-              <Send className="mr-2 h-4 w-4 text-[#FACC15]" />
+              <Send className="mr-2 h-4 w-4 text-[#fe822f]" />
               {isSubmitting ? 'Enviando mensaje al equipo docente...' : 'Enviar Mensaje al Equipo Docente'}
             </Button>
           </form>
@@ -319,13 +319,13 @@ export function SuggestionsView({
 
         {/* Historial de Sugerencias y Mensajes del Estudiante */}
         <div className="space-y-4">
-          <Card className="rounded-[24px] border border-[#DCE3EF] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-2 border-b border-[#E4EAF3] pb-4">
+          <Card className="rounded-[24px] border border-[#d9cda0] bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-2 border-b border-[#dfd3a6] pb-4">
               <div>
-                <h3 className="text-base font-extrabold text-[#10264F]">
+                <h3 className="text-base font-extrabold text-[#1a180f]">
                   Tus Mensajes Enviados
                 </h3>
-                <p className="text-xs text-[#66738A]">
+                <p className="text-xs text-[#6e674f]">
                   Historial de consultas y sugerencias registradas
                 </p>
               </div>
@@ -336,16 +336,16 @@ export function SuggestionsView({
 
             <div className="mt-4 space-y-3 max-h-[500px] overflow-y-auto pr-1">
               {isLoadingPast ? (
-                <p className="text-center py-6 text-xs text-[#8C9AA8]">
+                <p className="text-center py-6 text-xs text-[#857d64]">
                   Cargando tus mensajes anteriores...
                 </p>
               ) : pastSuggestions.length === 0 ? (
                 <div className="text-center py-8 px-4 rounded-xl border border-dashed border-slate-200">
                   <MessageSquare className="mx-auto h-8 w-8 text-slate-300" />
-                  <p className="mt-2 text-xs font-bold text-[#475569]">
+                  <p className="mt-2 text-xs font-bold text-[#59533f]">
                     No has enviado mensajes aún
                   </p>
-                  <p className="mt-1 text-[11px] text-[#8C9AA8]">
+                  <p className="mt-1 text-[11px] text-[#857d64]">
                     Usa el formulario para comunicarte con tus docentes.
                   </p>
                 </div>
@@ -353,19 +353,19 @@ export function SuggestionsView({
                 pastSuggestions.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-xl border border-[#E4EAF3] bg-[#F8FAFD] p-3.5 space-y-1.5 transition-all hover:border-[#CBD5E1]"
+                    className="rounded-xl border border-[#dfd3a6] bg-[#f7f0d4] p-3.5 space-y-1.5 transition-all hover:border-[#cfc18e]"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="inline-block rounded-full bg-[#E2E8F0] px-2 py-0.5 text-[10px] font-bold text-[#334155]">
+                      <span className="inline-block rounded-full bg-[#d9cda0] px-2 py-0.5 text-[10px] font-bold text-[#3a3525]">
                         {item.category}
                       </span>
-                      <span className="text-[10px] text-[#8C9AA8] flex items-center gap-1">
+                      <span className="text-[10px] text-[#857d64] flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {new Date(item.created_at).toLocaleDateString('es-CO')}
                       </span>
                     </div>
-                    <p className="text-xs font-bold text-[#10264F]">{item.subject}</p>
-                    <p className="text-[11px] text-[#475569] line-clamp-2 leading-relaxed">
+                    <p className="text-xs font-bold text-[#1a180f]">{item.subject}</p>
+                    <p className="text-[11px] text-[#59533f] line-clamp-2 leading-relaxed">
                       {item.message}
                     </p>
                     <div className="pt-1 flex items-center justify-between">

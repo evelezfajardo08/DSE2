@@ -215,7 +215,7 @@ export function Progress({ userId, completedActivities, totalActivities, current
               <XAxis dataKey="day" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="actividades" fill="#1E3A8A" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="actividades" fill="#28391e" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -227,7 +227,7 @@ export function Progress({ userId, completedActivities, totalActivities, current
             <RadarChart data={skillsData}>
               <PolarGrid />
               <PolarAngleAxis dataKey="skill" />
-              <Radar name="Nivel" dataKey="value" stroke="#1E3A8A" fill="#1E3A8A" fillOpacity={0.6} />
+              <Radar name="Nivel" dataKey="value" stroke="#28391e" fill="#28391e" fillOpacity={0.6} />
               <Tooltip />
             </RadarChart>
           </ResponsiveContainer>
@@ -335,11 +335,11 @@ export function Progress({ userId, completedActivities, totalActivities, current
               )}
 
               {selectedAttempt.next_steps && selectedAttempt.next_steps.length > 0 && (
-                <div className="p-4 border rounded-lg bg-blue-50/50 space-y-2">
-                  <h5 className="font-medium text-sm text-blue-700 flex items-center gap-1.5">
+                <div className="p-4 border rounded-lg bg-[#f7f0d4]/50 space-y-2">
+                  <h5 className="font-medium text-sm text-[#28391e] flex items-center gap-1.5">
                     <HelpCircle className="w-4 h-4" /> Siguientes pasos recomendados:
                   </h5>
-                  <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
+                  <ul className="list-disc list-inside text-sm text-[#28391e] space-y-1">
                     {selectedAttempt.next_steps.map((step, i) => (
                       <li key={i}>{step}</li>
                     ))}

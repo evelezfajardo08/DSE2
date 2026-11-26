@@ -92,7 +92,7 @@ export const disciplines: DisciplineInfo[] = [
     title: "Módulo 1: Formación en Liderazgo",
     shortTitle: "Liderazgo",
     tagline: "Fortalece tu capacidad para guiar equipos y tomar decisiones estratégicas mediante 5 enfoques esenciales.",
-    color: "#0F3B8F",
+    color: "#28391e",
     icon: Sparkles,
   },
   {
@@ -101,7 +101,7 @@ export const disciplines: DisciplineInfo[] = [
     title: "Módulo 2: Competencias en Comunicación Educativa",
     shortTitle: "Comunicación Educativa",
     tagline: "Domina la mediación pedagógica, la interacción dialógica y la educomunicación crítica en 5 ejes temáticos.",
-    color: "#0891B2",
+    color: "#4a3649",
     icon: MessageSquare,
   },
   {
@@ -110,7 +110,7 @@ export const disciplines: DisciplineInfo[] = [
     title: "Módulo 3: Toma de Decisiones y Resolución de Problemas",
     shortTitle: "Toma de Decisiones",
     tagline: "Desarrolla competencias analíticas, mitigación de sesgos cognitivos y criterios éticos para resolver problemas complejos.",
-    color: "#7C3AED",
+    color: "#fe822f",
     icon: Target,
   },
   {
@@ -119,7 +119,7 @@ export const disciplines: DisciplineInfo[] = [
     title: "Módulo 4: Trabajo en Equipo",
     shortTitle: "Trabajo en Equipo",
     tagline: "Comunicación, cooperación y construcción de metas compartidas en 5 dimensiones progresivas.",
-    color: "#059669",
+    color: "#4a6739",
     icon: Users,
   },
 ];
@@ -889,7 +889,7 @@ export default function App() {
             </div>
             <div className="rounded-lg bg-muted/40 p-4">
               <p className="text-sm text-muted-foreground">Módulos Habilitados</p>
-              <p className="font-semibold text-[#0F3B8F] mt-1">
+              <p className="font-semibold text-[#28391e] mt-1">
                 {disciplines.length} de {disciplines.length} módulos ({overallProgress}% global)
               </p>
             </div>
@@ -1119,11 +1119,11 @@ export default function App() {
   return (
     <div
       className={cn(
-        "bg-background text-foreground selection:bg-[#FACC15]/60",
+        "bg-background text-foreground selection:bg-[#fe822f]/60",
         view === "chatbot" ? "h-screen overflow-hidden flex flex-col" : "min-h-screen",
       )}
     >
-      <header className="sticky top-0 z-40 shrink-0 border-b border-white/10 bg-[#0B2D70] text-white shadow-[0_8px_24px_rgba(15,59,143,0.16)]">
+      <header className="sticky top-0 z-40 shrink-0 border-b border-white/10 bg-[#1e2c16] text-white shadow-[0_8px_24px_rgba(15,59,143,0.16)]">
         <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 lg:px-8">
           <button
             onClick={() => {
@@ -1136,12 +1136,12 @@ export default function App() {
             className="flex items-center gap-3 text-left"
             aria-label="Ir al inicio"
           >
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#FACC15] text-[#0F3B8F] shadow-[inset_0_-2px_0_rgba(0,0,0,.12)]">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#fe822f] text-[#28391e] shadow-[inset_0_-2px_0_rgba(0,0,0,.12)]">
               <BrainCircuit className="h-6 w-6" />
             </span>
             <span>
               <span className="block text-lg font-extrabold tracking-[-0.03em]">LideraBot</span>
-              <span className="hidden text-[10px] font-semibold uppercase tracking-[0.19em] text-blue-200 sm:block">
+              <span className="hidden text-[10px] font-semibold uppercase tracking-[0.19em] text-[#dcd2a4] sm:block">
                 Laboratorio de liderazgo
               </span>
             </span>
@@ -1157,8 +1157,8 @@ export default function App() {
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
                 view === "chatbot"
-                  ? "bg-[#FACC15] text-[#0F3B8F] font-extrabold"
-                  : "text-blue-100 hover:bg-white/10",
+                  ? "bg-[#fe822f] text-[#28391e] font-extrabold"
+                  : "text-[#efe6bf] hover:bg-white/10",
               )}
             >
               <Bot className="h-4 w-4" />
@@ -1172,14 +1172,14 @@ export default function App() {
                 view === "diagnostic"
                   ? "bg-white/20 text-white font-bold"
                   : hasInteractedWithBot || diagnosticResult
-                    ? "text-blue-100 hover:bg-white/10"
-                    : "text-blue-300/60 hover:bg-white/5",
+                    ? "text-[#efe6bf] hover:bg-white/10"
+                    : "text-[#c4ba8c]/60 hover:bg-white/5",
               )}
             >
               {hasInteractedWithBot || diagnosticResult ? (
-                <ClipboardCheck className="h-4 w-4 text-[#FACC15]" />
+                <ClipboardCheck className="h-4 w-4 text-[#fe822f]" />
               ) : (
-                <LockKeyhole className="h-3.5 w-3.5 text-blue-300" />
+                <LockKeyhole className="h-3.5 w-3.5 text-[#c4ba8c]" />
               )}
               Prueba Diagnóstica
             </button>
@@ -1191,11 +1191,11 @@ export default function App() {
                 view === "home" || view === "intro" || view === "evaluation" || view === "complete"
                   ? "bg-white/20 text-white font-bold"
                   : diagnosticResult
-                    ? "text-blue-100 hover:bg-white/10"
-                    : "text-blue-300/60 hover:bg-white/5",
+                    ? "text-[#efe6bf] hover:bg-white/10"
+                    : "text-[#c4ba8c]/60 hover:bg-white/5",
               )}
             >
-              {!diagnosticResult && <LockKeyhole className="h-3.5 w-3.5 text-blue-300" />}
+              {!diagnosticResult && <LockKeyhole className="h-3.5 w-3.5 text-[#c4ba8c]" />}
               Módulos ({disciplines.length} de {disciplines.length})
             </button>
 
@@ -1209,7 +1209,7 @@ export default function App() {
                 "rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
                 view === "foundations"
                   ? "bg-white/15 text-white"
-                  : "text-blue-100 hover:bg-white/10",
+                  : "text-[#efe6bf] hover:bg-white/10",
               )}
             >
               Fundamentación
@@ -1225,7 +1225,7 @@ export default function App() {
                 "rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
                 view === "responses"
                   ? "bg-white/15 text-white"
-                  : "text-blue-100 hover:bg-white/10",
+                  : "text-[#efe6bf] hover:bg-white/10",
               )}
             >
               Progreso ({overallProgress}%)
@@ -1238,9 +1238,9 @@ export default function App() {
                 <button className="hidden items-center gap-3 border-l border-white/20 pl-5 sm:flex text-left outline-none hover:opacity-90 transition-opacity">
                   <div className="text-right">
                     <p className="text-sm font-bold leading-tight">{authUser.name}</p>
-                    <p className="text-[11px] text-blue-200">Estudiante · {overallProgress}%</p>
+                    <p className="text-[11px] text-[#dcd2a4]">Estudiante · {overallProgress}%</p>
                   </div>
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-[#A855F7] font-bold">
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-[#4a3649] font-bold">
                     <User className="h-5 w-5 text-white" />
                   </span>
                 </button>
@@ -1296,20 +1296,20 @@ export default function App() {
                 setView("chatbot");
                 setMobileNav(false);
               }}
-              className="block w-full rounded-lg bg-white/10 px-4 py-3 text-left text-sm font-semibold text-[#FACC15]"
+              className="block w-full rounded-lg bg-white/10 px-4 py-3 text-left text-sm font-semibold text-[#fe822f]"
             >
               Chatbot LideraBot
             </button>
             <button
               onClick={handleOpenDiagnosticGuarded}
-              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-blue-100"
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-[#efe6bf]"
             >
               <span>Prueba Diagnóstica Inicial</span>
               {!hasInteractedWithBot && !diagnosticResult && <LockKeyhole className="h-4 w-4" />}
             </button>
             <button
               onClick={goHome}
-              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-blue-100"
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-[#efe6bf]"
             >
               <span>Módulos ({disciplines.length} de {disciplines.length})</span>
               {!diagnosticResult && <LockKeyhole className="h-4 w-4" />}
@@ -1319,7 +1319,7 @@ export default function App() {
                 setView("foundations");
                 setMobileNav(false);
               }}
-              className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-[#efe6bf]"
             >
               Fundamentación Teórica
             </button>
@@ -1328,19 +1328,19 @@ export default function App() {
                 setView("responses");
                 setMobileNav(false);
               }}
-              className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-[#efe6bf]"
             >
               Progreso ({overallProgress}%)
             </button>
             <button
               onClick={openProfile}
-              className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-[#efe6bf]"
             >
               Mi Perfil
             </button>
             <button
               onClick={openSettings}
-              className="block w-full px-4 py-3 text-left text-sm font-semibold text-blue-100"
+              className="block w-full px-4 py-3 text-left text-sm font-semibold text-[#efe6bf]"
             >
               Configuración
             </button>
@@ -1356,8 +1356,8 @@ export default function App() {
 
       {/* Lock Notice Toast Banner */}
       {lockNotice && (
-        <div className="bg-[#FFF5C2] border-b border-[#F0D567] px-5 py-2.5 text-center text-xs font-extrabold text-[#5A4E1D] flex items-center justify-center gap-2 shrink-0">
-          <LockKeyhole className="h-4 w-4 text-[#0F3B8F] shrink-0" />
+        <div className="bg-[#f9e9b8] border-b border-[#ffb074] px-5 py-2.5 text-center text-xs font-extrabold text-[#4a3f17] flex items-center justify-center gap-2 shrink-0">
+          <LockKeyhole className="h-4 w-4 text-[#28391e] shrink-0" />
           <span>{lockNotice}</span>
           <button
             onClick={() => setLockNotice(null)}
@@ -1578,12 +1578,12 @@ export default function App() {
         className={cn(
           "fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 rounded-full px-4 py-3 text-xs md:text-sm font-extrabold shadow-md border",
           view === "suggestions"
-            ? "bg-[#0F3B8F] text-white border-[#0F3B8F] ring-2 ring-[#FACC15]"
-            : "bg-white text-[#10264F] border-[#DCE3EF] hover:bg-[#F8FAFD] hover:text-[#0F3B8F]",
+            ? "bg-[#28391e] text-white border-[#28391e] ring-2 ring-[#fe822f]"
+            : "bg-white text-[#1a180f] border-[#d9cda0] hover:bg-[#f7f0d4] hover:text-[#28391e]",
         )}
         title="Buzón de Sugerencias y PQRS"
       >
-        <Mail className="h-4 w-4 text-[#2D6BFF]" />
+        <Mail className="h-4 w-4 text-[#fe822f]" />
         <span className="tracking-wide">
           {view === "suggestions" ? "Cerrar PQRS" : "PQRS"}
         </span>
@@ -1636,7 +1636,7 @@ function HomeView({
   return (
     <main className="mx-auto max-w-[1140px] px-5 py-8 lg:px-8">
       {/* Selector de Disciplinas / Módulos */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-2xl bg-[#e2d59a] p-1.5 border border-[#d9cda0]">
         {discList.map((d) => {
           const Icon = d.icon;
           const isActive = currentDiscipline === d.key;
@@ -1653,8 +1653,8 @@ function HomeView({
               className={cn(
                 "flex items-center justify-between gap-2 rounded-xl px-3.5 py-3 text-xs sm:text-sm font-extrabold transition-all",
                 isActive
-                  ? "bg-white text-[#0F3B8F] shadow-sm border border-[#DCE3EF]"
-                  : "text-[#5A6A85] hover:text-[#0F3B8F] hover:bg-white/60",
+                  ? "bg-white text-[#28391e] shadow-sm border border-[#d9cda0]"
+                  : "text-[#59533f] hover:text-[#28391e] hover:bg-white/60",
               )}
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -1666,15 +1666,15 @@ function HomeView({
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {isDiscCompleted ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#DFF5ED] px-2 py-0.5 text-[10px] font-bold text-[#0E785F]">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#e2ecd9] px-2 py-0.5 text-[10px] font-bold text-[#28391e]">
                     <CheckCircle2 className="h-3 w-3" /> 100%
                   </span>
                 ) : !isDiscUnlocked ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-200/90 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#e3d69c] px-2 py-0.5 text-[10px] font-semibold text-[#59533f]">
                     <LockKeyhole className="h-3 w-3" /> Bloqueado
                   </span>
                 ) : isPrimaryRec ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-extrabold text-[#92400E]">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1e5] px-2 py-0.5 text-[10px] font-extrabold text-[#7a3608]">
                     ★ Recomendado
                   </span>
                 ) : null}
@@ -1685,61 +1685,114 @@ function HomeView({
       </div>
 
       {/* Encabezado con información del módulo activo */}
-      <section
-        className="rounded-[24px] p-6 text-white md:p-8 transition-colors"
-        style={{ backgroundColor: activeDiscipline.color }}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white mb-2">
-              {!isCurrentDisciplineUnlocked && <LockKeyhole className="h-3 w-3 text-amber-300" />}
-              {activeDiscipline.title}
-              {!isCurrentDisciplineUnlocked && " · Bloqueado"}
-            </span>
-            <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
-              {activeDiscipline.shortTitle}
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-blue-100">
-              {activeDiscipline.tagline}
-            </p>
-          </div>
+      {(() => {
+        const isLightBanner = activeDiscipline.color.toLowerCase() === "#fe822f";
+        return (
+          <section
+            className={cn(
+              "rounded-[24px] p-6 md:p-8 transition-colors",
+              isLightBanner ? "text-[#1a180f]" : "text-white",
+            )}
+            style={{ backgroundColor: activeDiscipline.color }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="max-w-2xl">
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider mb-2",
+                    isLightBanner
+                      ? "bg-[#1a180f]/10 text-[#1a180f]"
+                      : "bg-white/15 text-white",
+                  )}
+                >
+                  {!isCurrentDisciplineUnlocked && (
+                    <LockKeyhole
+                      className={cn(
+                        "h-3 w-3",
+                        isLightBanner ? "text-[#28391e]" : "text-[#fe822f]",
+                      )}
+                    />
+                  )}
+                  {activeDiscipline.title}
+                  {!isCurrentDisciplineUnlocked && " · Bloqueado"}
+                </span>
+                <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+                  {activeDiscipline.shortTitle}
+                </h1>
+                <p
+                  className={cn(
+                    "mt-2 text-sm leading-6",
+                    isLightBanner ? "text-[#2b2719]" : "text-[#efe6bf]",
+                  )}
+                >
+                  {activeDiscipline.tagline}
+                </p>
+              </div>
 
-          <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-4 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-blue-200">Progreso</p>
-            <p className="mt-1 text-2xl font-extrabold text-[#FACC15]">{overallProgress}%</p>
-            <p className="text-[11px] text-blue-100">
-              {isCurrentDisciplineUnlocked
-                ? `${unlockedSubmoduleIds.length}/5 ${currentDiscipline === "leadership" ? "submódulos" : currentDiscipline === "teamwork" ? "dimensiones" : "ejes"} desbloqueados`
-                : "Módulo bloqueado"}
-            </p>
-          </div>
-        </div>
-      </section>
+              <div
+                className={cn(
+                  "rounded-2xl border px-5 py-4 text-center",
+                  isLightBanner
+                    ? "border-[#1a180f]/15 bg-[#1a180f]/10"
+                    : "border-white/15 bg-white/10",
+                )}
+              >
+                <p
+                  className={cn(
+                    "text-[11px] font-bold uppercase tracking-wider",
+                    isLightBanner ? "text-[#2b2719]" : "text-[#dcd2a4]",
+                  )}
+                >
+                  Progreso
+                </p>
+                <p
+                  className={cn(
+                    "mt-1 text-2xl font-extrabold",
+                    isLightBanner ? "text-[#28391e]" : "text-[#fe822f]",
+                  )}
+                >
+                  {overallProgress}%
+                </p>
+                <p
+                  className={cn(
+                    "text-[11px]",
+                    isLightBanner ? "text-[#2b2719]" : "text-[#efe6bf]",
+                  )}
+                >
+                  {isCurrentDisciplineUnlocked
+                    ? `${unlockedSubmoduleIds.length}/5 ${currentDiscipline === "leadership" ? "submódulos" : currentDiscipline === "teamwork" ? "dimensiones" : "ejes"} desbloqueados`
+                    : "Módulo bloqueado"}
+                </p>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Banner de Módulo Bloqueado si el estudiante seleccionó un módulo que no es el recomendado activo */}
       {diagnosticResult && !isCurrentDisciplineUnlocked && (
-        <section className="mt-6 rounded-[24px] border-2 border-dashed border-[#DCE3EF] bg-white p-6 md:p-8 text-center shadow-sm">
+        <section className="mt-6 rounded-[24px] border-2 border-dashed border-[#d9cda0] bg-white p-6 md:p-8 text-center shadow-sm">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
             <LockKeyhole className="h-7 w-7" />
           </div>
           <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
             MÓDULO BLOQUEADO TEMPORALMENTE
           </span>
-          <h2 className="mt-3 text-xl font-extrabold text-[#10264F]">
+          <h2 className="mt-3 text-xl font-extrabold text-[#1a180f]">
             {activeDiscipline.title}
           </h2>
-          <p className="mx-auto mt-2 max-w-xl text-xs sm:text-sm leading-relaxed text-[#66738A]">
+          <p className="mx-auto mt-2 max-w-xl text-xs sm:text-sm leading-relaxed text-[#6e674f]">
             LideraBot analizó tus respuestas de la Prueba Diagnóstica y priorizó el módulo{" "}
-            <strong className="text-[#0F3B8F]">{primaryUnlockedDiscipline?.shortTitle || "Recomendado"}</strong>{" "}
+            <strong className="text-[#28391e]">{primaryUnlockedDiscipline?.shortTitle || "Recomendado"}</strong>{" "}
             debido a que en esa competencia se identificaron mayores falencias y áreas de mejora.
             Para desbloquear este módulo, debes completar primero el 100% de las actividades del módulo recomendado.
           </p>
           {primaryUnlockedDiscipline && (
             <button
               onClick={() => onSelectDiscipline(primaryUnlockedDiscipline.key)}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-6 py-3 text-xs sm:text-sm font-extrabold text-white shadow-md hover:bg-[#174AA6]"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#28391e] px-6 py-3 text-xs sm:text-sm font-extrabold text-white shadow-md hover:bg-[#1e2c16]"
             >
-              Ir al Módulo Recomendado ({primaryUnlockedDiscipline.shortTitle}) <ArrowRight className="h-4 w-4 text-[#FACC15]" />
+              Ir al Módulo Recomendado ({primaryUnlockedDiscipline.shortTitle}) <ArrowRight className="h-4 w-4 text-[#fe822f]" />
             </button>
           )}
         </section>
@@ -1761,8 +1814,8 @@ function HomeView({
                 />
               ))
           ) : (
-            <div className="rounded-[20px] border border-[#DCE3EF] bg-white p-6 text-center shadow-sm">
-              <p className="text-sm font-extrabold text-[#10264F]">
+            <div className="rounded-[20px] border border-[#d9cda0] bg-white p-6 text-center shadow-sm">
+              <p className="text-sm font-extrabold text-[#1a180f]">
                 {unlockedSubmoduleIds.length === 0
                   ? "Realiza primero la Prueba Diagnóstica para desbloquear tu módulo aquí"
                   : `¡Has completado todos los submódulos de ${activeDiscipline.shortTitle}!`}
@@ -1770,7 +1823,7 @@ function HomeView({
               {unlockedSubmoduleIds.length === 0 && (
                 <button
                   onClick={onOpenDiagnostic}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-5 py-2.5 text-xs font-extrabold text-white hover:bg-[#174AA6]"
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#28391e] px-5 py-2.5 text-xs font-extrabold text-white hover:bg-[#1e2c16]"
                 >
                   Ir a la Prueba Diagnóstica <ArrowRight className="h-3.5 w-3.5" />
                 </button>
@@ -1816,12 +1869,12 @@ function ModuleCard({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.05 }}
-        className="rounded-[18px] border border-[#D5DFEE] bg-[#E9EEF6] px-5 py-4 opacity-75 select-none flex items-center justify-between gap-3"
+        className="rounded-[18px] border border-[#d2c593] bg-[#e6daa6] px-5 py-4 opacity-75 select-none flex items-center justify-between gap-3"
       >
-        <h3 className="text-sm font-bold text-[#64728A] md:text-base">
+        <h3 className="text-sm font-bold text-[#6e674f] md:text-base">
           0{item.id}. {item.name}
         </h3>
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#DCE3EF] text-[#64728A]">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#d9cda0] text-[#6e674f]">
           <LockKeyhole className="h-4 w-4" />
         </span>
       </motion.article>
@@ -1836,13 +1889,13 @@ function ModuleCard({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.05 }}
         onClick={onChoose}
-        className="cursor-pointer rounded-[18px] border border-[#CBEAD9] bg-[#F2FBF7] px-5 py-4 transition-all hover:shadow-sm flex items-center justify-between gap-3"
+        className="cursor-pointer rounded-[18px] border border-[#bfd1b0] bg-[#edf3e8] px-5 py-4 transition-all hover:shadow-sm flex items-center justify-between gap-3"
       >
-        <h3 className="text-sm font-extrabold text-[#0E785F] md:text-base">
+        <h3 className="text-sm font-extrabold text-[#28391e] md:text-base">
           0{item.id}. {item.name}
         </h3>
-        <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#DFF5ED] px-3 py-1.5 text-xs font-extrabold text-[#0E785F]">
-          <CheckCircle2 className="h-4 w-4 text-[#10856B]" />
+        <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#e2ecd9] px-3 py-1.5 text-xs font-extrabold text-[#28391e]">
+          <CheckCircle2 className="h-4 w-4 text-[#385229]" />
           Completado
         </span>
       </motion.article>
@@ -1855,7 +1908,7 @@ function ModuleCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="rounded-[22px] border-2 border-[#2D6BFF] bg-white p-6 shadow-md flex flex-col justify-between"
+      className="rounded-[22px] border-2 border-[#fe822f] bg-white p-6 shadow-md flex flex-col justify-between"
     >
       <div>
         <div className="flex items-center justify-between gap-3">
@@ -1866,22 +1919,22 @@ function ModuleCard({
             >
               <Icon className="h-5 w-5" />
             </span>
-            <h3 className="text-base font-extrabold text-[#10264F] md:text-lg">
+            <h3 className="text-base font-extrabold text-[#1a180f] md:text-lg">
               0{item.id}. {item.name}
             </h3>
           </div>
-          <span className="rounded-full bg-[#EAF0FF] px-2.5 py-1 text-xs font-extrabold text-[#2457D5]">
+          <span className="rounded-full bg-[#fff1e5] px-2.5 py-1 text-xs font-extrabold text-[#e66e1d]">
             Desbloqueado
           </span>
         </div>
 
-        <p className="mt-3 text-sm leading-6 text-[#4A5870]">{item.description}</p>
+        <p className="mt-3 text-sm leading-6 text-[#59533f]">{item.description}</p>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-[#E9EDF4] flex items-center justify-end">
+      <div className="mt-4 pt-3 border-t border-[#e2d59a] flex items-center justify-end">
         <button
           onClick={onChoose}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F3B8F] px-5 py-2.5 text-xs font-extrabold text-white hover:bg-[#174AA6]"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[#28391e] px-5 py-2.5 text-xs font-extrabold text-white hover:bg-[#1e2c16]"
         >
           {item.status === "En progreso" ? "Continuar submódulo" : "Iniciar submódulo"}
           <ArrowRight className="h-3.5 w-3.5" />
@@ -1910,18 +1963,18 @@ function IntroView({
     <main className="mx-auto max-w-[820px] px-5 py-8 lg:px-8">
       <button
         onClick={onBack}
-        className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F]"
+        className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#59533f] hover:text-[#28391e]"
       >
         <ArrowLeft className="h-4 w-4" /> Volver a módulos
       </button>
 
-      <section className="rounded-[24px] border border-[#DCE3EF] bg-white p-6 md:p-8 shadow-sm">
+      <section className="rounded-[24px] border border-[#d9cda0] bg-white p-6 md:p-8 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <span className="text-xs font-extrabold uppercase tracking-wider text-[#2D6BFF]">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-[#fe822f]">
               {modLabel} 0{item.id}
             </span>
-            <h1 className="mt-1 text-2xl font-extrabold text-[#10264F] md:text-3xl">
+            <h1 className="mt-1 text-2xl font-extrabold text-[#1a180f] md:text-3xl">
               {item.name}
             </h1>
           </div>
@@ -1933,27 +1986,27 @@ function IntroView({
           </span>
         </div>
 
-        <p className="mt-4 text-sm leading-6 text-[#4A5870]">{item.description}</p>
-        <p className="mt-3 text-sm leading-6 text-[#31415E]">{item.intro}</p>
+        <p className="mt-4 text-sm leading-6 text-[#59533f]">{item.description}</p>
+        <p className="mt-3 text-sm leading-6 text-[#3a3525]">{item.intro}</p>
 
         {/* Lista de los 5 niveles */}
-        <div className="mt-6 pt-5 border-t border-[#E9EEF6]">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[#64728A] mb-3">
+        <div className="mt-6 pt-5 border-t border-[#e6daa6]">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#6e674f] mb-3">
             Niveles que desarrollarás en este {modLabel.toLowerCase()}:
           </h3>
           <div className="grid gap-2">
             {item.topics.map((t) => (
               <div
                 key={t.level}
-                className="flex items-center gap-3 rounded-xl bg-[#F8FAFD] border border-[#E9EEF6] px-3.5 py-2.5 text-xs text-[#2A374E]"
+                className="flex items-center gap-3 rounded-xl bg-[#f7f0d4] border border-[#e6daa6] px-3.5 py-2.5 text-xs text-[#2b2719]"
               >
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#0F3B8F] text-white font-extrabold text-[11px]">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#28391e] text-white font-extrabold text-[11px]">
                   {t.level}
                 </span>
-                <span className="font-bold text-[#0F3B8F]">
+                <span className="font-bold text-[#28391e]">
                   {t.difficultyLabel || `Tema ${t.level}`}:
                 </span>
-                <span className="truncate text-[#4A5870]">{t.topicTitle}</span>
+                <span className="truncate text-[#59533f]">{t.topicTitle}</span>
               </div>
             ))}
           </div>
@@ -1962,7 +2015,7 @@ function IntroView({
         <div className="mt-6 flex justify-end">
           <button
             onClick={onStart}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-6 py-3 text-sm font-extrabold text-white hover:bg-[#174AA6]"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#28391e] px-6 py-3 text-sm font-extrabold text-white hover:bg-[#1e2c16]"
           >
             Comenzar {modLabel.toLowerCase()} <ArrowRight className="h-4 w-4" />
           </button>
@@ -2008,7 +2061,7 @@ function EvaluationView({
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F]"
+          className="inline-flex items-center gap-2 text-sm font-bold text-[#59533f] hover:text-[#28391e]"
         >
           <ArrowLeft className="h-4 w-4" /> Volver a la introducción
         </button>
@@ -2022,15 +2075,15 @@ function EvaluationView({
                     : `Revisa pedagógicamente mi respuesta para el Nivel ${level} (${currentTopic.difficultyLabel}) del ${modLabel} "${item.name}". Mi respuesta es: "${answer}". Contrasta con el marco de ${currentTopic.authorCitation}.`,
                 )
               }
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#EAF0FF] px-3 py-1 text-xs font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#fff1e5] px-3 py-1 text-xs font-extrabold text-[#28391e] hover:bg-[#ffe2c7]"
             >
-              <Bot className="h-3.5 w-3.5 text-[#2D6BFF]" />
+              <Bot className="h-3.5 w-3.5 text-[#fe822f]" />
               Pedir retroalimentación a LideraBot
             </button>
           )}
           <Pill
             className={
-              isSaved ? "bg-[#E7F8F1] text-[#0E785F]" : "bg-[#EAF0FF] text-[#0F3B8F]"
+              isSaved ? "bg-[#e2ecd9] text-[#28391e]" : "bg-[#fff1e5] text-[#28391e]"
             }
           >
             {isSaved ? (
@@ -2054,14 +2107,14 @@ function EvaluationView({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-        <aside className="h-fit rounded-[22px] bg-[#0F3B8F] p-5 text-white lg:sticky lg:top-24">
-          <p className="text-xs font-bold uppercase tracking-[0.15em] text-blue-200">
+        <aside className="h-fit rounded-[22px] bg-[#28391e] p-5 text-white lg:sticky lg:top-24">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#dcd2a4]">
             {modLabel} 0{item.id}
           </p>
           <h2 className="mt-2 text-xl font-extrabold leading-tight">{item.shortName}</h2>
-          <p className="mt-1 text-xs text-blue-200">{item.authorsSummary}</p>
+          <p className="mt-1 text-xs text-[#dcd2a4]">{item.authorsSummary}</p>
           <div className="my-5 h-px bg-white/15" />
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-blue-200">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[#dcd2a4]">
             Niveles del Módulo
           </p>
           <div className="space-y-2">
@@ -2098,8 +2151,8 @@ function EvaluationView({
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
                     number === level
-                      ? "bg-white text-[#0F3B8F]"
-                      : "text-blue-100 hover:bg-white/10",
+                      ? "bg-white text-[#28391e]"
+                      : "text-[#efe6bf] hover:bg-white/10",
                     !available && "cursor-not-allowed opacity-45",
                   )}
                 >
@@ -2107,7 +2160,7 @@ function EvaluationView({
                     className={cn(
                       "grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-extrabold",
                       saved && number !== level
-                        ? "border-[#FACC15] bg-[#FACC15] text-[#0F3B8F]"
+                        ? "border-[#fe822f] bg-[#fe822f] text-[#28391e]"
                         : "border-current",
                     )}
                   >
@@ -2118,7 +2171,7 @@ function EvaluationView({
                     <p
                       className={cn(
                         "truncate text-[10px]",
-                        number === level ? "text-[#2D6BFF]" : "text-blue-200",
+                        number === level ? "text-[#fe822f]" : "text-[#dcd2a4]",
                       )}
                     >
                       {labelSub}
@@ -2131,10 +2184,10 @@ function EvaluationView({
         </aside>
 
         <section>
-          <div className="mb-5 rounded-[18px] border border-[#DCE3EF] bg-white px-5 py-4">
+          <div className="mb-5 rounded-[18px] border border-[#d9cda0] bg-white px-5 py-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-extrabold text-[#10264F]">
+                <p className="text-sm font-extrabold text-[#1a180f]">
                   {isLeadership
                     ? isFinal
                       ? "Paso 5 de 5 · Ejercicio Práctico del Submódulo"
@@ -2143,18 +2196,18 @@ function EvaluationView({
                       ? "Nivel 5 de 5 · Pregunta Evaluativa Saber Pro"
                       : `Nivel ${level} de 5 · ${currentTopic.difficultyLabel}`}
                 </p>
-                <p className="mt-0.5 text-xs text-[#6C7990]">
+                <p className="mt-0.5 text-xs text-[#6e674f]">
                   {isLeadership && isFinal
                     ? `Actividad práctica integradora de ${item.name}`
                     : currentTopic.topicTitle}
                 </p>
               </div>
-              <p className="text-sm font-extrabold text-[#2D6BFF]">{level * 20}%</p>
+              <p className="text-sm font-extrabold text-[#fe822f]">{level * 20}%</p>
             </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E9EDF4]">
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#e2d59a]">
               <motion.div
                 animate={{ width: `${level * 20}%` }}
-                className="h-full rounded-full bg-[#2D6BFF]"
+                className="h-full rounded-full bg-[#fe822f]"
               />
             </div>
           </div>
@@ -2163,21 +2216,21 @@ function EvaluationView({
             key={`${discipline}-${item.id}-${level}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="overflow-hidden rounded-[24px] border border-[#DCE3EF] bg-white shadow-[0_14px_40px_rgba(29,55,96,.07)]"
+            className="overflow-hidden rounded-[24px] border border-[#d9cda0] bg-white shadow-[0_14px_40px_rgba(29,55,96,.07)]"
           >
-            <div className="border-b border-[#E3E8F0] bg-[#F8FAFD] px-6 py-5 md:px-8">
+            <div className="border-b border-[#d9cda0] bg-[#f7f0d4] px-6 py-5 md:px-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Pill className="bg-[#EAF0FF] text-[#2457D5]">
+                  <Pill className="bg-[#fff1e5] text-[#e66e1d]">
                     {currentTopic.difficultyLabel ||
                       (isFinal ? "Ejercicio Práctico" : "Contenido de Estudio")}
                   </Pill>
-                  <Pill className="bg-[#F5EBFF] text-[#7E22CE]">
+                  <Pill className="bg-[#f4eef3] text-[#4a3649]">
                     <BookMarked className="h-3.5 w-3.5" />
                     {currentTopic.authorCitation}
                   </Pill>
                 </div>
-                <span className="text-xs font-semibold text-[#78859A]">
+                <span className="text-xs font-semibold text-[#787058]">
                   Tiempo estimado: {currentTopic.suggestedMinutes} min
                 </span>
               </div>
@@ -2187,8 +2240,8 @@ function EvaluationView({
               {/* DISCIPLINA 1: LIDERAZGO (Niveles 1-4 Lectura) */}
               {isLeadership && !isFinal && (
                 <>
-                  <div className="mb-5 rounded-xl border border-[#DCE3EF] bg-[#F8FAFD] px-4 py-3 text-xs font-semibold text-[#4A5870] flex items-center gap-2.5">
-                    <BookOpen className="h-4 w-4 shrink-0 text-[#2D6BFF]" />
+                  <div className="mb-5 rounded-xl border border-[#d9cda0] bg-[#f7f0d4] px-4 py-3 text-xs font-semibold text-[#59533f] flex items-center gap-2.5">
+                    <BookOpen className="h-4 w-4 shrink-0 text-[#fe822f]" />
                     <span>
                       <strong>Sección de lectura teórica ({level}/4):</strong> Analiza este
                       contenido y su ejemplo resuelto. Al terminar los 4 temas realizarás el{" "}
@@ -2196,47 +2249,47 @@ function EvaluationView({
                     </span>
                   </div>
 
-                  <h1 className="text-xl font-extrabold leading-snug tracking-[-0.02em] text-[#10264F] md:text-2xl">
+                  <h1 className="text-xl font-extrabold leading-snug tracking-[-0.02em] text-[#1a180f] md:text-2xl">
                     {currentTopic.topicTitle}
                   </h1>
 
-                  <div className="mt-4 space-y-3 text-sm leading-7 text-[#31415E] whitespace-pre-line">
+                  <div className="mt-4 space-y-3 text-sm leading-7 text-[#3a3525] whitespace-pre-line">
                     {currentTopic.theoreticalContent}
                   </div>
 
                   {level === 4 && item.topics[4] && (
-                    <div className="mt-6 pt-6 border-t border-[#E3E8F0]">
-                      <h2 className="text-lg font-extrabold text-[#10264F]">
+                    <div className="mt-6 pt-6 border-t border-[#d9cda0]">
+                      <h2 className="text-lg font-extrabold text-[#1a180f]">
                         {item.topics[4].topicTitle}
                       </h2>
-                      <div className="mt-3 space-y-3 text-sm leading-7 text-[#31415E] whitespace-pre-line">
+                      <div className="mt-3 space-y-3 text-sm leading-7 text-[#3a3525] whitespace-pre-line">
                         {item.topics[4].theoreticalContent}
                       </div>
                     </div>
                   )}
 
-                  <div className="mt-6 rounded-2xl border border-[#DCE3EF] bg-[#F6F8FC] p-5">
-                    <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
-                      <Lightbulb className="h-4 w-4 text-[#2D6BFF]" />
+                  <div className="mt-6 rounded-2xl border border-[#d9cda0] bg-[#f7f0d4] p-5">
+                    <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#28391e]">
+                      <Lightbulb className="h-4 w-4 text-[#fe822f]" />
                       Idea Clave
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-[#31415E] font-semibold">
+                    <p className="mt-2 text-sm leading-6 text-[#3a3525] font-semibold">
                       {currentTopic.keyTakeaway}
                     </p>
                   </div>
 
                   {currentTopic.scenarioTitle && currentTopic.scenarioContext && (
-                    <div className="mt-6 rounded-2xl border-l-4 border-[#2D6BFF] bg-[#F4F8FF] p-5 space-y-3">
-                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
+                    <div className="mt-6 rounded-2xl border-l-4 border-[#fe822f] bg-[#fbf6e2] p-5 space-y-3">
+                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#28391e]">
                         Ejemplo Resuelto · {currentTopic.scenarioTitle}
                       </p>
-                      <p className="text-sm leading-6 text-[#293B5C]">
+                      <p className="text-sm leading-6 text-[#2b2719]">
                         <strong>Situación:</strong> {currentTopic.scenarioContext}
                       </p>
                       {currentTopic.options &&
                         currentTopic.correctOptionIndex !== undefined &&
                         currentTopic.options[currentTopic.correctOptionIndex] && (
-                          <div className="rounded-xl bg-white/90 border border-[#CBEAD9] p-3.5 text-sm leading-6 text-[#065F46]">
+                          <div className="rounded-xl bg-white/90 border border-[#bfd1b0] p-3.5 text-sm leading-6 text-[#28391e]">
                             <strong>✓ Cómo actúa el líder según este enfoque:</strong>{" "}
                             {currentTopic.options[currentTopic.correctOptionIndex]}
                           </div>
@@ -2249,7 +2302,7 @@ function EvaluationView({
               {/* DISCIPLINA 1: LIDERAZGO NIVEL 5 (Ejercicio práctico) */}
               {isLeadership && isFinal && (
                 <div>
-                  <div className="mb-6 rounded-2xl border border-[#DCE3EF] bg-[#EAF0FF] p-4 text-xs sm:text-sm text-[#0F3B8F] leading-6">
+                  <div className="mb-6 rounded-2xl border border-[#d9cda0] bg-[#fff1e5] p-4 text-xs sm:text-sm text-[#28391e] leading-6">
                     <strong>¿Qué debes hacer en este ejercicio práctico?</strong> Lee el caso
                     práctico a continuación y aplica los conceptos estudiados en los 4 contenidos
                     anteriores respondiendo las dos preguntas de desarrollo. Al finalizar, haz clic
@@ -2257,20 +2310,20 @@ function EvaluationView({
                   </div>
 
                   {currentTopic.scenarioTitle && currentTopic.scenarioContext && (
-                    <div className="mb-6 rounded-2xl border-l-4 border-[#A855F7] bg-[#F8F1FF] p-5">
-                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#8C39D7]">
+                    <div className="mb-6 rounded-2xl border-l-4 border-[#4a3649] bg-[#f4eef3] p-5">
+                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#4a3649]">
                         Caso Práctico · {currentTopic.scenarioTitle}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-[#293B5C] font-medium">
+                      <p className="mt-2 text-sm leading-6 text-[#2b2719] font-medium">
                         {currentTopic.scenarioContext}
                       </p>
                     </div>
                   )}
 
-                  <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#2D6BFF]">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#fe822f]">
                     Ejercicio Práctico Final · Submódulo 0{item.id}
                   </p>
-                  <h1 className="mt-2 text-lg font-extrabold leading-snug text-[#10264F] md:text-2xl">
+                  <h1 className="mt-2 text-lg font-extrabold leading-snug text-[#1a180f] md:text-2xl">
                     {currentTopic.questionPrompt}
                   </h1>
 
@@ -2288,8 +2341,8 @@ function EvaluationView({
               {/* DISCIPLINAS 2 Y 3: COMUNICACIÓN Y TOMA DE DECISIONES (NIVELES 1 AL 4) */}
               {!isLeadership && !isFinal && (
                 <div className="space-y-6">
-                  <div className="rounded-xl border border-[#DCE3EF] bg-[#F8FAFD] px-4 py-3 text-xs font-semibold text-[#4A5870] flex items-center gap-2.5">
-                    <BookOpen className="h-4 w-4 shrink-0 text-[#2D6BFF]" />
+                  <div className="rounded-xl border border-[#d9cda0] bg-[#f7f0d4] px-4 py-3 text-xs font-semibold text-[#59533f] flex items-center gap-2.5">
+                    <BookOpen className="h-4 w-4 shrink-0 text-[#fe822f]" />
                     <span>
                       <strong>{currentTopic.difficultyLabel} ({level}/5):</strong> Lee con atención
                       los fundamentos conceptuales y el escenario de aplicación. Luego redacta tu
@@ -2298,46 +2351,46 @@ function EvaluationView({
                   </div>
 
                   <div>
-                    <h1 className="text-xl font-extrabold leading-snug tracking-[-0.02em] text-[#10264F] md:text-2xl">
+                    <h1 className="text-xl font-extrabold leading-snug tracking-[-0.02em] text-[#1a180f] md:text-2xl">
                       {currentTopic.topicTitle}
                     </h1>
                   </div>
 
                   {/* Fundamentación Teórica */}
-                  <div className="space-y-3 text-sm leading-7 text-[#31415E] whitespace-pre-line bg-[#FBFCFE] p-5 rounded-2xl border border-[#E9EEF6]">
+                  <div className="space-y-3 text-sm leading-7 text-[#3a3525] whitespace-pre-line bg-[#fdfaf0] p-5 rounded-2xl border border-[#e6daa6]">
                     {currentTopic.theoreticalContent}
                   </div>
 
                   {/* Idea Clave */}
-                  <div className="rounded-2xl border border-[#DCE3EF] bg-[#F6F8FC] p-5">
-                    <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
-                      <Lightbulb className="h-4 w-4 text-[#2D6BFF]" />
+                  <div className="rounded-2xl border border-[#d9cda0] bg-[#f7f0d4] p-5">
+                    <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#28391e]">
+                      <Lightbulb className="h-4 w-4 text-[#fe822f]" />
                       Idea Clave / Concepto Esencial
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-[#31415E] font-semibold">
+                    <p className="mt-2 text-sm leading-6 text-[#3a3525] font-semibold">
                       {currentTopic.keyTakeaway}
                     </p>
                   </div>
 
                   {/* Contexto del caso / escenario */}
                   {currentTopic.scenarioContext && (
-                    <div className="rounded-2xl border-l-4 border-[#2D6BFF] bg-[#F4F8FF] p-5">
-                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F]">
+                    <div className="rounded-2xl border-l-4 border-[#fe822f] bg-[#fbf6e2] p-5">
+                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#28391e]">
                         {currentTopic.scenarioTitle || "Contexto de Aplicación"}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-[#293B5C] whitespace-pre-line">
+                      <p className="mt-2 text-sm leading-6 text-[#2b2719] whitespace-pre-line">
                         {currentTopic.scenarioContext}
                       </p>
                     </div>
                   )}
 
                   {/* Consigna y Pregunta de desarrollo */}
-                  <div className="rounded-2xl border border-[#CBD5E1] bg-white p-5 shadow-sm">
-                    <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F] mb-2">
-                      <MessageCircleQuestion className="h-4 w-4 text-[#0F3B8F]" />
+                  <div className="rounded-2xl border border-[#cfc18e] bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#28391e] mb-2">
+                      <MessageCircleQuestion className="h-4 w-4 text-[#28391e]" />
                       Consigna Evaluativa · {currentTopic.difficultyLabel}
                     </div>
-                    <h2 className="text-base font-extrabold text-[#10264F] md:text-lg">
+                    <h2 className="text-base font-extrabold text-[#1a180f] md:text-lg">
                       {currentTopic.questionPrompt}
                     </h2>
 
@@ -2363,9 +2416,9 @@ function EvaluationView({
                               `Revisa mi respuesta para el Nivel ${level} (${currentTopic.difficultyLabel}) del Eje "${item.name}" en ${discipline === "communication" ? "Comunicación Educativa" : "Toma de Decisiones"}. La consigna fue: "${currentTopic.questionPrompt}". Mi respuesta es: "${answer}". Bríndame retroalimentación pedagógica y sugerencias de mejora según el marco teórico de ${currentTopic.authorCitation}.`,
                             )
                           }
-                          className="inline-flex items-center gap-1.5 rounded-full bg-[#EAF0FF] px-4 py-2 text-xs font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF] transition-colors"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[#fff1e5] px-4 py-2 text-xs font-extrabold text-[#28391e] hover:bg-[#ffe2c7] transition-colors"
                         >
-                          <Bot className="h-3.5 w-3.5 text-[#2D6BFF]" />
+                          <Bot className="h-3.5 w-3.5 text-[#fe822f]" />
                           Pedir retroalimentación a LideraBot sobre mi respuesta
                         </button>
                       </div>
@@ -2374,11 +2427,11 @@ function EvaluationView({
 
                   {/* Respuesta Modelo Pedagógica (especialmente para Toma de Decisiones) */}
                   {currentTopic.modelAnswer && (
-                    <div className="rounded-2xl border border-[#DCE3EF] bg-[#F7FAFD] p-4">
+                    <div className="rounded-2xl border border-[#d9cda0] bg-[#f7f0d4] p-4">
                       <button
                         type="button"
                         onClick={() => setShowModelAnswer((v) => !v)}
-                        className="flex w-full items-center justify-between text-left text-xs font-bold text-[#0F3B8F] hover:text-[#2D6BFF]"
+                        className="flex w-full items-center justify-between text-left text-xs font-bold text-[#28391e] hover:text-[#fe822f]"
                       >
                         <span className="flex items-center gap-2">
                           <Lightbulb className="h-4 w-4 text-[#F59E0B]" />
@@ -2394,7 +2447,7 @@ function EvaluationView({
                         />
                       </button>
                       {showModelAnswer && (
-                        <div className="mt-3 pt-3 border-t border-[#E2E8F0] text-xs leading-6 text-[#2D3748] whitespace-pre-line bg-white rounded-xl p-4 border border-[#E2E8F0]">
+                        <div className="mt-3 pt-3 border-t border-[#d9cda0] text-xs leading-6 text-[#2b2719] whitespace-pre-line bg-white rounded-xl p-4 border border-[#d9cda0]">
                           {currentTopic.modelAnswer}
                         </div>
                       )}
@@ -2406,28 +2459,28 @@ function EvaluationView({
               {/* DISCIPLINAS 2 Y 3: NIVEL 5 (PREGUNTA SELECCIÓN MÚLTIPLE TIPO SABER PRO) */}
               {!isLeadership && isFinal && (
                 <div className="space-y-6">
-                  <div className="rounded-2xl border border-[#DCE3EF] bg-[#EAF0FF] p-4 text-xs sm:text-sm text-[#0F3B8F] leading-6">
+                  <div className="rounded-2xl border border-[#d9cda0] bg-[#fff1e5] p-4 text-xs sm:text-sm text-[#28391e] leading-6">
                     <strong>Pregunta Evaluativa Tipo Saber Pro (Nivel 5 de 5):</strong> Lee con
                     atención la situación y el enunciado pedagógico. Selecciona la opción que
                     consideres correcta y revisa la justificación oficial de la clave.
                   </div>
 
                   {currentTopic.scenarioContext && (
-                    <div className="rounded-2xl border-l-4 border-[#7C3AED] bg-[#FAF5FF] p-5">
-                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#7C3AED]">
+                    <div className="rounded-2xl border-l-4 border-[#4a3649] bg-[#f4eef3] p-5">
+                      <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#4a3649]">
                         {currentTopic.scenarioTitle || "Contexto Saber Pro"}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-[#293B5C] font-medium whitespace-pre-line">
+                      <p className="mt-2 text-sm leading-6 text-[#2b2719] font-medium whitespace-pre-line">
                         {currentTopic.scenarioContext}
                       </p>
                     </div>
                   )}
 
                   <div>
-                    <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#2D6BFF]">
+                    <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#fe822f]">
                       Pregunta Saber Pro · {item.name}
                     </p>
-                    <h1 className="mt-2 text-lg font-extrabold leading-snug text-[#10264F] md:text-xl">
+                    <h1 className="mt-2 text-lg font-extrabold leading-snug text-[#1a180f] md:text-xl">
                       {currentTopic.questionPrompt}
                     </h1>
                   </div>
@@ -2442,12 +2495,12 @@ function EvaluationView({
                   </div>
 
                   {answer && currentTopic.explanation && (
-                    <div className="rounded-2xl border border-[#CBD5E1] bg-[#F8FAFC] p-5">
-                      <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#0F3B8F] mb-2">
+                    <div className="rounded-2xl border border-[#cfc18e] bg-[#f7f0d4] p-5">
+                      <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.15em] text-[#28391e] mb-2">
                         <Lightbulb className="h-4 w-4 text-[#F59E0B]" />
                         Justificación Pedagógica de la Clave
                       </div>
-                      <p className="text-xs sm:text-sm leading-6 text-[#334155] whitespace-pre-line">
+                      <p className="text-xs sm:text-sm leading-6 text-[#3a3525] whitespace-pre-line">
                         {currentTopic.explanation}
                       </p>
 
@@ -2459,9 +2512,9 @@ function EvaluationView({
                               `Explícame con más profundidad por qué en la pregunta Saber Pro del Eje "${item.name}" la opción correcta es la seleccionada y por qué las demás son distractores inválidos según ${currentTopic.authorCitation}. La pregunta fue: "${currentTopic.questionPrompt}".`,
                             )
                           }
-                          className="inline-flex items-center gap-1.5 rounded-full bg-[#EAF0FF] px-4 py-2 text-xs font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF] transition-colors"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[#fff1e5] px-4 py-2 text-xs font-extrabold text-[#28391e] hover:bg-[#ffe2c7] transition-colors"
                         >
-                          <Bot className="h-3.5 w-3.5 text-[#2D6BFF]" />
+                          <Bot className="h-3.5 w-3.5 text-[#fe822f]" />
                           Pedir a LideraBot profundizar en esta pregunta Saber Pro
                         </button>
                       </div>
@@ -2471,7 +2524,7 @@ function EvaluationView({
               )}
 
               {/* Botones de Navegación Inferior */}
-              <div className="mt-8 flex flex-col-reverse items-center justify-between gap-4 border-t border-[#E3E8F0] pt-6 sm:flex-row">
+              <div className="mt-8 flex flex-col-reverse items-center justify-between gap-4 border-t border-[#d9cda0] pt-6 sm:flex-row">
                 <button
                   onClick={() => {
                     if (level > 1) {
@@ -2480,7 +2533,7 @@ function EvaluationView({
                     }
                   }}
                   disabled={level === 1}
-                  className="inline-flex items-center gap-2 text-sm font-bold text-[#65728A] disabled:opacity-30"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-[#6e674f] disabled:opacity-30"
                 >
                   <ArrowLeft className="h-4 w-4" /> Nivel anterior
                 </button>
@@ -2490,7 +2543,7 @@ function EvaluationView({
                     onContinue();
                   }}
                   disabled={!canContinue}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0F3B8F] px-6 py-3.5 font-bold text-white shadow-md transition-all hover:bg-[#174AA6] disabled:cursor-not-allowed disabled:bg-[#B8C2D1] sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28391e] px-6 py-3.5 font-bold text-white shadow-md transition-all hover:bg-[#1e2c16] disabled:cursor-not-allowed disabled:bg-[#c4b57e] sm:w-auto"
                 >
                   {isFinal
                     ? "Finalizar submódulo y desbloquear siguiente"
@@ -2538,24 +2591,24 @@ function MultipleChoice({
             className={cn(
               "flex w-full items-start gap-4 rounded-2xl border p-4 text-left transition-all md:p-5",
               selected
-                ? "border-[#2D6BFF] bg-[#EEF3FF] shadow-[0_0_0_3px_rgba(45,107,255,.10)]"
-                : "border-[#DCE3EF] bg-white hover:border-[#9DB6EF] hover:bg-[#FAFBFE]",
+                ? "border-[#fe822f] bg-[#fff1e5] shadow-[0_0_0_3px_rgba(45,107,255,.10)]"
+                : "border-[#d9cda0] bg-white hover:border-[#f3b689] hover:bg-[#fdfaf0]",
             )}
           >
             <span
               className={cn(
                 "grid h-8 w-8 shrink-0 place-items-center rounded-full border text-sm font-extrabold",
                 selected
-                  ? "border-[#2D6BFF] bg-[#2D6BFF] text-white"
-                  : "border-[#C9D2E1] text-[#68758B]",
+                  ? "border-[#fe822f] bg-[#fe822f] text-white"
+                  : "border-[#cfc18e] text-[#6e674f]",
               )}
             >
               {String.fromCharCode(65 + index)}
             </span>
-            <span className="pt-1 text-sm font-semibold leading-6 text-[#31415E] md:text-base">
+            <span className="pt-1 text-sm font-semibold leading-6 text-[#3a3525] md:text-base">
               {option}
             </span>
-            {selected && <Check className="ml-auto mt-1.5 h-5 w-5 shrink-0 text-[#2D6BFF]" />}
+            {selected && <Check className="ml-auto mt-1.5 h-5 w-5 shrink-0 text-[#fe822f]" />}
           </button>
         );
       })}
@@ -2565,8 +2618,8 @@ function MultipleChoice({
           className={cn(
             "mt-4 rounded-2xl border p-4 text-sm leading-6",
             isCorrectSelection
-              ? "border-[#A7F3D0] bg-[#ECFDF5] text-[#065F46]"
-              : "border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]",
+              ? "border-[#bfd1b0] bg-[#edf3e8] text-[#28391e]"
+              : "border-[#f2c68c] bg-[#fbf4d4] text-[#7a3608]",
           )}
         >
           {isCorrectSelection ? (
@@ -2606,20 +2659,20 @@ function OpenResponse({
     return (
       <div className="space-y-5">
         <label className="block">
-          <span className="mb-2 block text-sm font-extrabold text-[#31415E]">{prompt1}</span>
+          <span className="mb-2 block text-sm font-extrabold text-[#3a3525]">{prompt1}</span>
           <textarea
             value={part1}
             onChange={(event) => onChange(`${event.target.value}|||${part2}`)}
-            className="min-h-32 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-4 text-sm leading-6 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
+            className="min-h-32 w-full resize-y rounded-2xl border border-[#cfc18e] bg-[#fdfaf0] p-4 text-sm leading-6 outline-none transition focus:border-[#fe822f] focus:ring-4 focus:ring-[#fe822f]/10"
             placeholder="Describe la estrategia y decisión que tomarías..."
           />
         </label>
         <label className="block">
-          <span className="mb-2 block text-sm font-extrabold text-[#31415E]">{prompt2}</span>
+          <span className="mb-2 block text-sm font-extrabold text-[#3a3525]">{prompt2}</span>
           <textarea
             value={part2}
             onChange={(event) => onChange(`${part1}|||${event.target.value}`)}
-            className="min-h-36 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-4 text-sm leading-6 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
+            className="min-h-36 w-full resize-y rounded-2xl border border-[#cfc18e] bg-[#fdfaf0] p-4 text-sm leading-6 outline-none transition focus:border-[#fe822f] focus:ring-4 focus:ring-[#fe822f]/10"
             placeholder="Sustenta tu respuesta conectando con los conceptos de los autores estudiados..."
           />
         </label>
@@ -2631,10 +2684,10 @@ function OpenResponse({
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-44 w-full resize-y rounded-2xl border border-[#C9D2E1] bg-[#FBFCFE] p-5 leading-7 outline-none transition focus:border-[#2D6BFF] focus:ring-4 focus:ring-[#2D6BFF]/10"
+        className="min-h-44 w-full resize-y rounded-2xl border border-[#cfc18e] bg-[#fdfaf0] p-5 leading-7 outline-none transition focus:border-[#fe822f] focus:ring-4 focus:ring-[#fe822f]/10"
         placeholder={placeholder || "Escribe aquí tu análisis basándote en los conceptos pedagógicos..."}
       />
-      <span className="mt-2 block text-right text-xs text-[#7A879B]">
+      <span className="mt-2 block text-right text-xs text-[#787058]">
         {value.length} caracteres · Guardado automático
       </span>
     </label>
@@ -2677,33 +2730,33 @@ function CompleteView({
 
   return (
     <main className="mx-auto max-w-[900px] px-5 py-12 lg:px-8 lg:py-16">
-      <section className="overflow-hidden rounded-[28px] border border-[#DCE3EF] bg-white shadow-[0_18px_50px_rgba(29,55,96,.09)]">
-        <div className="bg-[#0F3B8F] px-6 py-11 text-center text-white md:px-10">
-          <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-[#FACC15] text-[#0F3B8F] shadow-[0_0_0_10px_rgba(255,255,255,.08)]">
+      <section className="overflow-hidden rounded-[28px] border border-[#d9cda0] bg-white shadow-[0_18px_50px_rgba(29,55,96,.09)]">
+        <div className="bg-[#28391e] px-6 py-11 text-center text-white md:px-10">
+          <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-[#fe822f] text-[#28391e] shadow-[0_0_0_10px_rgba(255,255,255,.08)]">
             <CheckCircle2 className="h-10 w-10" />
           </span>
-          <Pill className="mt-7 bg-white/10 text-blue-100">
+          <Pill className="mt-7 bg-white/10 text-[#efe6bf]">
             {modLabel} 0{item.id} completado satisfactoriamente
           </Pill>
           <h1 className="mt-4 text-3xl font-extrabold tracking-[-0.04em] md:text-4xl">
             ¡Escalón superado!
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl leading-7 text-blue-100">
+          <p className="mx-auto mt-3 max-w-2xl leading-7 text-[#efe6bf]">
             {item.name} · {item.authorsSummary}
           </p>
         </div>
         <div className="p-6 md:p-9">
-          <div className="rounded-2xl bg-[#F6F8FC] p-5">
+          <div className="rounded-2xl bg-[#f7f0d4] p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#64728A]">
+                <p className="text-xs font-extrabold uppercase tracking-[0.15em] text-[#6e674f]">
                   Registro de actividad
                 </p>
-                <p className="mt-2 font-extrabold text-[#10264F]">
+                <p className="mt-2 font-extrabold text-[#1a180f]">
                   {savedCount} de 5 niveles completados satisfactoriamente
                 </p>
               </div>
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#E7F8F1] text-[#10856B]">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#e2ecd9] text-[#385229]">
                 <Save className="h-6 w-6" />
               </span>
             </div>
@@ -2718,7 +2771,7 @@ function CompleteView({
                     key={number}
                     className={cn(
                       "rounded-lg py-2 text-center text-xs font-extrabold",
-                      done ? "bg-[#DFF5ED] text-[#0E785F]" : "bg-[#E8ECF2] text-[#79869A]",
+                      done ? "bg-[#e2ecd9] text-[#28391e]" : "bg-[#e2d59a] text-[#787058]",
                     )}
                   >
                     N{number} {done && "✓"}
@@ -2729,16 +2782,16 @@ function CompleteView({
           </div>
 
           {nextModule && (
-            <div className="mt-5 rounded-2xl border border-[#CBEAD9] bg-[#F2FBF7] p-5 flex flex-wrap items-center justify-between gap-4">
+            <div className="mt-5 rounded-2xl border border-[#bfd1b0] bg-[#edf3e8] p-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#DFF5ED] text-[#0E785F]">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#e2ecd9] text-[#28391e]">
                   <Unlock className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-[#0E785F]">
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-[#28391e]">
                     Nuevo {modLabel} Desbloqueado en tu Ruta:
                   </p>
-                  <p className="text-sm font-extrabold text-[#10264F]">
+                  <p className="text-sm font-extrabold text-[#1a180f]">
                     {modLabel} 0{nextModule.id}: {nextModule.name}
                   </p>
                 </div>
@@ -2749,9 +2802,9 @@ function CompleteView({
           <div className="mt-5">
             <button
               onClick={onAskAiFeedback}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#2D6BFF] bg-[#EAF0FF] p-4 text-sm font-extrabold text-[#0F3B8F] hover:bg-[#DCE7FF]"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#fe822f] bg-[#fff1e5] p-4 text-sm font-extrabold text-[#28391e] hover:bg-[#ffe2c7]"
             >
-              <Bot className="h-5 w-5 text-[#2D6BFF]" />
+              <Bot className="h-5 w-5 text-[#fe822f]" />
               Pedir a LideraBot retroalimentación de mis respuestas en este {modLabel.toLowerCase()}
             </button>
           </div>
@@ -2759,19 +2812,19 @@ function CompleteView({
           <div className="mt-7 grid gap-3 sm:grid-cols-3">
             <button
               onClick={onReview}
-              className="rounded-xl border border-[#BAC6D8] px-4 py-3 text-sm font-extrabold text-[#0F3B8F] hover:bg-[#F4F7FB]"
+              className="rounded-xl border border-[#c4b57e] px-4 py-3 text-sm font-extrabold text-[#28391e] hover:bg-[#f7f0d4]"
             >
               Revisar respuestas
             </button>
             <button
               onClick={onHome}
-              className="rounded-xl border border-[#BAC6D8] px-4 py-3 text-sm font-extrabold text-[#0F3B8F] hover:bg-[#F4F7FB]"
+              className="rounded-xl border border-[#c4b57e] px-4 py-3 text-sm font-extrabold text-[#28391e] hover:bg-[#f7f0d4]"
             >
               Volver a módulos
             </button>
             <button
               onClick={onNext}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0F3B8F] px-4 py-3 text-sm font-extrabold text-white"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#28391e] px-4 py-3 text-sm font-extrabold text-white"
             >
               {nextModule
                 ? `Ir al ${modLabel} 0${nextModule.id} Desbloqueado`
@@ -2808,7 +2861,7 @@ function FoundationsView({
       shortTitle: "Liderazgo",
       tagline:
         "Este módulo integra los enfoques clásicos, transformacionales, situacionales y emocionales de liderazgo.",
-      color: "#0F3B8F",
+      color: "#28391e",
       icon: Sparkles,
     };
 
@@ -2830,13 +2883,13 @@ function FoundationsView({
     <main className="mx-auto max-w-[1040px] px-5 py-8 lg:px-8 lg:py-10">
       <button
         onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F] transition-colors"
+        className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#59533f] hover:text-[#28391e] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Volver al inicio
       </button>
 
       {/* Tabs Selector de Módulos para las Referencias */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-2xl bg-[#e2d59a] p-1.5 border border-[#d9cda0]">
         {(discList || disciplines).map((d) => {
           const Icon = d.icon;
           const isActive = activeTab === d.key;
@@ -2847,8 +2900,8 @@ function FoundationsView({
               className={cn(
                 "flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-xs sm:text-sm font-extrabold transition-all",
                 isActive
-                  ? "bg-white text-[#0F3B8F] shadow-sm border border-[#DCE3EF]"
-                  : "text-[#5A6A85] hover:text-[#0F3B8F] hover:bg-white/60",
+                  ? "bg-white text-[#28391e] shadow-sm border border-[#d9cda0]"
+                  : "text-[#59533f] hover:text-[#28391e] hover:bg-white/60",
               )}
             >
               <Icon
@@ -2862,38 +2915,60 @@ function FoundationsView({
       </div>
 
       {/* Banner Principal del Módulo Seleccionado */}
-      <section
-        className="rounded-[28px] p-6 text-white md:p-8 transition-colors shadow-sm"
-        style={{ backgroundColor: activeDisciplineInfo.color }}
-      >
-        <Pill className="mb-3 bg-white/15 text-white">
-          {activeDisciplineInfo.title}
-        </Pill>
-        <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
-          Referencias Académicas y Fundamentación Teórica
-        </h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-blue-100 md:text-base">
-          {activeTab === "leadership" &&
-            "Este módulo integra enfoques esenciales de liderazgo (transformacional, participativo, coaching, delegativo y situacional) para guiar equipos de alto rendimiento."}
-          {activeTab === "communication" &&
-            "Fundamentación epistemológica de la comunicación educativa: mediación dialógica, escucha empática, teoría de sistemas comunicacionales y alfabetización mediática crítica."}
-          {activeTab === "decision" &&
-            "Corpus teórico de la ciencia de la decisión: racionalidad limitada, matrices multicriterio (AHP / Kepner-Tregoe), heurísticas cognitivas, modelos de crisis (Cynefin) y ética reflexiva."}
-        </p>
-      </section>
+      {(() => {
+        const isLightBanner = activeDisciplineInfo.color.toLowerCase() === "#fe822f";
+        return (
+          <section
+            className={cn(
+              "rounded-[28px] p-6 md:p-8 transition-colors shadow-sm",
+              isLightBanner ? "text-[#1a180f]" : "text-white",
+            )}
+            style={{ backgroundColor: activeDisciplineInfo.color }}
+          >
+            <Pill
+              className={cn(
+                "mb-3",
+                isLightBanner
+                  ? "bg-[#1a180f]/10 text-[#1a180f]"
+                  : "bg-white/15 text-white",
+              )}
+            >
+              {activeDisciplineInfo.title}
+            </Pill>
+            <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+              Referencias Académicas y Fundamentación Teórica
+            </h1>
+            <p
+              className={cn(
+                "mt-3 max-w-3xl text-sm leading-6 md:text-base",
+                isLightBanner ? "text-[#2b2719]" : "text-[#efe6bf]",
+              )}
+            >
+              {activeTab === "leadership" &&
+                "Este módulo integra enfoques esenciales de liderazgo (transformacional, participativo, coaching, delegativo y situacional) para guiar equipos de alto rendimiento."}
+              {activeTab === "communication" &&
+                "Fundamentación epistemológica de la comunicación educativa: mediación dialógica, escucha empática, teoría de sistemas comunicacionales y alfabetización mediática crítica."}
+              {activeTab === "decision" &&
+                "Corpus teórico de la ciencia de la decisión: racionalidad limitada, matrices multicriterio (AHP / Kepner-Tregoe), heurísticas cognitivas, modelos de crisis (Cynefin) y ética reflexiva."}
+              {activeTab === "teamwork" &&
+                "Respaldos teóricos del trabajo en equipo: etapas de desarrollo grupal (Tuckman), dinámica de grupos (Lewin), aprendizaje social (Bandura), cooperación constructiva (Deutsch) y diseño de equipos efectivos (Hackman)."}
+            </p>
+          </section>
+        );
+      })()}
 
       {/* Grid de Referencias */}
-      <section className="mt-6 rounded-[24px] border border-[#DCE3EF] bg-white p-6 md:p-8 shadow-sm">
-        <div className="flex items-center justify-between gap-4 border-b border-[#E3E8F0] pb-4 mb-6">
+      <section className="mt-6 rounded-[24px] border border-[#d9cda0] bg-white p-6 md:p-8 shadow-sm">
+        <div className="flex items-center justify-between gap-4 border-b border-[#d9cda0] pb-4 mb-6">
           <div>
-            <h2 className="text-xl font-extrabold text-[#10264F]">
+            <h2 className="text-xl font-extrabold text-[#1a180f]">
               Corpus Teórico · {activeDisciplineInfo.shortTitle}
             </h2>
-            <p className="text-xs text-[#64728A] mt-1">
+            <p className="text-xs text-[#6e674f] mt-1">
               {currentReferences.length} investigaciones seminales y marcos de referencia
             </p>
           </div>
-          <span className="rounded-xl bg-[#F0F4FA] px-3 py-1.5 text-xs font-bold text-[#0F3B8F]">
+          <span className="rounded-xl bg-[#f4ebc6] px-3 py-1.5 text-xs font-bold text-[#28391e]">
             {activeDisciplineInfo.shortTitle}
           </span>
         </div>
@@ -2902,33 +2977,33 @@ function FoundationsView({
           {currentReferences.map((foundation) => (
             <article
               key={foundation.authors}
-              className="rounded-2xl border border-[#DCE3EF] bg-[#F8FAFD] p-5 flex flex-col justify-between hover:border-[#B5C8E8] transition-colors"
+              className="rounded-2xl border border-[#d9cda0] bg-[#f7f0d4] p-5 flex flex-col justify-between hover:border-[#d9cda0] transition-colors"
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-base font-extrabold text-[#10264F] leading-tight">
+                  <h3 className="text-base font-extrabold text-[#1a180f] leading-tight">
                     {foundation.authors}
                   </h3>
-                  <span className="shrink-0 rounded-lg bg-white border border-[#DCE3EF] px-2 py-0.5 text-[11px] font-bold text-[#2D6BFF]">
+                  <span className="shrink-0 rounded-lg bg-white border border-[#d9cda0] px-2 py-0.5 text-[11px] font-bold text-[#fe822f]">
                     {foundation.year}
                   </span>
                 </div>
 
                 <div className="mt-3">
-                  <p className="text-xs font-bold text-[#0F3B8F] uppercase tracking-wider text-[10px]">
+                  <p className="text-xs font-bold text-[#28391e] uppercase tracking-wider text-[10px]">
                     Aporte Conceptual:
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-[#334155]">
+                  <p className="mt-1 text-xs leading-5 text-[#3a3525]">
                     {foundation.contribution}
                   </p>
                 </div>
 
                 {foundation.justification && (
-                  <div className="mt-3 rounded-xl bg-white/80 border border-[#E2E8F0] p-3">
-                    <p className="text-[10px] font-bold text-[#64728A] uppercase tracking-wider">
+                  <div className="mt-3 rounded-xl bg-white/80 border border-[#d9cda0] p-3">
+                    <p className="text-[10px] font-bold text-[#6e674f] uppercase tracking-wider">
                       Relevancia en el Módulo:
                     </p>
-                    <p className="mt-1 text-xs leading-5 text-[#475569]">
+                    <p className="mt-1 text-xs leading-5 text-[#59533f]">
                       {foundation.justification}
                     </p>
                   </div>
@@ -2936,8 +3011,8 @@ function FoundationsView({
               </div>
 
               {foundation.links && foundation.links.length > 0 && (
-                <div className="mt-4 border-t border-[#E4EAF3] pt-3 space-y-1.5">
-                  <p className="text-[10px] font-extrabold text-[#64728A] uppercase tracking-wider mb-1">
+                <div className="mt-4 border-t border-[#dfd3a6] pt-3 space-y-1.5">
+                  <p className="text-[10px] font-extrabold text-[#6e674f] uppercase tracking-wider mb-1">
                     Lecturas y Recursos Académicos:
                   </p>
                   {foundation.links.map((link) => (
@@ -2946,7 +3021,7 @@ function FoundationsView({
                       href={link.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-2 text-xs font-bold text-[#2D6BFF] hover:underline"
+                      className="flex items-center gap-2 text-xs font-bold text-[#fe822f] hover:underline"
                     >
                       <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{link.label}</span>
@@ -3014,14 +3089,14 @@ function ResponsesView({
       <div className="mb-6 flex items-center justify-between">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-sm font-bold text-[#53627A] hover:text-[#0F3B8F] transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-bold text-[#59533f] hover:text-[#28391e] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Volver
         </button>
       </div>
 
       {/* Tabs Selector de Disciplinas */}
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-2xl bg-[#EEF2F8] p-1.5 border border-[#DCE3EF]">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 rounded-2xl bg-[#e2d59a] p-1.5 border border-[#d9cda0]">
         {discList.map((d) => {
           const Icon = d.icon;
           const isActive = currentDiscipline === d.key;
@@ -3035,8 +3110,8 @@ function ResponsesView({
               className={cn(
                 "flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-xs sm:text-sm font-extrabold transition-all",
                 isActive
-                  ? "bg-white text-[#0F3B8F] shadow-sm border border-[#DCE3EF]"
-                  : "text-[#5A6A85] hover:text-[#0F3B8F] hover:bg-white/60",
+                  ? "bg-white text-[#28391e] shadow-sm border border-[#d9cda0]"
+                  : "text-[#59533f] hover:text-[#28391e] hover:bg-white/60",
               )}
             >
               <Icon
@@ -3050,23 +3125,23 @@ function ResponsesView({
       </div>
 
       {/* Progreso General de la Disciplina */}
-      <section className="mb-6 rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+      <section className="mb-6 rounded-2xl border border-[#d9cda0] bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#64728A]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#6e674f]">
               Progreso en {activeDiscipline.shortTitle}
             </span>
-            <h1 className="text-xl font-bold text-[#10264F]">{activeDiscipline.title}</h1>
+            <h1 className="text-xl font-bold text-[#1a180f]">{activeDiscipline.title}</h1>
           </div>
-          <span className="text-2xl font-black text-[#2D6BFF]">{overallProgress}%</span>
+          <span className="text-2xl font-black text-[#fe822f]">{overallProgress}%</span>
         </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-[#EDF2F7]">
+        <div className="h-3 w-full overflow-hidden rounded-full bg-[#ebe0b2]">
           <div
-            className="h-full rounded-full bg-[#2D6BFF] transition-all duration-500"
+            className="h-full rounded-full bg-[#fe822f] transition-all duration-500"
             style={{ width: `${overallProgress}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-[#718096]">
+        <p className="mt-2 text-xs text-[#6e674f]">
           {totalStepsDone} de 25 niveles completados
         </p>
       </section>
@@ -3083,7 +3158,7 @@ function ResponsesView({
           return (
             <div
               key={mod.id}
-              className="rounded-xl border border-[#E2E8F0] bg-white p-5 transition-all shadow-sm"
+              className="rounded-xl border border-[#d9cda0] bg-white p-5 transition-all shadow-sm"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -3091,17 +3166,17 @@ function ResponsesView({
                     className={cn(
                       "flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold",
                       completedLevels === 5
-                        ? "bg-[#DFF5ED] text-[#0E785F]"
+                        ? "bg-[#e2ecd9] text-[#28391e]"
                         : completedLevels > 0
-                          ? "bg-[#EAF0FF] text-[#2457D5]"
-                          : "bg-[#F1F3F7] text-[#65728A]",
+                          ? "bg-[#fff1e5] text-[#e66e1d]"
+                          : "bg-[#efe5b8] text-[#6e674f]",
                     )}
                   >
                     0{mod.id}
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-[#10264F]">{mod.name}</h2>
-                    <span className="text-xs font-semibold text-[#64728A]">
+                    <h2 className="text-base font-bold text-[#1a180f]">{mod.name}</h2>
+                    <span className="text-xs font-semibold text-[#6e674f]">
                       {completedLevels === 5
                         ? "Completado (5/5 niveles)"
                         : completedLevels > 0
@@ -3112,7 +3187,7 @@ function ResponsesView({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-black text-[#10264F]">{progress}%</span>
+                  <span className="text-sm font-black text-[#1a180f]">{progress}%</span>
                   <button
                     onClick={() => {
                       const modWithProg: ModuleWithProgress = {
@@ -3135,7 +3210,7 @@ function ResponsesView({
                         completedLevels < 5 ? completedLevels + 1 : 1,
                       );
                     }}
-                    className="rounded-lg bg-[#F1F4F9] px-3 py-1.5 text-xs font-bold text-[#0F3B8F] hover:bg-[#E2E8F0] transition-colors"
+                    className="rounded-lg bg-[#efe5b8] px-3 py-1.5 text-xs font-bold text-[#28391e] hover:bg-[#d9cda0] transition-colors"
                   >
                     Ir al módulo
                   </button>
@@ -3143,11 +3218,11 @@ function ResponsesView({
               </div>
 
               {/* Barra de progreso */}
-              <div className="mt-3.5 h-2 w-full overflow-hidden rounded-full bg-[#EDF2F7]">
+              <div className="mt-3.5 h-2 w-full overflow-hidden rounded-full bg-[#ebe0b2]">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-300",
-                    completedLevels === 5 ? "bg-[#10B981]" : "bg-[#2D6BFF]",
+                    completedLevels === 5 ? "bg-[#4a6739]" : "bg-[#fe822f]",
                   )}
                   style={{ width: `${progress}%` }}
                 />
@@ -3155,10 +3230,10 @@ function ResponsesView({
 
               {/* Toggle para ver respuestas registradas */}
               {completedLevels > 0 && (
-                <div className="mt-3 pt-3 border-t border-[#F1F4F9]">
+                <div className="mt-3 pt-3 border-t border-[#efe5b8]">
                   <button
                     onClick={() => setExpandedModuleId(isExpanded ? null : mod.id)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#2D6BFF] hover:underline"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#fe822f] hover:underline"
                   >
                     <ChevronDown
                       className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-180")}
@@ -3175,29 +3250,29 @@ function ResponsesView({
                         return (
                           <div
                             key={top.level}
-                            className="rounded-lg border border-[#E9EDF4] bg-[#F8FAFC] p-3 text-xs text-[#31415E] space-y-1"
+                            className="rounded-lg border border-[#e2d59a] bg-[#f7f0d4] p-3 text-xs text-[#3a3525] space-y-1"
                           >
                             <div className="flex items-center justify-between">
-                              <span className="font-extrabold text-[#0F3B8F]">
+                              <span className="font-extrabold text-[#28391e]">
                                 Nivel {top.level}: {top.difficultyLabel || top.topicTitle}
                               </span>
-                              <span className="text-[10px] text-[#718096]">✓ Completado</span>
+                              <span className="text-[10px] text-[#6e674f]">✓ Completado</span>
                             </div>
-                            <p className="text-[11px] text-[#4A5568] italic font-medium">
+                            <p className="text-[11px] text-[#59533f] italic font-medium">
                               {top.questionPrompt}
                             </p>
-                            <div className="mt-1 pt-1 border-t border-[#E2E8F0]">
+                            <div className="mt-1 pt-1 border-t border-[#d9cda0]">
                               {ans.includes("|||") ? (
                                 <div className="space-y-1">
                                   {ans.split("|||").map((part, i) => (
-                                    <p key={i} className="text-[#1A202C] whitespace-pre-line">
+                                    <p key={i} className="text-[#1a180f] whitespace-pre-line">
                                       <strong>{i === 0 ? "Decisión:" : "Sustentación:"}</strong>{" "}
                                       {part}
                                     </p>
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-[#1A202C] whitespace-pre-line font-medium">
+                                <p className="text-[#1a180f] whitespace-pre-line font-medium">
                                   {ans === "CONTENIDO_ESTUDIADO" ? "Lectura completada" : ans}
                                 </p>
                               )}

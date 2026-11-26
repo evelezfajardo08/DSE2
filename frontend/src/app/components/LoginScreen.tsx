@@ -341,24 +341,24 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
   const features = role === 'student' ? STUDENT_FEATURES : TEACHER_FEATURES;
   const roleLabel = role === 'student' ? 'Estudiante' : 'Docente';
-  const roleColor = role === 'student' ? 'from-blue-600 to-blue-800' : 'from-indigo-700 to-purple-800';
-  const accentColor = role === 'student' ? 'bg-yellow-400' : 'bg-purple-400';
+  const roleColor = role === 'student' ? 'from-[#28391e] to-[#1a2614]' : 'from-[#4a3649] to-[#322331]';
+  const accentColor = role === 'student' ? 'bg-[#fe822f]' : 'bg-[#eee2aa]';
 
   if (authMode === 'role-select') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#1E3A8A] via-[#1e4fa8] to-[#1a2f6e] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#28391e] via-[#1f2e17] to-[#1a180f] flex flex-col items-center justify-center p-4">
         {/* Decorative circles */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 bg-[#FACC15]/10 rounded-full translate-x-1/3 translate-y-1/3 pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-[#fe822f]/15 rounded-full translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-xl">
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
-            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-2xl mb-4">
-              <Bot className="w-11 h-11 text-[#1E3A8A]" />
+            <div className="w-20 h-20 bg-[#fe822f] rounded-2xl flex items-center justify-center shadow-2xl mb-4">
+              <Bot className="w-11 h-11 text-[#1a180f]" />
             </div>
-            <h1 className="text-4xl font-bold text-white tracking-tight">LideraBot</h1>
-            <p className="text-blue-200 mt-1 text-center">Tu asistente virtual para desarrollar liderazgo</p>
+            <h1 className="text-4xl font-bold text-[#fdfaf0] tracking-tight">LideraBot</h1>
+            <p className="text-[#dcd2a4] mt-1 text-center">Tu asistente virtual para desarrollar liderazgo</p>
           </div>
 
           {/* Role Cards */}
@@ -369,16 +369,16 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             {/* Student Card */}
             <button
               onClick={() => handleRoleSelect('student')}
-              className="group bg-white/10 hover:bg-white/20 border border-white/20 hover:border-[#FACC15]/60 rounded-2xl p-6 text-left transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group bg-white/10 hover:bg-white/20 border border-white/20 hover:border-[#fe822f]/60 rounded-2xl p-6 text-left transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
-              <div className="w-12 h-12 bg-[#FACC15] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <User className="w-6 h-6 text-[#1E3A8A]" />
+              <div className="w-12 h-12 bg-[#fe822f] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <User className="w-6 h-6 text-[#28391e]" />
               </div>
               <h3 className="text-white font-semibold text-lg mb-1">Soy Estudiante</h3>
-              <p className="text-blue-200 text-sm leading-relaxed">
+              <p className="text-[#dcd2a4] text-sm leading-relaxed">
                 Desarrolla habilidades de liderazgo con tu mentor virtual personalizado.
               </p>
-              <div className="mt-4 flex items-center gap-2 text-[#FACC15] text-sm font-medium">
+              <div className="mt-4 flex items-center gap-2 text-[#fe822f] text-sm font-medium">
                 Comenzar
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -387,16 +387,16 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             {/* Teacher Card */}
             <button
               onClick={() => handleRoleSelect('teacher')}
-              className="group bg-white/10 hover:bg-white/20 border border-white/20 hover:border-purple-400/60 rounded-2xl p-6 text-left transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group bg-white/10 hover:bg-white/20 border border-white/20 hover:border-[#fe822f]/60 rounded-2xl p-6 text-left transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
-              <div className="w-12 h-12 bg-purple-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-[#4a3649] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-white font-semibold text-lg mb-1">Soy Docente</h3>
-              <p className="text-blue-200 text-sm leading-relaxed">
+              <p className="text-[#dcd2a4] text-sm leading-relaxed">
                 Monitorea el progreso de tus estudiantes y gestiona grupos académicos.
               </p>
-              <div className="mt-4 flex items-center gap-2 text-purple-300 text-sm font-medium">
+              <div className="mt-4 flex items-center gap-2 text-[#e5c5e3] text-sm font-medium">
                 Comenzar
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -412,7 +412,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] flex">
+    <div className="min-h-screen bg-[#eee2aa] flex">
       {/* Left panel — branding */}
       <div className={`hidden lg:flex flex-col justify-between w-[420px] bg-gradient-to-b ${roleColor} p-10 relative overflow-hidden`}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-x-1/2 -translate-y-1/2" />
@@ -428,7 +428,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           </button>
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
-              <Bot className="w-7 h-7 text-[#1E3A8A]" />
+              <Bot className="w-7 h-7 text-[#28391e]" />
             </div>
             <div>
               <div className="text-white font-bold text-xl leading-none">LideraBot</div>
@@ -436,7 +436,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             </div>
           </div>
 
-          <div className={`inline-flex items-center gap-2 ${accentColor} text-[#1E3A8A] text-xs font-bold px-3 py-1.5 rounded-full mb-6`}>
+          <div className={`inline-flex items-center gap-2 ${accentColor} text-[#28391e] text-xs font-bold px-3 py-1.5 rounded-full mb-6`}>
             {role === 'student' ? <User className="w-3.5 h-3.5" /> : <GraduationCap className="w-3.5 h-3.5" />}
             Acceso {roleLabel}
           </div>
@@ -472,16 +472,16 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           <div className="lg:hidden mb-6">
             <button
               onClick={() => setAuthMode('role-select')}
-              className="flex items-center gap-1 text-[#1E3A8A] text-sm mb-4 font-medium"
+              className="flex items-center gap-1 text-[#28391e] text-sm mb-4 font-medium"
             >
               <ChevronLeft className="w-4 h-4" />
               Volver
             </button>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#28391e] rounded-lg flex items-center justify-center">
                 <Bot className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-[#1E3A8A] text-lg">LideraBot</span>
+              <span className="font-bold text-[#28391e] text-lg">LideraBot</span>
             </div>
           </div>
 
@@ -494,7 +494,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 }}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   isLogin
-                    ? 'bg-[#1E3A8A] text-white shadow-md'
+                    ? 'bg-[#28391e] text-white shadow-md'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -507,7 +507,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 }}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   !isLogin
-                    ? 'bg-[#1E3A8A] text-white shadow-md'
+                    ? 'bg-[#28391e] text-white shadow-md'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -560,7 +560,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                       value={form.email}
                       onChange={(e) => handleField('email', e.target.value)}
                       placeholder={isLogin ? 'tu-correo@ejemplo.com' : 'Ej. nombre@institucion.edu.co'}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28391e]/30 focus:border-[#28391e] transition-all bg-gray-50 focus:bg-white"
                     />
                   </div>
                 )}
@@ -574,7 +574,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                         value={resetToken}
                         onChange={(e) => setResetToken(e.target.value)}
                         placeholder="Pega el código recibido"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28391e]/30 focus:border-[#28391e] transition-all bg-gray-50 focus:bg-white"
                       />
                     </div>
 
@@ -585,7 +585,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28391e]/30 focus:border-[#28391e] transition-all bg-gray-50 focus:bg-white"
                       />
                     </div>
 
@@ -596,7 +596,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                         value={newPasswordConfirm}
                         onChange={(e) => setNewPasswordConfirm(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28391e]/30 focus:border-[#28391e] transition-all bg-gray-50 focus:bg-white"
                       />
                     </div>
                   </>
@@ -625,7 +625,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     className={`flex-1 py-3 font-semibold rounded-xl transition-all ${
                       resetStep === 'request' && cooldownSeconds > 0
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-[#1E3A8A] text-white hover:bg-[#1a3278]'
+                        : 'bg-[#28391e] text-white hover:bg-[#1e2c16]'
                     }`}
                   >
                     {resetStep === 'request'
@@ -655,7 +655,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     value={registrationCode}
                     onChange={(e) => setRegistrationCode(e.target.value)}
                     placeholder="Ingresa el código de 6 dígitos"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[#28391e]/30 focus:border-[#28391e] transition-all bg-gray-50 focus:bg-white"
                   />
                 </div>
                 <div className="flex gap-3 pt-2">
@@ -673,7 +673,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                   <button
                     type="button"
                     onClick={handleVerifyRegistration}
-                    className="flex-1 py-3 bg-[#1E3A8A] text-white font-semibold rounded-xl hover:bg-[#1a3278] transition-all"
+                    className="flex-1 py-3 bg-[#28391e] text-white font-semibold rounded-xl hover:bg-[#1e2c16] transition-all"
                   >
                     Verificar correo
                   </button>
@@ -685,7 +685,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                   className={`w-full text-sm font-semibold ${
                     verificationCooldownSeconds > 0
                       ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-[#1E3A8A] hover:underline'
+                      : 'text-[#28391e] hover:underline'
                   }`}
                 >
                   {verificationCooldownSeconds > 0
@@ -707,7 +707,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                       value={form.name}
                       onChange={(e) => handleField('name', e.target.value)}
                       placeholder="Ej. María González"
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28391e]/30 focus:border-[#28391e] transition-all bg-gray-50 focus:bg-white"
                     />
                   </div>
                 )}
@@ -723,7 +723,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     value={form.email}
                     onChange={(e) => handleField('email', e.target.value)}
                     placeholder="tu-correo@ejemplo.com"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28391e]/30 focus:border-[#28391e] transition-all bg-gray-50 focus:bg-white"
                   />
                 </div>
 
@@ -739,7 +739,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                       value={form.password}
                       onChange={(e) => handleField('password', e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-4 py-2.5 pr-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
+                      className="w-full px-4 py-2.5 pr-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28391e]/30 focus:border-[#28391e] transition-all bg-gray-50 focus:bg-white"
                     />
                     <button
                       type="button"
@@ -763,7 +763,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                         value={form.confirmPassword}
                         onChange={(e) => handleField('confirmPassword', e.target.value)}
                         placeholder="••••••••"
-                        className="w-full px-4 py-2.5 pr-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] transition-all bg-gray-50 focus:bg-white"
+                        className="w-full px-4 py-2.5 pr-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28391e]/30 focus:border-[#28391e] transition-all bg-gray-50 focus:bg-white"
                       />
                       <button
                         type="button"
@@ -789,7 +789,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                         setNewPassword('');
                         setNewPasswordConfirm('');
                       }}
-                      className="text-[#1E3A8A] text-xs font-medium hover:underline"
+                      className="text-[#28391e] text-xs font-medium hover:underline"
                     >
                       ¿Olvidaste tu contraseña?
                     </button>
@@ -804,14 +804,14 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                       id="terms"
                       checked={acceptedTerms}
                       onChange={(e) => setAcceptedTerms(e.target.checked)}
-                      className="mt-0.5 w-4 h-4 accent-[#1E3A8A] rounded"
+                      className="mt-0.5 w-4 h-4 accent-[#28391e] rounded"
                     />
                     <label htmlFor="terms" className="text-[11px] leading-5 text-gray-500">
                       Acepto los{' '}
                       <button
                         type="button"
                         onClick={() => setLegalDocument('terms')}
-                        className="text-[11px] font-medium leading-5 text-[#1E3A8A] cursor-pointer hover:underline"
+                        className="text-[11px] font-medium leading-5 text-[#28391e] cursor-pointer hover:underline"
                       >
                         términos y condiciones
                       </button>{' '}
@@ -819,7 +819,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                       <button
                         type="button"
                         onClick={() => setLegalDocument('privacy')}
-                        className="text-[11px] font-medium leading-5 text-[#1E3A8A] cursor-pointer hover:underline"
+                        className="text-[11px] font-medium leading-5 text-[#28391e] cursor-pointer hover:underline"
                       >
                         política de privacidad
                       </button>
@@ -829,7 +829,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-[#1E3A8A] hover:bg-[#1a3278] text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 mt-2 shadow-md hover:shadow-lg active:scale-95"
+                  className="w-full py-3 bg-[#28391e] hover:bg-[#1e2c16] text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 mt-2 shadow-md hover:shadow-lg active:scale-95"
                 >
                   {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
                   <ArrowRight className="w-4 h-4" />
@@ -850,7 +850,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                   <button
                     type="button"
                     onClick={() => setIsLogin(!isLogin)}
-                    className="text-[#1E3A8A] font-semibold hover:underline"
+                    className="text-[#28391e] font-semibold hover:underline"
                   >
                     {isLogin ? 'Regístrate gratis' : 'Inicia sesión'}
                   </button>
@@ -861,11 +861,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
           {/* Role badge at bottom */}
           <div className="flex items-center justify-center gap-2 mt-5">
-            <div className={`w-2 h-2 rounded-full ${role === 'student' ? 'bg-[#FACC15]' : 'bg-purple-400'}`} />
+            <div className={`w-2 h-2 rounded-full ${role === 'student' ? 'bg-[#fe822f]' : 'bg-[#4a3649]'}`} />
             <span className="text-xs text-gray-400">Modo {roleLabel}</span>
             <button
               onClick={() => setAuthMode('role-select')}
-              className="text-xs text-[#1E3A8A] font-medium hover:underline ml-1"
+              className="text-xs text-[#28391e] font-medium hover:underline ml-1"
             >
               Cambiar
             </button>
@@ -985,7 +985,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             <button
               type="button"
               onClick={() => setLegalDocument(null)}
-              className="mt-6 w-full rounded-xl bg-[#1E3A8A] py-3 font-semibold text-white hover:bg-[#1a3278]"
+              className="mt-6 w-full rounded-xl bg-[#28391e] py-3 font-semibold text-white hover:bg-[#1e2c16]"
             >
               Entendido
             </button>

@@ -441,11 +441,11 @@ export function ChatPanel({
     leadershipModules.find((m) => m.id === recommendedStartId) ?? leadershipModules[0];
 
   return (
-    <Card className="flex flex-col h-full w-full shadow-lg border-[#DCE3EF] overflow-hidden rounded-[22px]">
+    <Card className="flex flex-col h-full w-full shadow-lg border-[#d9cda0] overflow-hidden rounded-[22px]">
       {/* Top Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b bg-[#0F3B8F] text-white shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b bg-[#28391e] text-white shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#FACC15] text-[#0F3B8F] rounded-xl flex items-center justify-center font-bold">
+          <div className="w-9 h-9 bg-[#fe822f] text-[#28391e] rounded-xl flex items-center justify-center font-bold">
             <Bot className="w-5 h-5" />
           </div>
           <h3 className="text-white font-extrabold tracking-tight text-sm sm:text-base">
@@ -468,7 +468,7 @@ export function ChatPanel({
       </div>
 
       {/* Messages Area - Takes remaining height with internal scroll */}
-      <ScrollArea className="min-h-0 flex-1 overflow-y-auto bg-[#F8FAFD]">
+      <ScrollArea className="min-h-0 flex-1 overflow-y-auto bg-[#f7f0d4]">
         <div className="space-y-4 p-5">
           {messages.map((message) => (
             <div
@@ -478,8 +478,8 @@ export function ChatPanel({
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.type === 'bot'
-                    ? 'bg-[#0F3B8F] text-white'
-                    : 'bg-[#A855F7] text-white'
+                    ? 'bg-[#28391e] text-white'
+                    : 'bg-[#4a3649] text-white'
                 }`}
               >
                 {message.type === 'bot' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
@@ -487,8 +487,8 @@ export function ChatPanel({
               <div
                 className={`min-w-0 max-w-[82%] overflow-hidden rounded-2xl px-4 py-3 ${
                   message.type === 'bot'
-                    ? 'bg-white border border-[#DCE3EF] shadow-sm text-[#152542]'
-                    : 'bg-[#0F3B8F] text-white'
+                    ? 'bg-white border border-[#d9cda0] shadow-sm text-[#1a180f]'
+                    : 'bg-[#28391e] text-white'
                 }`}
               >
                 {message.type === 'bot' ? (
@@ -520,13 +520,13 @@ export function ChatPanel({
                           )}
 
                           {targetMod && diagnosticResult && onOpenSubmodule && (
-                            <div className="mt-3 pt-3 border-t border-[#E4EAF3] flex items-center justify-between gap-3">
-                              <span className="text-xs font-bold text-[#0E785F]">
+                            <div className="mt-3 pt-3 border-t border-[#dfd3a6] flex items-center justify-between gap-3">
+                              <span className="text-xs font-bold text-[#28391e]">
                                 Submódulo 0{targetMod.id}: {targetMod.name}
                               </span>
                               <button
                                 onClick={() => onOpenSubmodule(targetMod.id, 1)}
-                                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#0E785F] px-3.5 py-2 text-xs font-extrabold text-white hover:bg-[#0B614D]"
+                                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-[#28391e] px-3.5 py-2 text-xs font-extrabold text-white hover:bg-[#28391e]"
                               >
                                 Abrir Submódulo 0{targetMod.id} <ArrowRight className="w-3.5 h-3.5" />
                               </button>
@@ -545,19 +545,19 @@ export function ChatPanel({
 
           {/* Action Banner inside chat once user has interacted (before diagnostic) */}
           {hasInteractedWithBot && !diagnosticResult && onOpenDiagnostic && (
-            <div className="rounded-2xl border-2 border-[#FACC15] bg-[#FFFBEB] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="rounded-2xl border-2 border-[#fe822f] bg-[#fbf4d4] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-wider text-[#92400E]">
+                <p className="text-xs font-extrabold uppercase tracking-wider text-[#7a3608]">
                   ✓ ¡Prueba Diagnóstica Desbloqueada!
                 </p>
-                <p className="text-sm font-bold text-[#10264F] mt-0.5">
+                <p className="text-sm font-bold text-[#1a180f] mt-0.5">
                   Completa las 14 preguntas para que LideraBot te recomiende y desbloquee tu primer
                   módulo.
                 </p>
               </div>
               <button
                 onClick={onOpenDiagnostic}
-                className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#0F3B8F] px-4 py-2.5 text-xs font-extrabold text-white hover:bg-[#174AA6]"
+                className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#28391e] px-4 py-2.5 text-xs font-extrabold text-white hover:bg-[#1e2c16]"
               >
                 Ir a la Prueba Diagnóstica <ArrowRight className="w-4 h-4" />
               </button>
@@ -566,21 +566,21 @@ export function ChatPanel({
 
           {isTyping && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#0F3B8F] text-white">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-[#28391e] text-white">
                 <Bot className="w-5 h-5" />
               </div>
-              <div className="rounded-2xl border border-[#DCE3EF] bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-2xl border border-[#d9cda0] bg-white px-4 py-3 shadow-sm">
                 <div className="flex gap-1">
                   <div
-                    className="w-2 h-2 bg-[#2D6BFF] rounded-full animate-bounce"
+                    className="w-2 h-2 bg-[#fe822f] rounded-full animate-bounce"
                     style={{ animationDelay: '0ms' }}
                   />
                   <div
-                    className="w-2 h-2 bg-[#2D6BFF] rounded-full animate-bounce"
+                    className="w-2 h-2 bg-[#fe822f] rounded-full animate-bounce"
                     style={{ animationDelay: '150ms' }}
                   />
                   <div
-                    className="w-2 h-2 bg-[#2D6BFF] rounded-full animate-bounce"
+                    className="w-2 h-2 bg-[#fe822f] rounded-full animate-bounce"
                     style={{ animationDelay: '300ms' }}
                   />
                 </div>
@@ -592,7 +592,7 @@ export function ChatPanel({
       </ScrollArea>
 
       {/* Input Bar */}
-      <div className="p-3.5 border-t border-[#DCE3EF] bg-white shrink-0">
+      <div className="p-3.5 border-t border-[#d9cda0] bg-white shrink-0">
         <div className="flex gap-2">
           <Input
             value={inputValue}
@@ -603,13 +603,13 @@ export function ChatPanel({
                 ? 'Escribe "Hola" para iniciar y desbloquear tu Prueba Diagnóstica...'
                 : 'Escribe tu mensaje a LideraBot...'
             }
-            className="flex-1 rounded-xl border-[#C9D2E1]"
+            className="flex-1 rounded-xl border-[#cfc18e]"
           />
           <Button
             size="icon"
             onClick={handleSend}
             disabled={isTyping || !inputValue.trim()}
-            className="flex-shrink-0 bg-[#0F3B8F] hover:bg-[#174AA6] rounded-xl"
+            className="flex-shrink-0 bg-[#28391e] hover:bg-[#1e2c16] rounded-xl"
           >
             <Send className="w-5 h-5" />
           </Button>

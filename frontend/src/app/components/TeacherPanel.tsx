@@ -389,9 +389,9 @@ export function TeacherPanel() {
     const students = registeredUsers.filter((u) => u.role === 'student');
     if (!students.length) {
       return [
-        { skill: 'Formación en Liderazgo', promedio: 0, color: '#1E3A8A' },
-        { skill: 'Comunicación Educativa', promedio: 0, color: '#0891B2' },
-        { skill: 'Toma de Decisiones', promedio: 0, color: '#7C3AED' },
+        { skill: 'Formación en Liderazgo', promedio: 0, color: '#28391e' },
+        { skill: 'Comunicación Educativa', promedio: 0, color: '#4a3649' },
+        { skill: 'Toma de Decisiones', promedio: 0, color: '#4a3649' },
       ];
     }
 
@@ -429,22 +429,22 @@ export function TeacherPanel() {
       {
         skill: 'Formación en Liderazgo',
         promedio: Math.round(totalLead / students.length),
-        color: '#1E3A8A',
+        color: '#28391e',
       },
       {
         skill: 'Comunicación Educativa',
         promedio: Math.round(totalComm / students.length),
-        color: '#0891B2',
+        color: '#4a3649',
       },
       {
         skill: 'Toma de Decisiones',
         promedio: Math.round(totalDec / students.length),
-        color: '#7C3AED',
+        color: '#fe822f',
       },
       {
         skill: 'Trabajo en Equipo',
         promedio: Math.round(totalTeam / students.length),
-        color: '#059669',
+        color: '#4a6739',
       },
     ];
   }, [registeredUsers]);
@@ -453,11 +453,11 @@ export function TeacherPanel() {
   const realDistributionData = useMemo(() => {
     const students = registeredUsers.filter((u) => u.role === 'student');
     const brackets = [
-      { nivel: 'Sin iniciar (0%)', cantidad: 0, color: '#94A3B8' },
-      { nivel: 'Inicial (1-25%)', cantidad: 0, color: '#F59E0B' },
-      { nivel: 'Medio (26-50%)', cantidad: 0, color: '#3B82F6' },
-      { nivel: 'Avanzado (51-75%)', cantidad: 0, color: '#8B5CF6' },
-      { nivel: 'Dominio (76-100%)', cantidad: 0, color: '#10B981' },
+      { nivel: 'Sin iniciar (0%)', cantidad: 0, color: '#857d64' },
+      { nivel: 'Inicial (1-25%)', cantidad: 0, color: '#d49a2a' },
+      { nivel: 'Medio (26-50%)', cantidad: 0, color: '#fe822f' },
+      { nivel: 'Avanzado (51-75%)', cantidad: 0, color: '#4a3649' },
+      { nivel: 'Dominio (76-100%)', cantidad: 0, color: '#28391e' },
     ];
 
     for (const s of students) {
@@ -568,7 +568,7 @@ export function TeacherPanel() {
       {/* Header y Pestañas Principales del Panel */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b pb-4">
         <div>
-          <h2 className="text-2xl font-black text-[#10264F] tracking-wide">PANEL DE CONTROL DOCENTE</h2>
+          <h2 className="text-2xl font-black text-[#1a180f] tracking-wide">PANEL DE CONTROL DOCENTE</h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Monitorea el progreso por habilidades, conexiones de estudiantes y buzón de sugerencias
           </p>
@@ -587,11 +587,11 @@ export function TeacherPanel() {
           </Button>
           <Button
             size="sm"
-            className="bg-[#0F3B8F] text-xs font-bold hover:bg-[#174AA6]"
+            className="bg-[#28391e] text-xs font-bold hover:bg-[#1e2c16]"
             onClick={exportReport}
             disabled={isLoading || Boolean(loadError)}
           >
-            <Download className="w-3.5 h-3.5 mr-1.5 text-[#FACC15]" />
+            <Download className="w-3.5 h-3.5 mr-1.5 text-[#fe822f]" />
             EXPORTAR REPORTE PDF
           </Button>
         </div>
@@ -603,8 +603,8 @@ export function TeacherPanel() {
           onClick={() => setPanelTab('monitoring')}
           className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black transition-all ${
             panelTab === 'monitoring'
-              ? 'bg-white text-[#0F3B8F] shadow-sm'
-              : 'text-slate-600 hover:text-[#0F3B8F] hover:bg-white/60'
+              ? 'bg-white text-[#28391e] shadow-sm'
+              : 'text-slate-600 hover:text-[#28391e] hover:bg-white/60'
           }`}
         >
           <TrendingUp className="h-4 w-4" />
@@ -618,8 +618,8 @@ export function TeacherPanel() {
           }}
           className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black transition-all ${
             panelTab === 'suggestions'
-              ? 'bg-white text-[#0F3B8F] shadow-sm'
-              : 'text-slate-600 hover:text-[#0F3B8F] hover:bg-white/60'
+              ? 'bg-white text-[#28391e] shadow-sm'
+              : 'text-slate-600 hover:text-[#28391e] hover:bg-white/60'
           }`}
         >
           <MessageSquare className="h-4 w-4" />
@@ -635,14 +635,14 @@ export function TeacherPanel() {
           onClick={() => setPanelTab('requests')}
           className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black transition-all ${
             panelTab === 'requests'
-              ? 'bg-white text-[#0F3B8F] shadow-sm'
-              : 'text-slate-600 hover:text-[#0F3B8F] hover:bg-white/60'
+              ? 'bg-white text-[#28391e] shadow-sm'
+              : 'text-slate-600 hover:text-[#28391e] hover:bg-white/60'
           }`}
         >
           <Clock className="h-4 w-4" />
           <span>SOLICITUDES DOCENTES</span>
           {teacherRequests.length > 0 && (
-            <span className="rounded-full bg-[#0F3B8F] px-2 py-0.2 text-[10px] text-white font-extrabold">
+            <span className="rounded-full bg-[#28391e] px-2 py-0.2 text-[10px] text-white font-extrabold">
               {teacherRequests.length}
             </span>
           )}
@@ -656,12 +656,12 @@ export function TeacherPanel() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="p-5 shadow-sm border border-slate-200">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-[#0F3B8F] shrink-0">
+                <div className="w-12 h-12 bg-[#f7f0d4] rounded-xl flex items-center justify-center text-[#28391e] shrink-0">
                   <Users className="w-6 h-6" />
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">TOTAL ESTUDIANTES</p>
-                  <p className="text-2xl font-black text-[#10264F]">{totalStudents}</p>
+                  <p className="text-2xl font-black text-[#1a180f]">{totalStudents}</p>
                 </div>
               </div>
             </Card>
@@ -692,12 +692,12 @@ export function TeacherPanel() {
 
             <Card className="p-5 shadow-sm border border-slate-200">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 shrink-0">
+                <div className="w-12 h-12 bg-[#f4eef3] rounded-xl flex items-center justify-center text-[#4a3649] shrink-0">
                   <Calendar className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">EVALUACIONES REALIZADAS</p>
-                  <p className="text-2xl font-black text-purple-700">
+                  <p className="text-xs font-bold text-[#6e674f] uppercase tracking-wide">EVALUACIONES REALIZADAS</p>
+                  <p className="text-2xl font-black text-[#4a3649]">
                     {studentsData.reduce((sum, s) => sum + s.evaluations, 0)}
                   </p>
                 </div>
@@ -711,10 +711,10 @@ export function TeacherPanel() {
             <Card className="p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-2 min-h-[36px]">
-                  <h3 className="text-base font-black text-[#10264F] tracking-wide">
+                  <h3 className="text-base font-black text-[#1a180f] tracking-wide">
                     PROGRESO POR HABILIDADES
                   </h3>
-                  <Badge variant="outline" className="text-[10px] font-bold text-[#0F3B8F] shrink-0">
+                  <Badge variant="outline" className="text-[10px] font-bold text-[#28391e] shrink-0">
                     Basado en actividades reales
                   </Badge>
                 </div>
@@ -726,20 +726,20 @@ export function TeacherPanel() {
               <div className="h-[270px] mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={realSkillsData} margin={{ top: 10, right: 10, left: -15, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#d9cda0" />
                     <XAxis
                       dataKey="skill"
-                      tick={{ fontSize: 11, fill: '#475569', fontWeight: 600 }}
+                      tick={{ fontSize: 11, fill: '#59533f', fontWeight: 600 }}
                       interval={0}
                     />
                     <YAxis
                       domain={[0, 100]}
-                      tick={{ fontSize: 11, fill: '#475569' }}
+                      tick={{ fontSize: 11, fill: '#59533f' }}
                       unit="%"
                     />
                     <Tooltip
                       formatter={(val: number) => [`${val}% de avance promedio`, 'Progreso']}
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #E2E8F0' }}
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #d9cda0' }}
                     />
                     <Bar dataKey="promedio" radius={[8, 8, 0, 0]}>
                       {realSkillsData.map((entry, index) => (
@@ -755,7 +755,7 @@ export function TeacherPanel() {
             <Card className="p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-2 min-h-[36px]">
-                  <h3 className="text-base font-black text-[#10264F] tracking-wide">
+                  <h3 className="text-base font-black text-[#1a180f] tracking-wide">
                     DISTRIBUCIÓN DE ESTUDIANTES POR AVANCE
                   </h3>
                   <Badge variant="outline" className="text-[10px] font-bold text-emerald-700 shrink-0">
@@ -770,19 +770,19 @@ export function TeacherPanel() {
               <div className="h-[270px] mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={realDistributionData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#d9cda0" />
                     <XAxis
                       dataKey="nivel"
-                      tick={{ fontSize: 10, fill: '#475569', fontWeight: 600 }}
+                      tick={{ fontSize: 10, fill: '#59533f', fontWeight: 600 }}
                       interval={0}
                     />
                     <YAxis
                       allowDecimals={false}
-                      tick={{ fontSize: 11, fill: '#475569' }}
+                      tick={{ fontSize: 11, fill: '#59533f' }}
                     />
                     <Tooltip
                       formatter={(val: number) => [`${val} estudiante(s)`, 'Cantidad']}
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #E2E8F0' }}
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #d9cda0' }}
                     />
                     <Bar dataKey="cantidad" radius={[8, 8, 0, 0]}>
                       {realDistributionData.map((entry, index) => (
@@ -799,7 +799,7 @@ export function TeacherPanel() {
           <Card className="shadow-sm border border-slate-200">
             <div className="p-5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-base font-black text-[#10264F] tracking-wide">
+                <h3 className="text-base font-black text-[#1a180f] tracking-wide">
                   ESTUDIANTES Y CUENTAS REGISTRADAS
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -870,7 +870,7 @@ export function TeacherPanel() {
                       <TableRow key={student.id} className="hover:bg-slate-50/80">
                         <TableCell>
                           <div>
-                            <p className="font-bold text-xs text-[#10264F]">{student.name}</p>
+                            <p className="font-bold text-xs text-[#1a180f]">{student.name}</p>
                             <p className="text-[11px] text-muted-foreground">{student.email}</p>
                           </div>
                         </TableCell>
@@ -886,7 +886,7 @@ export function TeacherPanel() {
                           <div className="w-28">
                             <div className="flex items-center gap-2 mb-1">
                               <Progress value={student.progress} className="h-1.5 flex-1" />
-                              <span className="text-xs font-bold text-[#10264F]">{student.progress}%</span>
+                              <span className="text-xs font-bold text-[#1a180f]">{student.progress}%</span>
                             </div>
                           </div>
                         </TableCell>
@@ -910,7 +910,7 @@ export function TeacherPanel() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 px-2.5 text-xs font-bold text-[#0F3B8F] hover:bg-blue-50"
+                              className="h-8 px-2.5 text-xs font-bold text-[#28391e] hover:bg-[#f7f0d4]"
                               onClick={() => setSelectedUser(student)}
                             >
                               Ver Detalles
@@ -947,7 +947,7 @@ export function TeacherPanel() {
           <Card className="p-6 border border-slate-200 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
               <div>
-                <h3 className="text-lg font-black text-[#10264F] tracking-wide">
+                <h3 className="text-lg font-black text-[#1a180f] tracking-wide">
                   BUZÓN DE MENSAJES Y SUGERENCIAS DE ESTUDIANTES
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -959,7 +959,7 @@ export function TeacherPanel() {
                 <Badge variant="outline" className="text-xs font-bold text-slate-700">
                   {suggestions.length} totales
                 </Badge>
-                <Badge variant="default" className="text-xs font-bold bg-[#0F3B8F]">
+                <Badge variant="default" className="text-xs font-bold bg-[#28391e]">
                   {pendingSuggestionsCount} pendientes
                 </Badge>
               </div>
@@ -973,10 +973,10 @@ export function TeacherPanel() {
               ) : suggestions.length === 0 ? (
                 <div className="text-center py-12 px-4 rounded-xl border border-dashed border-slate-200">
                   <MessageSquare className="mx-auto h-8 w-8 text-slate-300" />
-                  <p className="mt-2 text-xs font-bold text-[#475569]">
+                  <p className="mt-2 text-xs font-bold text-[#59533f]">
                     No hay mensajes ni sugerencias registradas
                   </p>
-                  <p className="mt-1 text-[11px] text-[#8C9AA8]">
+                  <p className="mt-1 text-[11px] text-[#857d64]">
                     Cuando un estudiante envíe un mensaje desde su panel, aparecerá aquí y se notificará por correo.
                   </p>
                 </div>
@@ -984,11 +984,11 @@ export function TeacherPanel() {
                 suggestions.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 shadow-xs hover:border-[#2D6BFF]/40 transition-all"
+                    className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 shadow-xs hover:border-[#fe822f]/40 transition-all"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#EAF0FF] px-3 py-1 text-xs font-black text-[#0F3B8F]">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1e5] px-3 py-1 text-xs font-black text-[#28391e]">
                           {item.category}
                         </span>
                         <span className="text-xs font-bold text-slate-800">{item.user_name}</span>
@@ -1011,7 +1011,7 @@ export function TeacherPanel() {
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-extrabold text-[#10264F]">{item.subject}</h4>
+                      <h4 className="text-sm font-extrabold text-[#1a180f]">{item.subject}</h4>
                       <p className="mt-1.5 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-100">
                         {item.message}
                       </p>
@@ -1019,7 +1019,7 @@ export function TeacherPanel() {
 
                     <div className="flex items-center justify-between pt-1">
                       <span className="text-[11px] text-slate-500">
-                        Atención / PQRS: <strong className="text-blue-900">liderabot.app@gmail.com</strong>
+                        Atención / PQRS: <strong className="text-[#28391e]">liderabot.app@gmail.com</strong>
                       </span>
                       <Button
                         variant="outline"
@@ -1049,7 +1049,7 @@ export function TeacherPanel() {
                 <Clock className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-black text-base text-[#10264F] tracking-wide">SOLICITUDES DE CUENTAS DOCENTES</h3>
+                <h3 className="font-black text-base text-[#1a180f] tracking-wide">SOLICITUDES DE CUENTAS DOCENTES</h3>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   Revisa y aprueba las cuentas con rol docente que ya verificaron su correo institucional.
                 </p>
@@ -1072,7 +1072,7 @@ export function TeacherPanel() {
                     className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-white p-4 md:flex-row md:items-center md:justify-between shadow-xs"
                   >
                     <div>
-                      <p className="font-bold text-xs text-[#10264F]">{request.name}</p>
+                      <p className="font-bold text-xs text-[#1a180f]">{request.name}</p>
                       <p className="text-xs text-muted-foreground">{request.email}</p>
                       <p className="mt-1 text-[11px] text-muted-foreground">
                         Solicitud registrada:{' '}
@@ -1110,12 +1110,12 @@ export function TeacherPanel() {
             className="w-full max-w-2xl max-h-[88vh] flex flex-col overflow-hidden shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-4 border-b p-5 shrink-0 bg-[#0F3B8F] text-white">
+            <div className="flex items-start justify-between gap-4 border-b p-5 shrink-0 bg-[#28391e] text-white">
               <div>
                 <h3 id="user-details-title" className="text-lg font-black text-white tracking-wide">
                   DETALLES DE LA CUENTA Y PROGRESO REAL
                 </h3>
-                <p className="mt-0.5 text-xs text-blue-100">
+                <p className="mt-0.5 text-xs text-[#efe6bf]">
                   Información académica, última conexión y respuestas del estudiante.
                 </p>
               </div>
@@ -1134,23 +1134,23 @@ export function TeacherPanel() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5">
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">NOMBRE COMPLETO</p>
-                  <p className="mt-1 font-black text-sm text-[#10264F]">{selectedUser.name}</p>
+                  <p className="mt-1 font-black text-sm text-[#1a180f]">{selectedUser.name}</p>
                 </div>
 
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5">
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">CORREO ELECTRÓNICO</p>
-                  <p className="mt-1 break-all font-semibold text-xs text-[#10264F]">{selectedUser.email}</p>
+                  <p className="mt-1 break-all font-semibold text-xs text-[#1a180f]">{selectedUser.email}</p>
                 </div>
 
                 {/* Apartado de Última Conexión en LideraBot (Requerido) */}
-                <div className="rounded-xl bg-blue-50 border border-blue-200 p-3.5 sm:col-span-2">
+                <div className="rounded-xl bg-[#f7f0d4] border border-[#d9cda0] p-3.5 sm:col-span-2">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-[#0F3B8F]" />
-                    <p className="text-xs font-black text-[#0F3B8F] uppercase tracking-wide">
+                    <Clock className="h-4 w-4 text-[#28391e]" />
+                    <p className="text-xs font-black text-[#28391e] uppercase tracking-wide">
                       ÚLTIMA CONEXIÓN EN LIDERABOT:
                     </p>
                   </div>
-                  <p className="mt-1 text-sm font-extrabold text-[#10264F]">
+                  <p className="mt-1 text-sm font-extrabold text-[#1a180f]">
                     {formatLastConnection(selectedUser.last_connection || selectedUser.registered_at)}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
@@ -1163,7 +1163,7 @@ export function TeacherPanel() {
 
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5">
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">TIPO DE CUENTA</p>
-                  <p className="mt-1 font-black text-xs text-[#10264F]">
+                  <p className="mt-1 font-black text-xs text-[#1a180f]">
                     {selectedUser.role === 'teacher' ? 'Docente' : 'Estudiante'}
                   </p>
                 </div>
@@ -1178,7 +1178,7 @@ export function TeacherPanel() {
                 {selectedUser.role === 'student' && (
                   <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 sm:col-span-2">
                     <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">RESUMEN ACADÉMICO REAL</p>
-                    <p className="mt-1 font-black text-sm text-[#0F3B8F]">
+                    <p className="mt-1 font-black text-sm text-[#28391e]">
                       {selectedUser.progress}% de progreso general real · {selectedUser.evaluations} evaluaciones completadas · {selectedUser.activities} submódulos activos
                     </p>
                   </div>
@@ -1187,7 +1187,7 @@ export function TeacherPanel() {
 
               {selectedUser.role === 'student' && (
                 <div className="space-y-3 border-t pt-4">
-                  <h4 className="font-black text-xs text-[#10264F] uppercase tracking-wider">
+                  <h4 className="font-black text-xs text-[#1a180f] uppercase tracking-wider">
                     Progreso y Respuestas por Submódulo / Eje
                   </h4>
                   {selectedUser.submodules && selectedUser.submodules.length > 0 ? (
@@ -1200,7 +1200,7 @@ export function TeacherPanel() {
                           className="rounded-xl border border-slate-200 p-3.5 space-y-2 bg-white"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <p className="font-extrabold text-xs text-[#10264F]">
+                            <p className="font-extrabold text-xs text-[#1a180f]">
                               {sub.submodule_name || `Submódulo ${sub.module_id || idx + 1}`}
                             </p>
                             <Badge
@@ -1212,7 +1212,7 @@ export function TeacherPanel() {
                           </div>
                           {hasExerciseAnswer ? (
                             <div className="mt-2 space-y-1.5 rounded-lg bg-slate-50 p-3 text-xs border border-slate-100">
-                              <p className="font-black text-[#0F3B8F] text-[11px] uppercase tracking-wide">
+                              <p className="font-black text-[#28391e] text-[11px] uppercase tracking-wide">
                                 RESPUESTA AL EJERCICIO PRÁCTICO:
                               </p>
                               <p>
@@ -1298,8 +1298,8 @@ export function TeacherPanel() {
               </div>
 
               {/* Notificación oficial por correo */}
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 flex items-start gap-2.5">
-                <Mail className="h-4 w-4 text-[#0F3B8F] shrink-0 mt-0.5" />
+              <div className="rounded-xl border border-[#d9cda0] bg-[#f7f0d4] p-3 text-xs text-[#28391e] flex items-start gap-2.5">
+                <Mail className="h-4 w-4 text-[#28391e] shrink-0 mt-0.5" />
                 <p>
                   El sistema enviará automáticamente un correo electrónico a{' '}
                   <strong>{userToDelete.email}</strong> notificándole la baja y el motivo que especifiques a continuación.
@@ -1313,7 +1313,7 @@ export function TeacherPanel() {
               )}
 
               <div>
-                <label className="block text-[11px] font-black text-[#10264F] uppercase tracking-wide mb-1.5">
+                <label className="block text-[11px] font-black text-[#1a180f] uppercase tracking-wide mb-1.5">
                   MOTIVO DE LA ELIMINACIÓN (REQUERIDO - SE NOTIFICARÁ AL ESTUDIANTE) *
                 </label>
                 <textarea
@@ -1369,7 +1369,7 @@ export function TeacherPanel() {
           >
             <div className="flex items-center justify-between border-b p-5">
               <div>
-                <h3 className="font-black text-sm text-[#10264F] tracking-wide">FILTRAR ESTUDIANTES</h3>
+                <h3 className="font-black text-sm text-[#1a180f] tracking-wide">FILTRAR ESTUDIANTES</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {visibleUsers.length} cuentas visibles de {registeredUsers.length}
                 </p>
@@ -1391,7 +1391,7 @@ export function TeacherPanel() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Ej: Camilo o gmail.com"
-                    className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#0F3B8F]/20"
+                    className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#28391e]/20"
                   />
                 </div>
               </div>
