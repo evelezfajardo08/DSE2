@@ -890,7 +890,7 @@ export default function App() {
             <div className="rounded-lg bg-muted/40 p-4">
               <p className="text-sm text-muted-foreground">Módulos Habilitados</p>
               <p className="font-semibold text-[#0F3B8F] mt-1">
-                3 de 3 módulos ({overallProgress}% global)
+                {disciplines.length} de {disciplines.length} módulos ({overallProgress}% global)
               </p>
             </div>
           </div>
@@ -1196,7 +1196,7 @@ export default function App() {
               )}
             >
               {!diagnosticResult && <LockKeyhole className="h-3.5 w-3.5 text-blue-300" />}
-              Módulos (3 de 3)
+              Módulos ({disciplines.length} de {disciplines.length})
             </button>
 
             <button
@@ -1311,7 +1311,7 @@ export default function App() {
               onClick={goHome}
               className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-blue-100"
             >
-              <span>Módulos (3 de 3)</span>
+              <span>Módulos ({disciplines.length} de {disciplines.length})</span>
               {!diagnosticResult && <LockKeyhole className="h-4 w-4" />}
             </button>
             <button
@@ -1585,7 +1585,7 @@ export default function App() {
       >
         <Mail className="h-4 w-4 text-[#2D6BFF]" />
         <span className="tracking-wide">
-          {view === "suggestions" ? "Cerrar PQRS" : "PQRS / Sugerencias"}
+          {view === "suggestions" ? "Cerrar PQRS" : "PQRS"}
         </span>
       </button>
     </div>
